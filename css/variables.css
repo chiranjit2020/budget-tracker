@@ -1,0 +1,15 @@
+:root{
+    --font: 'Poppins', sans-serif;
+    --lh: 1.618;
+    
+    --primary-color: #000;
+    --light-blue: #E5EAF1;
+    --blue: #3546AB;
+    --dark-blue: #0C145A;
+    --orange: #F0582E;
+    
+    --radius: 1.5rem;
+    
+    --shadow: 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12), 0 11px 15px -7px rgba(0,0,0,0.2);
+    --trans: all .3s ease;
+}

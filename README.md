@@ -1,1 +1,2 @@
-# budget-tracker
+# Bt- Budget Tracker
+ Budget App

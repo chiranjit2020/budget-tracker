@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Budget Tracker</title>
+    <link rel="icon" href="favicon.svg" sizes="32X32" />
+    <!-- plugins -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <main>
+        <div class="menu-bar">
+            <div class="brand">
+                <a href="index.html">
+                    <img src="images/logo.svg" alt="Budget Tracker Logo" class="img-fluid" />
+                </a>
+            </div>
+            <ul>
+                <li>
+                    <a href="#" class="active">
+                        <i class="fas fa-th"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-chart-line"></i> Monthly Transaction
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-credit-card"></i> Detail Expenses
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-receipt"></i> Detail Income
+                    </a>
+                </li>
+                <li>
+                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-file-import"></i> Print
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="app-window">
+            <header>
+                <div class="title-block">
+                    <h2>Overview</h2>
+                    <div class="app-subtitle"></div>
+                </div>
+                <div class="user-block">
+                    <ul>
+                        <li>
+                            <a href="#" title="Notification"><i class="far fa-bell"></i></a>
+                        </li>
+                        <li>
+                            <a href="#" title="Email"><i class="far fa-envelope"></i></a>
+                        </li>
+                        <li>
+                            <a href="#" title="User" id="user-profile-btn"><img src="images/user.jpg" alt="user" /></a>
+                        </li>
+                    </ul>
+                </div>
+            </header>
+            <div class="row">
+                <!-- Daily Transaction -->
+                <div class="col-6">
+                    <div class="daily-transaction">
+                        <div class="title-block">
+                            <h2>Daily Transaction</h2>
+                            <div class="icon-block" id="cal-date-buttons">
+                                <!-- <a href="#"><i class="far fa-calendar-alt"></i></a> -->
+                                <a href="#"><i class="fas fa-plus-circle"></i></a>
+                            </div>
+                        </div>
+                        <!-- .title-block -->
+                        <div class="amount-block">
+                            <div class="block">
+                                <small>Total Expense</small>
+                                <h4>$742.56</h4>
+                            </div>
+                            <div class="block">
+                                <small>Total Income</small>
+                                <h4>$120.56</h4>
+                            </div>
+                            <div class="block">
+                                <small>Net</small>
+                                <h4>$198.56</h4>
+                            </div>
+                        </div>
+                        <!-- .amount-block -->
+                    </div>
+                    <!-- .daily-transaction -->
+                    <div class="transaction-history">
+                        <div class="title-block">
+                            <h2>Transaction history</h2>
+                            <div class="icon-block">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                        <!-- .title-block -->
+                        <div class="date">
+                            <p>21 January 2021</p>
+                        </div>
+                        <div class="transaction-desc">
+                            <div class="item">
+                                <div class="purpose">
+                                    <h5>John Doe</h5>
+                                    <small>4 January 2021, at 10:45 AM</small>
+                                </div>
+                                <div class="amount">
+                                    <h5 class="comes-in">+ $450.00</h5>
+                                    <small>Payment</small>
+                                </div>
+                            </div>
+                            <!-- .item -->
+                            <div class="item">
+                                <div class="purpose">
+                                    <h5>Jane Doe</h5>
+                                    <small>3 January 2021, at 02:30 PM</small>
+                                </div>
+                                <div class="amount">
+                                    <h5 class="goes-out">- $250.00</h5>
+                                    <small>Transfer</small>
+                                </div>
+                            </div>
+                            <!-- .item -->
+                            <div class="item">
+                                <div class="purpose">
+                                    <h5>Jack Sparrow</h5>
+                                    <small>2 January 2021, at 01:39 PM</small>
+                                </div>
+                                <div class="amount">
+                                    <h5 class="goes-out">- $1250.00</h5>
+                                    <small>Transfer</small>
+                                </div>
+                            </div>
+                            <!-- .item -->
+                        </div>
+                    </div>
+                </div>
+                <!-- .col-6 -->
+                <!-- Monthly Transaction -->
+                <div class="col-6">
+                    <div class="monthly-transaction">
+                        <div class="title-block">
+                            <h2>Monthly Transaction</h2>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="expense-block">
+                                    <small>Expense</small>
+                                    <div class="chart">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                    <div class="amount">
+                                        <h4>$120.56</h4>
+                                        <small>+71.22</small>
+                                    </div>
+                                </div>
+                                <!-- .expense-block -->
+                            </div>
+                            <!-- .col-6 -->
+                            <div class="col-6">
+                                <div class="income-block">
+                                    <small>Income</small>
+                                    <div class="chart">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                    <div class="amount">
+                                        <h4>$120.56</h4>
+                                        <small>+71.22</small>
+                                    </div>
+                                </div>
+                                <!-- .income-block -->
+                            </div>
+                            <!-- .col-6 -->
+                        </div>
+                        <!-- .row -->
+                        <div class="lower-block">
+                            <div class="title-block">
+                                <h2>Expenses by category</h2>
+                            </div>
+                            <div class="card">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <div class="pie"></div>
+                                        <div class="amount">
+                                            <small>Food and Drink</small>
+                                            <h4>$120.56</h4>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                    <div class="col-2">
+                                        <div class="percentage">
+                                            <small>47%</small>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                </div>
+                                <!-- .row -->
+                            </div>
+                            <!-- .card -->
+                            <div class="card">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <div class="pie"></div>
+                                        <div class="amount">
+                                            <small>Groceries</small>
+                                            <h4>$120.56</h4>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                    <div class="col-2">
+                                        <div class="percentage">
+                                            <small>18%</small>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                </div>
+                                <!-- .row -->
+                            </div>
+                            <!-- .card -->
+                            <div class="card">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <div class="pie"></div>
+                                        <div class="amount">
+                                            <small>Household</small>
+                                            <h4>$120.56</h4>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                    <div class="col-2">
+                                        <div class="percentage">
+                                            <small>12%</small>
+                                        </div>
+                                    </div>
+                                    <!-- .col-6 -->
+                                </div>
+                                <!-- .row -->
+                            </div>
+                            <!-- .card -->
+                        </div>
+                        <!-- .lower-block -->
+                    </div>
+                    <!-- .monthly-transaction -->
+                </div>
+                <!-- .col-6 -->
+            </div>
+            <!-- .row -->
+        </div>
+        <!-- .app-window -->
+    </main>
+
+    <!-- JS-->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // flatpickr("#datetime", {});
+
+    </script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

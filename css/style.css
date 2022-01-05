@@ -1,0 +1,1276 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
+@import "variables.css";
+
+html {
+    font-size: 62.5%;
+}
+
+*,
+*::after,
+*::before {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: var(--font);
+    font-size: 1.6rem;
+    color: var(--primary-color);
+    line-height: var(--lh);
+    font-weight: 400;
+    background-color: var(--light-blue);
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+ul,
+li {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+a,
+a:visited,
+a:hover {
+    display: inline-block;
+    text-decoration: none;
+    color: var(--dark-blue);
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.col-2 {
+    width: 16.6666%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.col-10 {
+    width: 83.3333%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.col-6 {
+    width: 50%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.img-fluid {
+    max-width: 100%;
+    height: auto;
+}
+
+/*Main Section Start*/
+main {
+    border: 1px solid #fff;
+    border-radius: var(--radius);
+    background-color: rgba(255, 255, 255, 0.3);
+    padding: 2rem;
+    margin: 0 3rem;
+    box-shadow: var(--shadow);
+
+    display: grid;
+    grid-template-columns: 13rem 100rem;
+}
+
+main .menu-bar {
+    background-color: var(--light-blue);
+    text-align: center;
+    border-radius: var(--radius) 0 0 var(--radius);
+    padding: 2rem;
+    margin: 0;
+}
+
+main .brand {
+    --size: 6rem;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    margin: 0 auto 4rem auto;
+}
+
+main .brand a {
+    display: block;
+}
+
+main .menu-bar ul li {
+    margin: 0 0 1.5rem 0;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+main .menu-bar ul li:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+main .menu-bar ul li a {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #7e8cac;
+    line-height: var(--lh);
+    font-weight: 400;
+    padding: 2rem 0;
+    margin: 0;
+    transition: var(--trans);
+}
+
+main .menu-bar ul li a.active,
+main .menu-bar ul li a:hover {
+    color: var(--dark-blue);
+}
+
+main .menu-bar ul li a i.fas {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/*App Window*/
+main .app-window {
+    background-color: #fff;
+    padding: 2rem 4rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    box-shadow: -.4rem 0 1rem rgba(0, 0, 0, .05);
+}
+
+main .app-window header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 2rem;
+    border-bottom: 0.1rem solid #dcdcdc;
+}
+
+main .app-window header .title-block h2 {
+    font-family: inherit;
+    font-size: 3rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    padding: 0;
+    margin: 0;
+}
+
+main .app-window header .title-block p {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #7e8cac;
+    line-height: var(--lh);
+    padding: 0;
+    margin: 0;
+}
+
+main .app-window header .user-block ul {
+    display: flex;
+}
+
+main .app-window header .user-block ul li {
+    margin-left: 2rem;
+}
+
+main .app-window header .user-block ul li a {
+    font-size: 2rem;
+    color: #7e8cac;
+    transition: var(--trans);
+}
+
+main .app-window header .user-block ul li a img {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+main .app-window header .user-block ul li a:hover {
+    color: var(--blue);
+}
+
+/*Daily Transaction Section*/
+
+main .app-window .daily-transaction {
+    margin: 2.5rem 0;
+}
+
+main .app-window .daily-transaction .title-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+main .app-window .daily-transaction .title-block h2 {
+    font-family: inherit;
+    font-size: 2rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    margin: 0;
+    padding: 0;
+}
+
+main .app-window .daily-transaction .title-block .icon-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/*
+main .app-window .daily-transaction .title-block .icon-block a:nth-child(1) {
+    color: #444;
+}
+*/
+
+main .app-window .daily-transaction .title-block .icon-block a {
+    font-size: 3rem;
+    color: var(--blue);
+    margin-left: 3rem;
+}
+
+main .app-window .daily-transaction .title-block .icon-block a i.fas {
+    box-shadow: var(--shadow);
+    border-radius: 50%;
+    transition: var(--trans);
+}
+
+main .app-window .daily-transaction .title-block .icon-block a:hover i.fas {
+    box-shadow: none;
+}
+
+main .app-window .daily-transaction .title-block .icon-block a i.fas:active {
+    transform: scale(.9);
+}
+
+main .app-window .daily-transaction .amount-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+}
+
+main .app-window .daily-transaction .amount-block .block small {
+    color: var(--blue);
+    font-weight: 500;
+}
+
+main .app-window .daily-transaction .amount-block .block h4 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #444;
+    line-height: var(--lh);
+    font-weight: 400;
+    padding: 0;
+    margin: 0;
+}
+
+main .app-window .daily-transaction .amount-block .block:nth-child(3) h4 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #000;
+    line-height: var(--lh);
+    font-weight: 700;
+    padding: 0;
+    margin: 0;
+}
+
+/*Transaction History*/
+main .app-window .transaction-history {
+    margin: 2.5rem 0;
+}
+
+main .app-window .transaction-history .title-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+main .app-window .transaction-history .title-block h2 {
+    font-family: inherit;
+    font-size: 2rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    margin: 0 0 2rem 0;
+    padding: 0;
+}
+
+main .app-window .transaction-history .date {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #444;
+    line-height: var(--lh);
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+}
+
+main .app-window .transaction-history .transaction-desc {
+    margin: 2.5rem 0;
+}
+
+main .app-window .transaction-history .transaction-desc .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2rem 0;
+}
+
+main .app-window .transaction-history .transaction-desc .item .purpose h5 {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+}
+
+main .app-window .transaction-history .transaction-desc .item .amount {
+    text-align: right;
+}
+
+main .app-window .transaction-history .transaction-desc .item .amount h5 {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+}
+
+main .app-window .transaction-history .transaction-desc .item .amount h5.comes-in {
+    color: var(--blue);
+}
+
+main .app-window .transaction-history .transaction-desc .item .amount h5.goes-out {
+    color: var(--orange);
+}
+
+/* Add Transaction Section */
+.add-transaction-section {
+    border: 20px solid #edf0f5;
+    border-radius: var(--radius);
+    background-color: #fff;
+    padding: 2rem;
+    margin: 0 3rem;
+    box-shadow: var(--shadow);
+    position: absolute;
+    z-index: 9;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: zoom 0.2s ease-out forwards;
+    transform-origin: center;
+}
+
+@keyframes zoom {
+    0 {
+        transform: translate(-50%, -50%) scale(0);
+
+    }
+
+    1% {
+        transform: translate(-50%, -50%) scale(0.01);
+
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+
+    }
+}
+
+.add-transaction-section .block {
+    position: relative;
+    width: 400px;
+    max-width: 100%;
+}
+
+.add-transaction-section .block h4 {
+    font-family: inherit;
+    font-size: 2.5rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    margin: 0;
+    padding: 0 0 1.5rem 0;
+}
+
+
+.add-transaction-section .block h2 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #222;
+    line-height: var(--lh);
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+}
+
+.add-transaction-section .block h2::before {
+    content: 'Today: ';
+}
+
+.add-transaction-section .block .form-block {
+    padding: 2rem 0;
+    border-top: 1px solid #dcdcdc;
+}
+
+.add-transaction-section .block .form-block > label {
+    display: block;
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #222;
+    line-height: var(--lh);
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.add-transaction-section .block .form-block input.tr-input {
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #222;
+    line-height: var(--lh);
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    transition: var(--trans);
+}
+
+.add-transaction-section .block .form-block input.tr-input:focus {
+    outline: none;
+    border: 1px solid var(--blue);
+}
+
+.add-transaction-section .block .form-block .radio-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+.add-transaction-section .block .form-block .radio-box .box {
+    /*    width: 32%;*/
+    padding: 1rem 0;
+}
+
+.add-transaction-section .block .form-block .radio-box .box > label {
+    display: block;
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #222;
+    line-height: var(--lh);
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.add-transaction-section .block .form-block .radio-box .box > input#received,
+.add-transaction-section .block .form-block .radio-box .box > input#spent {
+    display: block;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: white;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    transition: var(--trans);
+}
+
+.add-transaction-section .block .form-block .radio-box .box > input#received:focus,
+.add-transaction-section .block .form-block .radio-box .box > input#spent:focus {
+    outline: none;
+    border: 1px solid var(--blue);
+}
+
+.add-transaction-section .block .form-block .radio-box .box > input#received:focus::after,
+.add-transaction-section .block .form-block .radio-box .box > input#spent:focus::after {
+    transition: var(--trans);
+}
+
+.add-transaction-section .block .form-block .radio-box .box > input#received:focus::after,
+.add-transaction-section .block .form-block .radio-box .box > input#spent:focus::after {
+    content: '';
+    width: 1.6rem;
+    height: 1.6rem;
+    background: var(--blue);
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    outline: none;
+
+}
+
+.add-transaction-section .block .form-block .radio-box .bottom-block .amount-section > label {
+    display: block;
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #222;
+    line-height: var(--lh);
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.add-transaction-section .block .form-block .radio-box .bottom-block .amount-section {
+    /*    width: 100%*/
+}
+
+.add-transaction-section .block .form-block button#save-transaction {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #fff;
+    line-height: var(--lh);
+    background-color: var(--blue);
+    border: none;
+    padding: 0.8rem 2rem;
+    margin: 2rem 0 0 0;
+    width: 100%;
+    cursor: pointer;
+    transition: var(--trans);
+    border-radius: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.add-transaction-section .block .form-block button#save-transaction:focus {
+    outline: none;
+}
+
+.add-transaction-section .block .form-block button#save-transaction:active {
+    transform: scale(.9);
+}
+
+.add-transaction-section .block .flatpickr-input[readonly] {
+    appearance: none;
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #222;
+    border: 1px solid #aaa;
+    padding: 10px;
+    outline: none;
+    border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    margin: 2rem 0;
+    transition: var(--trans);
+}
+
+.add-transaction-section .block .flatpickr-input[readonly]:focus {
+    outline: none;
+    border: 1px solid var(--blue);
+}
+
+.flatpickr-calendar.open {
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.flatpickr-months {
+    background: var(--blue);
+    padding: 1rem 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    top: 10px;
+    color: #fff;
+    fill: #fff;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-size: 1.6rem;
+    font-family: inherit;
+    font-weight: 400;
+    color: #fff;
+    background: var(--blue);
+}
+
+.flatpickr-current-month input.cur-year {
+    font-size: 1.6rem;
+    color: #fff;
+    font-weight: 400;
+}
+
+span.flatpickr-weekday {
+    color: var(--blue);
+}
+
+.flatpickr-day.today {
+    background: var(--blue);
+    color: #fff;
+}
+
+.flatpickr-calendar.hasTime .flatpickr-time {
+    background-color: var(--blue);
+}
+
+.flatpickr-time input.flatpickr-hour {
+    color: #fff;
+}
+
+.flatpickr-time input.flatpickr-minute,
+.flatpickr-time input.flatpickr-second {
+    color: #fff;
+}
+
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    color: #fff;
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:focus {
+    background: var(--blue);
+}
+
+.close-button {
+    font-size: 3rem;
+    color: var(--blue);
+    margin-left: 3rem;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 0;
+    margin: 0;
+}
+
+.close-button:active {
+    transform: scale(0.9);
+}
+
+.add-transaction-section .block .close-button {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+}
+
+body.defuse main {
+    position: relative;
+}
+
+body.defuse main:after {
+    content: "";
+    position: absolute;
+    width: 96%;
+    height: 96%;
+    background-color: rgb(53 70 171 / 80%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: saturate(180%) blur(5px);
+    border-radius: var(--radius);
+}
+
+/*Calendar UI*/
+.calendar-ui {
+    position: absolute;
+    z-index: 9;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40rem;
+    padding: 3rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    background: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-ui .content-block {
+    width: 100%;
+}
+
+.calendar-ui .content-block .month-year-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    margin: 0;
+    border-bottom: 0.1rem solid #dcdcdc;
+}
+
+.calendar-ui .content-block .month-year-panel .month {
+    width: calc(50% - 0.5rem);
+    position: relative;
+}
+
+.calendar-ui .content-block .month-year-panel .month select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    appearance: none;
+    border: 0.1rem solid var(--blue);
+    border-radius: 0.6rem;
+    outline: 0;
+    width: 13rem;
+    background: none;
+    padding: 0.6rem;
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #444;
+    line-height: var(--lh);
+    margin-right: 0.5rem;
+    width: 100%;
+}
+
+.calendar-ui .content-block .month-year-panel .month::after {
+    content: "\f107";
+    font-family: "Font Awesome 5 Free";
+    position: absolute;
+    top: 0.5rem;
+    right: 8%;
+    background: none;
+    cursor: pointer;
+    pointer-events: none;
+    color: #444;
+    font-weight: 900;
+}
+
+.calendar-ui .content-block .month-year-panel .year {
+    width: calc(50% - 0.5rem);
+    position: relative;
+}
+
+.calendar-ui .content-block .month-year-panel .year select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    appearance: none;
+    border: 0.1rem solid var(--blue);
+    border-radius: 0.6rem;
+    outline: 0;
+    width: 13rem;
+    background: none;
+
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #444;
+    line-height: var(--lh);
+    padding: 0.6rem;
+    width: 100%;
+}
+
+.calendar-ui .content-block .month-year-panel .year::after {
+    content: "\f107";
+    font-family: "Font Awesome 5 Free";
+    position: absolute;
+    top: 0.5rem;
+    right: 8%;
+    background: none;
+    cursor: pointer;
+    pointer-events: none;
+    color: #444;
+    font-weight: 900;
+}
+
+.calendar-ui .content-block .day-date-panel {
+    padding: 0;
+    margin: 0;
+}
+
+.calendar-ui .content-block .day-date-panel .day ul {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-ui .content-block .day-date-panel .day ul li {
+    color: #444;
+    padding: 0.8rem;
+}
+
+.calendar-ui .content-block .day-date-panel .date {
+    padding: 1.2rem 0;
+}
+
+.calendar-ui .content-block .day-date-panel .date ul {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    place-items: center;
+}
+
+.calendar-ui .content-block .day-date-panel .date ul li {
+    transition: var(--trans);
+    cursor: pointer;
+    border-radius: var(--radius);
+    width: 4.1rem;
+    height: 4.1rem;
+    text-align: center;
+    line-height: 4.1rem;
+}
+
+.calendar-ui .content-block .day-date-panel .date ul li.current,
+.calendar-ui .content-block .day-date-panel .date ul li:hover {
+    background-color: var(--blue);
+    color: #fff;
+}
+
+.calendar-ui .content-block .day-date-panel .time-panel {
+    padding: 1.5rem 0;
+    border-top: 0.1rem solid #dcdcdc;
+}
+
+.calendar-ui .content-block .day-date-panel .time-panel input.form-control[type="text"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    position: relative;
+    background: none;
+    padding: 0.5rem;
+
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #444;
+    line-height: var(--lh);
+    padding: 0.5rem;
+    border: 0.1rem solid var(--blue);
+    border-radius: 0.6rem;
+}
+
+.calendar-ui .content-block .day-date-panel .time-panel input.form-control[type="time"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    position: relative;
+    background: none;
+    padding: 0.5rem;
+
+    font-family: inherit;
+    font-size: 1.4rem;
+    color: #444;
+    line-height: var(--lh);
+    padding: 0.5rem;
+    border: 0.1rem solid var(--blue);
+    border-radius: 0.6rem;
+}
+
+.calendar-ui .content-block .day-date-panel .time-panel .form-control[type="time"]:focus {
+    outline: none;
+    box-shadow: none;
+    border: none;
+    color: #444;
+}
+
+.calendar-ui .content-block .day-date-panel .time-panel input.form-control[type="text"]::after {
+    content: "\f017";
+    font-family: "Font Awesome 5 Free";
+    position: absolute;
+    top: 0;
+    right: 8%;
+    background: none;
+    cursor: pointer;
+    pointer-events: none;
+    color: #444;
+    font-weight: 900;
+}
+
+.calendar-ui .calendar-close {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-size: 3rem;
+    cursor: pointer;
+    transition: var(--trans);
+    box-shadow: var(--shadow);
+    border-radius: 50%;
+}
+
+.calendar-ui .calendar-close i.fas {
+    border-radius: 50%;
+    display: block;
+}
+
+.calendar-ui .calendar-close:active {
+    transform: scale(0.9);
+}
+
+.calendar-ui .calendar-close:focus {
+    outline: none;
+}
+
+/*Monthly Transaction Section*/
+
+main .app-window .monthly-transaction {
+    margin: 2.5rem 0;
+}
+
+main .app-window .monthly-transaction .title-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+main .app-window .monthly-transaction .title-block h2 {
+    font-family: inherit;
+    font-size: 2rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    margin: 0;
+    padding: 0;
+}
+
+main .app-window .monthly-transaction .expense-block {
+    margin-left: -15px;
+    border-radius: var(--radius);
+    border: 0.1rem solid #dcdcdc;
+    padding: 1rem;
+}
+
+main .app-window .monthly-transaction .expense-block small {
+    display: block;
+    color: var(--orange);
+    margin-bottom: 2rem;
+}
+
+main .app-window .monthly-transaction .expense-block .chart {
+    margin-bottom: 2.5rem;
+}
+
+main .app-window .monthly-transaction .expense-block .chart span {
+    display: inline-block;
+    --height: 5rem;
+    height: var(--height);
+    width: 0.5rem;
+    background: var(--orange);
+    border-radius: 5rem;
+    margin: 0 0.2rem;
+}
+
+main .app-window .monthly-transaction .expense-block .amount h4 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #000;
+    line-height: var(--lh);
+    font-weight: 700;
+    padding: 0;
+    margin: 0;
+}
+
+main .app-window .monthly-transaction .expense-block .amount small {
+    margin: 0;
+    color: var(--orange);
+}
+
+main .app-window .monthly-transaction .income-block {
+    margin-right: -15px;
+    border-radius: var(--radius);
+    border: 0.1rem solid #dcdcdc;
+    padding: 1rem;
+}
+
+main .app-window .monthly-transaction .income-block small {
+    display: block;
+    color: var(--blue);
+    margin-bottom: 2rem;
+}
+
+main .app-window .monthly-transaction .income-block .chart {
+    margin-bottom: 2.5rem;
+}
+
+main .app-window .monthly-transaction .income-block .chart span {
+    display: inline-block;
+    --height: 5rem;
+    height: var(--height);
+    width: 0.5rem;
+    background: var(--blue);
+    border-radius: 5rem;
+    margin: 0 0.2rem;
+}
+
+main .app-window .monthly-transaction .income-block .amount h4 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #000;
+    line-height: var(--lh);
+    font-weight: 700;
+    padding: 0;
+    margin: 0;
+}
+
+main .app-window .monthly-transaction .income-block .amount small {
+    margin: 0;
+    color: var(--blue);
+}
+
+main .app-window .monthly-transaction .lower-block {
+    margin-top: 2.5rem;
+}
+
+main .app-window .monthly-transaction .lower-block .card {
+    border-radius: var(--radius);
+    border: 0.1rem solid #dcdcdc;
+    background-color: #faf7f5;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+main .app-window .monthly-transaction .lower-block .card .col-10 {
+    display: flex;
+    align-items: center;
+}
+
+main .app-window .monthly-transaction .lower-block .card .pie {
+    --height: 3.5rem;
+    --width: 3.5rem;
+    width: var(--width);
+    height: var(--height);
+    border-radius: 50%;
+    background: var(--orange);
+    background-image: conic-gradient(#f0582e 47deg, #dcdcdc 0 360deg);
+}
+
+main .app-window .monthly-transaction .lower-block .card:nth-child(2) .pie {
+    --height: 3.5rem;
+    --width: 3.5rem;
+    width: var(--width);
+    height: var(--height);
+    border-radius: 50%;
+    background: var(--orange);
+    background-image: conic-gradient(#3546ab 120deg, #dcdcdc 0 360deg);
+}
+
+main .app-window .monthly-transaction .lower-block .card .amount {
+    margin-left: 2.5rem;
+}
+
+/*User Profile*/
+.user-profile {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    border: 0.1rem solid #dcdcdc;
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    background: #fff;
+    min-width: 30rem;
+    animation: zoom .3s forwards ease-in;
+}
+
+.user-profile .image-block {
+    position: relative;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 20rem;
+}
+
+.user-profile .image-block .edit-icon {
+    position: absolute;
+    right: 2%;
+    top: 2%;
+}
+
+.user-profile .image-block .edit-icon label {
+    display: block;
+    background-color: #fff;
+    height: 4rem;
+    width: 4rem;
+    border-radius: 50%;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-profile .image-block .edit-icon label > i.fas {
+    color: var(--blue);
+    font-size: 1.6rem;
+}
+
+.user-profile .image-block .edit-icon input {
+    display: none;
+}
+
+.user-profile .user-details {
+    padding: 2.5rem 0 0 0;
+}
+
+.user-profile .user-details h2 {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    border: .1rem solid #dcdcdc;
+    border-radius: .6rem;
+    ;
+    padding: 1rem;
+    margin: 0 0 1rem 0;
+    transition: var(--trans);
+}
+
+.user-profile .user-details p {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #aaa;
+    line-height: var(--lh);
+    border: .1rem solid #dcdcdc;
+    border-radius: .6rem;
+    ;
+    padding: 1rem;
+    margin: 0 0 1rem 0;
+    transition: var(--trans);
+}
+
+.user-profile .user-details h2:focus,
+.user-profile .user-details p:focus {
+    border: .1rem solid var(--blue);
+    outline: none;
+}
+
+.user-profile .user-details .done {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #fff;
+    line-height: var(--lh);
+    background-color: var(--blue);
+    border: none;
+    padding: 0.8rem 2rem;
+    margin: 2rem 0 0 0;
+    width: 100%;
+    cursor: pointer;
+    transition: var(--trans);
+    border-radius: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.user-profile .user-details .done:active {
+    transform: scale(0.9);
+}
+
+.user-profile .user-details .done:focus {
+    outline: none;
+}
+
+/*Registration page CSS*/
+
+.registration {
+    border: 0.1rem solid #dcdcdc;
+    padding: 3rem;
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    background: #fff;
+}
+
+.registration .logo-block {
+    width: 6rem;
+    margin: 0 auto;
+}
+
+.registration form {
+    text-align: center;
+}
+
+.registration form .title-block {
+    margin-bottom: 2.5rem;
+}
+
+.registration form .title-block h1 {
+    font-family: inherit;
+    font-size: 2.5rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    font-weight: 600;
+    padding: 0;
+    margin: 0;
+}
+
+.registration form .input-group {
+    margin-bottom: 2rem;
+}
+
+.registration form .input-group .form-control {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: var(--blue);
+    line-height: var(--lh);
+    width: 100%;
+    height: 4rem;
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border: 0.1rem solid #dcdcdc;
+    border-radius: 0.5rem;
+    transition: var(--trans);
+}
+
+.registration form .input-group .form-control:focus {
+    border: 0.1rem solid var(--blue);
+    outline: none;
+}
+
+.registration form .input-group .btn {
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: #fff;
+    line-height: var(--lh);
+    background-color: var(--blue);
+    width: 100%;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: var(--trans);
+}
+
+.registration form .input-group .btn:hover {
+    box-shadow: var(--shadow);
+}
+
+.registration form .input-group .btn:active {
+    transform: scale(0.9);
+}
+
+.registration form .user-guide p {
+    font-family: inherit;
+    font-size: 1.2rem;
+    color: #222;
+    line-height: var(--lh);
+    font-weight: 400;
+    padding: 0;
+    margin: 0;
+}
+
+.registration form .user-guide p a {
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: var(--trans);
+}
+
+.registration form .user-guide p a:hover {
+    border-bottom: 1px solid var(--blue);
+}
+
+/**/

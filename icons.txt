@@ -1,0 +1,28 @@
+Icons:
+--------
+<img src="https://img.icons8.com/material/96/000000/four-squares.png"/>
+<img src="https://img.icons8.com/material/96/000000/combo-chart--v1.png"/>
+<img src="https://img.icons8.com/material/96/000000/bank-cards--v2.png"/>
+<img src="https://img.icons8.com/material/96/000000/receipt--v1.png"/>
+<img src="https://img.icons8.com/material/96/000000/guarantee.png"/>
+<img src="https://img.icons8.com/material/96/000000/settings--v2.png"/>
+<img src="https://img.icons8.com/material/96/000000/save--v1.png"/>
+
+<img src="https://img.icons8.com/material/96/000000/multiply--v2.png"/>
+<img src="https://img.icons8.com/material-rounded/96/000000/appointment-reminders.png"/>
+<img src="https://img.icons8.com/material-rounded/96/000000/new-post.png"/>
+
+Colors:
+---------
+Light Blue: #E5EAF1
+Blue: #3546AB
+Dark Blue: #0C145A
+
+Orange: #F0582E
+
+Font:
+------
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+font-family: 'Poppins', sans-serif;
