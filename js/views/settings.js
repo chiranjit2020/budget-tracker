@@ -53,21 +53,22 @@ export function render(root) {
 
     root.innerHTML = `
     <div class="settings">
+      <div class="settings-col">
         <section class="panel">
             <h2>Profile</h2>
             <div class="profile-row">
-                <span class="avatar avatar-lg">${avatarHTML(profile)}</span>
-                <div class="btn-row">
-                    <label class="btn btn-ghost file-btn">${icon('upload')}<span>${profile.photo ? 'Change photo' : 'Add photo'}</span>
-                        <input type="file" accept="image/*" id="photo-input" class="sr-only">
-                    </label>
-                    ${profile.photo ? '<button type="button" class="btn btn-ghost" id="photo-remove">Remove</button>' : ''}
-                </div>
+                <label class="avatar-edit" title="${profile.photo ? 'Change photo' : 'Add photo'}">
+                    <span class="avatar avatar-md">${avatarHTML(profile)}</span>
+                    <span class="avatar-badge">${icon('camera')}</span>
+                    <span class="sr-only">${profile.photo ? 'Change photo' : 'Add photo'}</span>
+                    <input type="file" accept="image/*" id="photo-input" class="sr-only">
+                </label>
+                <label class="field profile-name">
+                    <span>Your name</span>
+                    <input type="text" id="name-input" maxlength="60" value="${esc(profile.name)}" placeholder="Your name" autocomplete="name">
+                </label>
             </div>
-            <label class="field">
-                <span>Your name</span>
-                <input type="text" id="name-input" maxlength="60" value="${esc(profile.name)}" placeholder="Your name" autocomplete="name">
-            </label>
+            ${profile.photo ? '<button type="button" class="link-btn photo-remove" id="photo-remove">Remove photo</button>' : ''}
         </section>
 
         <section class="panel">
@@ -100,7 +101,9 @@ export function render(root) {
                     .join('')}
             </div>
         </section>
+      </div>
 
+      <div class="settings-col">
         <section class="panel">
             <h2>Backup &amp; restore</h2>
             <p class="muted">Your data is stored only in this browser on this device. Nothing is uploaded anywhere.
@@ -126,6 +129,7 @@ export function render(root) {
             <p class="muted">Permanently removes every transaction, category and your profile from this device.</p>
             <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.name ? '' : 'disabled'}>Delete all data</button>
         </section>
+      </div>
     </div>`;
 
     // Storage protection status (async).
