@@ -25,6 +25,10 @@ const view = document.getElementById('view');
 const titleEl = document.getElementById('page-title');
 const subtitleEl = document.getElementById('page-subtitle');
 const avatarEl = document.getElementById('top-avatar');
+const addLabelEl = document.getElementById('add-label');
+
+/** The header button says what it adds; on Expenses/Income it opens that type. */
+const ADD_LABELS = { expenses: 'Add expense', income: 'Add income' };
 
 /** Shared between views: the month being looked at. */
 const ctx = {
@@ -56,6 +60,7 @@ function render() {
     const { profile } = getState();
     const firstName = profile.name.split(/\s+/)[0];
     titleEl.textContent = page.title;
+    addLabelEl.textContent = ADD_LABELS[route] ?? 'Add transaction';
     subtitleEl.textContent = route === ''
         ? `Hi ${firstName || 'there'}, here’s your summary for ${fmtMonth(ctx.month)}.`
         : '';

@@ -734,7 +734,9 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 @media (max-width: 380px) {
     .amount-block { grid-template-columns: 1fr; }
     .trend-cards { grid-template-columns: minmax(0, 1fr); }
-    .topbar .btn-primary span { display: none; }
+    /* icon-only on tiny screens, but the label stays for screen readers */
+    .topbar .btn-primary { padding: .9rem 1.2rem; }
+    .topbar .btn-primary span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
