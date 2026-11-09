@@ -283,6 +283,19 @@ export function addFavorite(input) {
     return commit((d) => d.favorites.push(fav)) ? 'added' : null;
 }
 
+/** Change a favourite's name, amount or category. Returns 'updated', 'exists' (clashes with another) or null. */
+export function updateFavorite(id, input) {
+    const current = state.favorites.find((f) => f.id === id);
+    if (!current) return null;
+    const fav = cleanFavorite({ ...current, ...input, id });
+    if (!fav) return null;
+    if (state.favorites.some((f) => f.id !== id && sameFavorite(f, fav))) return 'exists';
+    return commit((d) => {
+        const i = d.favorites.findIndex((f) => f.id === id);
+        if (i >= 0) d.favorites[i] = fav;
+    }) ? 'updated' : null;
+}
+
 export function removeFavorite(id) {
     return commit((d) => {
         d.favorites = d.favorites.filter((f) => f.id !== id);

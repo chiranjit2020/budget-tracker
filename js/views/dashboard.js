@@ -57,7 +57,7 @@ function quickAddRow(state) {
     const amount = (p) => (p % 100 === 0 ? moneyWhole(p) : money(p));
     return `
     <div class="quick-add">
-        <span class="qa-label">Quick add</span>
+        <div class="qa-head"><span class="qa-label">Quick add</span><a href="#/settings?favourites" class="link">Edit</a></div>
         <div class="qa-chips">
             ${state.favorites
                 .map(

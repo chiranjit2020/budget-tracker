@@ -1,7 +1,7 @@
-import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, removeFavorite, MAX_FAVORITES } from '../store.js';
+import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, removeFavorite, updateFavorite, MAX_FAVORITES } from '../store.js';
 import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
-import { esc, money, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
+import { esc, money, parseAmount, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
 import { icon, toast, confirmDialog } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 
@@ -19,20 +19,46 @@ function scheduleText(r) {
     return `Every year on ${start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
 }
 
-function favoritesPanel(favorites) {
+let editingFav = null; // id of the favourite being edited inline
+
+const plainAmount = (paise) => (paise % 100 === 0 ? String(paise / 100) : (paise / 100).toFixed(2));
+
+function favoriteEditor(f, categories) {
+    const cats = categories[f.type].includes(f.category) ? categories[f.type] : [...categories[f.type], f.category];
     return `
-        <section class="panel">
+                <li class="fav-item is-editing">
+                    <form class="fav-edit" data-fav-id="${esc(f.id)}" novalidate>
+                        <label class="field"><span>Name</span><input name="note" maxlength="200" value="${esc(f.note)}" placeholder="${esc(f.category)}" autocomplete="off"></label>
+                        <label class="field fav-amount"><span>Amount</span><span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" inputmode="decimal" autocomplete="off" value="${plainAmount(f.amount)}"></span></label>
+                        <label class="field"><span>Category</span><select name="category">${cats.map((c) => `<option${c === f.category ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+                        <p class="field-error" role="alert" hidden></p>
+                        <div class="btn-row">
+                            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                            <button type="button" class="btn btn-ghost btn-sm" data-fav-cancel>Cancel</button>
+                        </div>
+                    </form>
+                </li>`;
+}
+
+function favoritesPanel(favorites, categories) {
+    return `
+        <section class="panel" id="favourites-panel">
             <h2>Quick-add favourites</h2>
             ${favorites.length
-                ? `<p class="muted">One tap on the dashboard adds these with the current date and time. ${favorites.length} of ${MAX_FAVORITES} used.</p>
+                ? `<p class="muted">One tap on the dashboard adds these with the current date and time. Use the pencil button to change a price. ${favorites.length} of ${MAX_FAVORITES} used.</p>
             <ul class="fav-list">
                 ${favorites
-                    .map(
-                        (f) => `
+                    .map((f) =>
+                        f.id === editingFav
+                            ? favoriteEditor(f, categories)
+                            : `
                 <li class="fav-item">
                     <span class="tx-icon ${f.type}">${icon('star')}</span>
                     <span class="rec-main"><strong>${esc(f.note || f.category)}</strong><small><span class="${f.type}">${f.type === 'income' ? '+' : '−'} ${money(f.amount)}</span> · ${esc(f.category)}</small></span>
-                    <button type="button" class="icon-btn" data-fav-remove="${esc(f.id)}" aria-label="Remove ${esc(f.note || f.category)} from quick add">${icon('trash')}</button>
+                    <span class="rec-actions">
+                        <button type="button" class="icon-btn" data-fav-edit="${esc(f.id)}" aria-label="Edit ${esc(f.note || f.category)}">${icon('edit')}</button>
+                        <button type="button" class="icon-btn icon-btn-danger" data-fav-remove="${esc(f.id)}" aria-label="Remove ${esc(f.note || f.category)} from quick add">${icon('trash')}</button>
+                    </span>
                 </li>`,
                     )
                     .join('')}
@@ -40,6 +66,7 @@ function favoritesPanel(favorites) {
                 : `<p class="muted">No favourites yet. When adding a transaction, tick <strong>“Save as a quick-add favourite”</strong> and it will appear on the dashboard for one-tap adding.</p>`}
         </section>`;
 }
+
 
 function recurringPanel(rules) {
     const list = [...rules].sort((a, b) => Number(b.active) - Number(a.active) || a.next.localeCompare(b.next));
@@ -83,7 +110,8 @@ function installSection() {
     return '<p class="muted">Use your browser menu’s <strong>Install app</strong> or <strong>Add to Home screen</strong> option to install Budget Tracker. It works offline.</p>';
 }
 
-export function render(root) {
+export function render(root, ctx = {}) {
+    if (ctx.entered) editingFav = null;
     const { profile, categories, transactions, lastBackup, recurring, favorites } = getState();
     const backupText = lastBackup
         ? `Last backup: ${fmtDate(toLocalString(new Date(lastBackup)))} at ${fmtTime(toLocalString(new Date(lastBackup)))}`
@@ -123,7 +151,7 @@ export function render(root) {
             </div>
         </section>
 
-        ${favoritesPanel(favorites)}
+        ${favoritesPanel(favorites, categories)}
 
         <section class="panel">
             <h2>Security</h2>
@@ -184,6 +212,10 @@ export function render(root) {
       </div>
     </div>`;
 
+    if (ctx.entered && location.hash.includes('favourites')) {
+        root.querySelector('#favourites-panel')?.scrollIntoView({ block: 'start' });
+    }
+
     // Storage protection status (async).
     storagePersisted().then((persisted) => {
         const line = root.querySelector('#storage-line');
@@ -206,6 +238,28 @@ export function render(root) {
     };
 
     root.onsubmit = async (e) => {
+        if (e.target.classList.contains('fav-edit')) {
+            e.preventDefault();
+            const form = e.target;
+            const error = form.querySelector('.field-error');
+            const amount = parseAmount(form.elements.amount.value);
+            if (amount === null) {
+                error.textContent = 'Enter an amount greater than ₹0, like 25 or 99.50.';
+                error.hidden = false;
+                form.elements.amount.focus();
+                return;
+            }
+            const id = form.dataset.favId;
+            editingFav = null; // close the editor (the save re-renders this page)
+            const result = updateFavorite(id, { note: form.elements.note.value, amount, category: form.elements.category.value });
+            if (result === 'updated') toast(`Quick add updated: ${form.elements.note.value.trim() || form.elements.category.value} ${money(amount)}`);
+            else if (result === 'exists') {
+                editingFav = id;
+                render(root);
+                toast('You already have a favourite exactly like that.');
+            }
+            return;
+        }
         if (e.target.id === 'pw-form') {
             e.preventDefault();
             const form = e.target;
@@ -271,6 +325,13 @@ export function render(root) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.dataset.favEdit) {
+            editingFav = el.dataset.favEdit;
+            render(root);
+            root.querySelector('.fav-edit input[name="amount"]')?.focus();
+        } else if (el.hasAttribute('data-fav-cancel')) {
+            editingFav = null;
+            render(root);
         } else if (el.dataset.favRemove) {
             const fav = getState().favorites.find((x) => x.id === el.dataset.favRemove);
             if (fav && removeFavorite(fav.id)) toast(`Removed “${fav.note || fav.category}” from quick add`);

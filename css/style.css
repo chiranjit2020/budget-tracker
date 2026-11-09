@@ -731,6 +731,8 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 /* ---- Quick add ------------------------------------------------------------- */
 
 .quick-add { margin-top: 1.6rem; }
+.qa-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .8rem; }
+.qa-head .qa-label { margin-bottom: 0; }
 .qa-label { display: block; margin-bottom: .8rem; font-size: 1.25rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 .qa-chips { display: flex; flex-wrap: wrap; gap: .8rem; }
 
@@ -765,6 +767,14 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .fav-item .tx-icon .icon { width: 1.6rem; height: 1.6rem; }
 .fav-item .icon-btn { color: var(--muted); }
 .fav-item .icon-btn:hover { color: var(--danger); background: #fdf0f0; }
+.fav-item .icon-btn:not(.icon-btn-danger):hover { color: var(--blue); background: var(--soft); }
+.fav-item.is-editing { display: block; padding: 1.4rem; margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--soft); }
+.fav-edit { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0 1.2rem; }
+.fav-edit .field { margin-bottom: 1rem; }
+.fav-edit .field:nth-of-type(3), .fav-edit .field-error, .fav-edit .btn-row { grid-column: 1 / -1; }
+.fav-edit .amount-wrap b { left: 1.1rem; font-size: 1.5rem; }
+.fav-edit .amount-wrap input { padding-left: 2.8rem; }
+.fav-edit .field-error { margin: 0 0 1rem; }
 
 /* ---- Login / registration ---------------------------------------------- */
 

@@ -60,6 +60,7 @@ function render() {
 
     // Views attach their own handlers with on* properties; clear the previous view's.
     view.onclick = view.oninput = view.onchange = view.onsubmit = null;
+    if (ctx.entered) window.scrollTo(0, 0); // before rendering, so a page can scroll itself (e.g. to a panel)
     page.render(view, ctx);
 
     const { profile } = getState();
@@ -79,7 +80,6 @@ function render() {
         else a.removeAttribute('aria-current');
     });
 
-    if (ctx.entered) window.scrollTo(0, 0);
 }
 
 document.addEventListener('click', (e) => {
