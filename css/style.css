@@ -23,7 +23,6 @@
     --radius: 1.5rem;
     --radius-sm: .8rem;
     --shadow: 0 24px 38px 3px rgba(0, 0, 0, .14), 0 9px 46px 8px rgba(0, 0, 0, .12), 0 11px 15px -7px rgba(0, 0, 0, .2);
-    --shadow-sm: 0 2px 10px rgba(12, 20, 90, .08);
     --trans: .2s ease;
 
     --sidebar-w: 13rem;
@@ -86,22 +85,22 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 
 /* ---- App frame ------------------------------------------------------- */
 
+/* Full-screen dashboard: sidebar pinned on the left, content fills the rest. */
 .app {
     display: grid;
     grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-    max-width: 128rem;
-    margin: 3rem auto;
-    padding: 2rem;
-    border: 1px solid #fff;
-    border-radius: var(--radius);
-    background: rgba(255, 255, 255, .3);
-    box-shadow: var(--shadow);
-    width: calc(100% - 6rem);
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
     background: var(--light-blue);
-    border-radius: var(--radius) 0 0 var(--radius);
+    border-right: 1px solid #d5dbe6;
     padding: 2rem 1rem;
     text-align: center;
 }
@@ -129,10 +128,7 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 
 .pane {
     background: var(--surface);
-    border-radius: 0 var(--radius) var(--radius) 0;
     padding: 2rem 4rem 4rem;
-    box-shadow: -.4rem 0 1rem rgba(0, 0, 0, .05);
-    min-height: 70rem;
 }
 
 .topbar {
@@ -179,12 +175,12 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
     font-size: 1.4rem;
     font-weight: 500;
     white-space: nowrap;
-    transition: background-color var(--trans), border-color var(--trans), box-shadow var(--trans), transform .1s;
+    transition: background-color var(--trans), border-color var(--trans), transform .1s;
 }
 
 .btn .icon { width: 1.8rem; height: 1.8rem; }
 .btn:active:not(:disabled) { transform: scale(.97); }
-.btn-primary { background: var(--blue); color: #fff; box-shadow: 0 6px 16px rgb(53 70 171 / .3); }
+.btn-primary { background: var(--blue); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--dark-blue); }
 .btn-ghost { background: #fff; border-color: #cfd6e4; color: var(--dark-blue); }
 .btn-ghost:hover:not(:disabled) { border-color: var(--blue); }
@@ -213,7 +209,6 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
     width: 4.4rem; height: 4.4rem;
     background: var(--blue);
     color: #fff;
-    box-shadow: 0 6px 16px rgb(53 70 171 / .35);
 }
 
 .icon-btn-solid:hover { background: var(--dark-blue); }
@@ -333,10 +328,10 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
     border: 1px solid var(--line);
     border-radius: var(--radius);
     color: var(--text);
-    transition: box-shadow var(--trans), border-color var(--trans);
+    transition: border-color var(--trans);
 }
 
-.trend-card:hover { box-shadow: var(--shadow-sm); border-color: #cfd6e4; }
+.trend-card:hover { border-color: var(--blue); }
 .trend-card > small { font-weight: 500; }
 .trend-card.expense > small, .trend-card.expense .trend-change { color: var(--expense-text); }
 .trend-card.income > small, .trend-card.income .trend-change { color: var(--blue); }
@@ -534,7 +529,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     transition: background-color var(--trans), color var(--trans);
 }
 
-.segmented input:checked + span { background: #fff; box-shadow: var(--shadow-sm); }
+.segmented input:checked + span { background: #fff; outline: 1px solid var(--line); }
 .segmented input[value="expense"]:checked + span { color: var(--expense-text); }
 .segmented input[value="income"]:checked + span { color: var(--blue); }
 .segmented input:focus-visible + span { outline: 2px solid var(--blue); }
@@ -606,6 +601,9 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
         position: fixed;
         z-index: 20;
         inset: auto 0 0 0;
+        height: auto;
+        overflow: visible;
+        border-right: 0;
         padding: 0 .4rem env(safe-area-inset-bottom);
         border-radius: 0;
         border-top: 1px solid var(--line);
