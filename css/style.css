@@ -1,7 +1,7 @@
 /* Budget Tracker: one stylesheet, mobile-friendly, printable. */
 
 :root {
-    --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --lh: 1.6;
 
     /* Brand palette (from the original design) */
@@ -53,6 +53,7 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .5; }
 img { display: block; max-width: 100%; }
 h1, h2, h3 { line-height: 1.3; }
+h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
