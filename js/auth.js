@@ -222,7 +222,11 @@ export async function lock() {
         document.querySelectorAll(':popover-open').forEach((p) => p.hidePopover());
     } catch { /* older browsers */ }
     // …then finish all encrypted saves before forgetting the key.
-    await flush();
+    let pending;
+    do {
+        pending = flush();
+        await pending;
+    } while (pending !== flush()); // saves queued while we waited are finished too
     if (!vault.isUnlocked()) return; // already locked by another call meanwhile
     vault.lock();
     closeSession();

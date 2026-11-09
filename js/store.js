@@ -22,6 +22,7 @@ function blank() {
         categories: structuredClone(DEFAULT_CATEGORIES),
         transactions: [],
         budgets: {}, // { [expense category]: monthly limit in paise }
+        recurring: [], // repeating transactions (see cleanRule)
         lastBackup: '',
     };
 }
@@ -31,13 +32,60 @@ function cleanTx(t) {
     const amount = Math.round(Number(t.amount));
     if (!Number.isSafeInteger(amount) || amount <= 0) return null;
     if (typeof t.date !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(t.date)) return null;
-    return {
+    const tx = {
         id: typeof t.id === 'string' && t.id ? t.id : uid(),
         type: t.type,
         amount,
         category: String(t.category ?? '').trim().slice(0, 40) || 'Other',
         note: String(t.note ?? '').trim().slice(0, 200),
         date: t.date.slice(0, 16),
+    };
+    if (typeof t.recurringId === 'string' && t.recurringId) tx.recurringId = t.recurringId;
+    return tx;
+}
+
+// ---- Recurring schedules ------------------------------------------------------
+
+export const FREQUENCIES = ['weekly', 'monthly', 'yearly'];
+
+const pad2 = (n) => String(n).padStart(2, '0');
+const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const daysIn = (y, m) => new Date(y, m + 1, 0).getDate(); // m is 0-based
+
+/**
+ * The next date ('YYYY-MM-DD') after `from` for a rule. Monthly and yearly
+ * rules keep the day they started on; in shorter months they fall on the
+ * last day (e.g. the 31st becomes 30 Nov, 28 Feb).
+ */
+export function nextOccurrence(rule, from) {
+    const [y, m, d] = from.split('-').map(Number);
+    if (rule.freq === 'weekly') return isoDay(new Date(y, m - 1, d + 7));
+    const [sy, sm, sd] = rule.start.split('-').map(Number);
+    if (rule.freq === 'monthly') {
+        const ny = m === 12 ? y + 1 : y;
+        const nm = m === 12 ? 0 : m; // 0-based month after `from`
+        return isoDay(new Date(ny, nm, Math.min(sd, daysIn(ny, nm))));
+    }
+    // yearly
+    return isoDay(new Date(y + 1, sm - 1, Math.min(sd, daysIn(y + 1, sm - 1))));
+}
+
+function cleanRule(r) {
+    if (!r || !TYPES.includes(r.type) || !FREQUENCIES.includes(r.freq)) return null;
+    const amount = Math.round(Number(r.amount));
+    const day = /^\d{4}-\d{2}-\d{2}$/;
+    if (!Number.isSafeInteger(amount) || amount <= 0 || !day.test(r.start) || !day.test(r.next)) return null;
+    return {
+        id: typeof r.id === 'string' && r.id ? r.id : uid(),
+        type: r.type,
+        amount,
+        category: String(r.category ?? '').trim().slice(0, 40) || 'Other',
+        note: String(r.note ?? '').trim().slice(0, 200),
+        freq: r.freq,
+        start: r.start,
+        next: r.next,
+        time: /^\d{2}:\d{2}$/.test(r.time) ? r.time : '09:00',
+        active: r.active !== false,
     };
 }
 
@@ -73,6 +121,7 @@ export function normalize(data) {
     }
     s.transactions = data.transactions.map(cleanTx).filter(Boolean).sort(byDateDesc);
     s.budgets = cleanBudgets(data.budgets);
+    s.recurring = Array.isArray(data.recurring) ? data.recurring.map(cleanRule).filter(Boolean) : [];
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -157,14 +206,70 @@ export function setSaveErrorHandler(fn) {
     onSaveError = fn;
 }
 
-export function addTx(input) {
+/**
+ * Add a transaction. With `repeat` ('weekly' | 'monthly' | 'yearly') it also
+ * creates a recurring rule that starts on this transaction's date.
+ */
+export function addTx(input, { repeat = '' } = {}) {
     const tx = cleanTx({ ...input, id: uid() });
     if (!tx) return null;
-    return commit((d) => d.transactions.push(tx)) ? tx : null;
+    let rule = null;
+    if (FREQUENCIES.includes(repeat)) {
+        const start = tx.date.slice(0, 10);
+        const draft = { ...tx, id: uid(), freq: repeat, start, time: tx.date.slice(11, 16) };
+        rule = cleanRule({ ...draft, next: nextOccurrence(draft, start) });
+        tx.recurringId = rule.id;
+    }
+    return commit((d) => {
+        d.transactions.push(tx);
+        if (rule) d.recurring.push(rule);
+    }) ? tx : null;
+}
+
+/**
+ * Add every recurring transaction that is due up to `today` ('YYYY-MM-DD'),
+ * catching up on missed ones. Returns the transactions that were added.
+ */
+export function runRecurring(today) {
+    if (!state.recurring.some((r) => r.active && r.next <= today)) return [];
+    const added = [];
+    commit((d) => {
+        for (const r of d.recurring) {
+            let guard = 0; // never loop forever on bad data
+            while (r.active && r.next <= today && guard++ < 400) {
+                const tx = cleanTx({ ...r, id: uid(), date: `${r.next}T${r.time}`, recurringId: r.id });
+                d.transactions.push(tx);
+                added.push(tx);
+                r.next = nextOccurrence(r, r.next);
+            }
+        }
+    });
+    return added;
+}
+
+/** Pause or resume. Resuming skips dates missed while paused instead of back-filling them. */
+export function setRecurringActive(id, active, today) {
+    return commit((d) => {
+        const r = d.recurring.find((x) => x.id === id);
+        if (!r) return;
+        r.active = active;
+        if (active) {
+            let guard = 0;
+            while (r.next < today && guard++ < 400) r.next = nextOccurrence(r, r.next);
+        }
+    });
+}
+
+/** Stop a repeat. Transactions it already added stay. */
+export function deleteRecurring(id) {
+    return commit((d) => {
+        d.recurring = d.recurring.filter((r) => r.id !== id);
+    });
 }
 
 export function updateTx(id, input) {
-    const tx = cleanTx({ ...input, id });
+    const old = state.transactions.find((t) => t.id === id);
+    const tx = cleanTx({ ...input, id, recurringId: old?.recurringId }); // editing keeps the repeat link
     if (!tx) return null;
     return commit((d) => {
         const i = d.transactions.findIndex((t) => t.id === id);
@@ -231,6 +336,8 @@ export function importBackup(data) {
                 if (!d.categories[type].includes(c)) d.categories[type].push(c);
             }
         }
+        const ruleIds = new Set(d.recurring.map((r) => r.id));
+        for (const r of incoming.recurring) if (!ruleIds.has(r.id)) d.recurring.push(r);
         for (const [cat, limit] of Object.entries(incoming.budgets)) {
             if (!(cat in d.budgets)) d.budgets[cat] = limit; // keep budgets you already set
         }

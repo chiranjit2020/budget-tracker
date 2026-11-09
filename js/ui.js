@@ -1,7 +1,7 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals } from './store.js';
-import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth } from './format.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring } from './store.js';
+import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
 export const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -36,7 +36,8 @@ export const emptyState = (message, addType) => `
 
 export function txItem(t) {
     const title = t.note || t.category;
-    const sub = t.note ? `${esc(t.category)} · ${fmtTime(t.date)}` : fmtTime(t.date);
+    const repeatMark = t.recurringId ? `<span class="tx-repeat" title="Repeats automatically">${icon('repeat')}<span class="sr-only">Repeating,</span></span>` : '';
+    const sub = repeatMark + (t.note ? `${esc(t.category)} · ${fmtTime(t.date)}` : fmtTime(t.date));
     const sign = t.type === 'income' ? '+' : '−';
     return `
         <li>
@@ -173,11 +174,31 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     txForm.note.value = tx?.note ?? '';
     document.getElementById('tx-title').textContent = tx ? 'Edit transaction' : 'Add transaction';
     deleteBtn.hidden = !tx;
+
+    // "Repeat" is offered when adding; an edited entry that belongs to a repeat says so.
+    repeatField.hidden = Boolean(tx);
+    const rule = tx?.recurringId && getState().recurring.find((r) => r.id === tx.recurringId);
+    repeatNote.hidden = !rule;
+    if (rule) repeatNote.textContent = `This entry repeats ${FREQ_WORD[rule.freq]}. Changes here affect only this one. Manage repeats in Settings → Recurring.`;
+    updateRepeatHint();
     txDialog.showModal();
+}
+
+const repeatField = document.getElementById('repeat-field');
+const repeatNote = document.getElementById('repeat-note');
+const repeatHint = document.getElementById('repeat-hint');
+const FREQ_WORD = { weekly: 'every week', monthly: 'every month', yearly: 'every year' };
+
+/** Under the Repeat menu: when the next one will be added. */
+function updateRepeatHint() {
+    const freq = txForm.repeat.value;
+    const date = (txForm.date.value || nowLocal()).slice(0, 10);
+    repeatHint.textContent = freq ? `Next one is added automatically on ${fmtDate(nextOccurrence({ freq, start: date }, date))}.` : '';
 }
 
 txForm.addEventListener('change', (e) => {
     if (e.target.name === 'type') fillCategories(e.target.value);
+    if (e.target.name === 'repeat' || e.target.name === 'date') updateRepeatHint();
 });
 
 txForm.amount.addEventListener('input', () => showAmountError(''));
@@ -204,11 +225,16 @@ txForm.addEventListener('submit', (e) => {
         const old = editingId && getState().transactions.find((t) => t.id === editingId);
         if (old && old.type === 'expense' && old.category === data.category && old.date.slice(0, 7) === data.date.slice(0, 7)) before -= old.amount;
     }
-    const saved = editingId ? updateTx(editingId, data) : addTx(data);
+    const repeat = editingId ? '' : txForm.repeat.value;
+    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat });
     if (!saved) return; // the save-error handler already told the user
     txDialog.close();
+    // A repeat that started in the past catches up on the dates already due.
+    const caughtUp = repeat ? runRecurring(nowLocal().slice(0, 10)).length : 0;
     const alert = data.type === 'expense' ? budgetAlert(data.category, data.date, before) : null;
-    toast(alert ?? (editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`));
+    let message = editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`;
+    if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
+    toast(alert ?? message);
 });
 
 deleteBtn.addEventListener('click', () => {

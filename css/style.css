@@ -683,6 +683,27 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 /* Report: budget column */
 .data-table small.over { color: var(--danger); font-weight: 600; }
 
+/* ---- Recurring ------------------------------------------------------------ */
+
+.repeat-hint { display: block; margin-top: .5rem; font-size: 1.25rem; color: var(--blue); }
+.repeat-hint:empty { display: none; }
+.repeat-note { margin: -.4rem 0 1.4rem; padding: .9rem 1.2rem; border-radius: var(--radius-sm); background: var(--soft); font-size: 1.3rem; color: var(--dark-blue); }
+.tx-repeat { display: inline-flex; vertical-align: -2px; margin-right: .4rem; color: var(--blue); }
+.tx-repeat .icon { width: 1.3rem; height: 1.3rem; }
+
+.rec-list { display: grid; }
+.rec-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; padding: 1.2rem 0; border-top: 1px solid var(--line); }
+.rec-item:first-child { border-top: 0; padding-top: .2rem; }
+.rec-main { display: flex; flex-direction: column; min-width: 0; }
+.rec-main strong { font-size: 1.4rem; color: var(--dark-blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-main small { font-size: 1.25rem; color: var(--muted); }
+.rec-main small .income, .rec-main small .expense { font-weight: 600; }
+.rec-actions { display: flex; align-items: center; gap: .4rem; }
+.rec-actions .icon-btn { color: var(--muted); }
+.rec-actions .icon-btn:hover { color: var(--danger); background: #fdf0f0; }
+.rec-item.is-paused .tx-icon, .rec-item.is-paused .rec-main { opacity: .55; }
+.btn-sm { padding: .5rem 1.2rem; font-size: 1.3rem; }
+
 /* ---- Login / registration ---------------------------------------------- */
 
 .auth {

@@ -1,12 +1,52 @@
-import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll, changePassword } from '../store.js';
+import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll, changePassword, setRecurringActive, deleteRecurring } from '../store.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
-import { esc, toDecimal, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
+import { esc, money, toDecimal, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
 import { icon, toast, confirmDialog, download } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 
 export const title = 'Settings';
 
 const TYPE_LABEL = { expense: 'Expense categories', income: 'Income categories' };
+
+const ordinal = (n) => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}`;
+
+/** "Monthly on the 1st", "Every Friday", "Every year on 15 Mar" */
+function scheduleText(r) {
+    const start = toDate(r.start);
+    if (r.freq === 'weekly') return `Every ${start.toLocaleDateString('en-IN', { weekday: 'long' })}`;
+    if (r.freq === 'monthly') return `Monthly on the ${ordinal(start.getDate())}`;
+    return `Every year on ${start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+}
+
+function recurringPanel(rules) {
+    const list = [...rules].sort((a, b) => Number(b.active) - Number(a.active) || a.next.localeCompare(b.next));
+    return `
+        <section class="panel">
+            <h2>Recurring transactions</h2>
+            ${list.length
+                ? `<p class="muted">Added automatically when they're due. Stopping one keeps the entries already added.</p>
+            <ul class="rec-list">
+                ${list
+                    .map(
+                        (r) => `
+                <li class="rec-item${r.active ? '' : ' is-paused'}">
+                    <span class="tx-icon ${r.type}">${icon('repeat')}</span>
+                    <span class="rec-main">
+                        <strong>${esc(r.note || r.category)}</strong>
+                        <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}</small>
+                        <small>${r.active ? `Next: ${fmtDate(r.next)}` : 'Paused'}</small>
+                    </span>
+                    <span class="rec-actions">
+                        <button type="button" class="btn btn-ghost btn-sm" data-rec-toggle="${esc(r.id)}">${r.active ? 'Pause' : 'Resume'}</button>
+                        <button type="button" class="icon-btn" data-rec-delete="${esc(r.id)}" aria-label="Stop repeating ${esc(r.note || r.category)}">${icon('trash')}</button>
+                    </span>
+                </li>`,
+                    )
+                    .join('')}
+            </ul>`
+                : `<p class="muted">Nothing repeats yet. When you add a transaction, choose <strong>Repeat</strong> (every week, month or year), e.g. rent, salary, SIPs, EMIs or subscriptions, and it will be added automatically.</p>`}
+        </section>`;
+}
 
 function csvCell(value) {
     let s = String(value);
@@ -36,7 +76,7 @@ function installSection() {
 }
 
 export function render(root) {
-    const { profile, categories, transactions, lastBackup } = getState();
+    const { profile, categories, transactions, lastBackup, recurring } = getState();
     const backupText = lastBackup
         ? `Last backup: ${fmtDate(toLocalString(new Date(lastBackup)))} at ${fmtTime(toLocalString(new Date(lastBackup)))}`
         : transactions.length ? 'You have not made a backup yet.' : '';
@@ -100,6 +140,8 @@ export function render(root) {
       </div>
 
       <div class="settings-col">
+        ${recurringPanel(recurring)}
+
         <section class="panel">
             <h2>Backup &amp; restore</h2>
             <p class="muted">Your data is stored only in this browser on this device. Nothing is uploaded anywhere.
@@ -123,7 +165,7 @@ export function render(root) {
 
         <section class="panel panel-danger">
             <h2>Delete all data</h2>
-            <p class="muted">Permanently removes every transaction, category, budget and your profile photo from this device. Your account and password stay.</p>
+            <p class="muted">Permanently removes every transaction, category, budget, repeat and your profile photo from this device. Your account and password stay.</p>
             <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.photo ? "" : "disabled"}>Delete all data</button>
         </section>
       </div>
@@ -235,6 +277,21 @@ export function render(root) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.dataset.recToggle) {
+            const rule = getState().recurring.find((r) => r.id === el.dataset.recToggle);
+            if (!rule) return;
+            setRecurringActive(rule.id, !rule.active, nowLocal().slice(0, 10));
+            toast(rule.active ? `Paused “${rule.note || rule.category}”` : `Resumed “${rule.note || rule.category}”`);
+        } else if (el.dataset.recDelete) {
+            const rule = getState().recurring.find((r) => r.id === el.dataset.recDelete);
+            if (!rule) return;
+            const ok = await confirmDialog({
+                title: `Stop repeating “${rule.note || rule.category}”?`,
+                message: 'No new entries will be added. Transactions it already added stay in your history.',
+                ok: 'Stop repeating',
+                danger: true,
+            });
+            if (ok && deleteRecurring(rule.id)) toast('Repeat stopped');
         } else if (el.id === 'lock-now') {
             lock();
         } else if (el.id === 'export-json') {

@@ -1,7 +1,7 @@
 // Entry point: routing, header and global click handling.
 
-import { getState, subscribe, setSaveErrorHandler } from './store.js';
-import { currentMonthKey, shiftMonth, fmtMonth } from './format.js';
+import { getState, subscribe, setSaveErrorHandler, runRecurring } from './store.js';
+import { currentMonthKey, shiftMonth, fmtMonth, nowLocal, money } from './format.js';
 import { openTxDialog, avatarHTML, toast } from './ui.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
 import { isUnlocked } from './vault.js';
@@ -126,6 +126,7 @@ window.addEventListener('hashchange', render);
 let lastSeenMonth = currentMonthKey();
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    addDueRecurring();
     const now = currentMonthKey();
     if (now !== lastSeenMonth) {
         if (ctx.month === lastSeenMonth) ctx.month = now;
@@ -139,6 +140,7 @@ initAuth({
         lastRoute = null; // treat it as a fresh visit
         ctx.month = currentMonthKey();
         render();
+        addDueRecurring();
     },
     onLock() {
         // Remove everything private from the page while locked.
@@ -162,4 +164,19 @@ async function hideSplash() {
     await new Promise((r) => setTimeout(r, Math.max(0, minimum - performance.now())));
     splash.classList.add('splash-out');
     setTimeout(() => splash.remove(), 500); // after the fade
+}
+
+/** Add repeating transactions that are due, and say what was added. */
+function addDueRecurring() {
+    if (!isUnlocked()) return;
+    const added = runRecurring(nowLocal().slice(0, 10));
+    if (!added.length) return;
+    if (added.length === 1) {
+        const t = added[0];
+        toast(`Added automatically: ${t.note || t.category} ${money(t.amount)}`);
+    } else {
+        const names = [...new Set(added.map((t) => t.note || t.category))];
+        const list = names.length > 3 ? `${names.slice(0, 3).join(', ')} and more` : names.join(', ');
+        toast(`Added ${added.length} repeating transactions: ${list}`);
+    }
 }
