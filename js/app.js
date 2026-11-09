@@ -4,6 +4,7 @@ import { getState, subscribe, setSaveErrorHandler } from './store.js';
 import { currentMonthKey, shiftMonth, fmtMonth } from './format.js';
 import { openTxDialog, avatarHTML, toast } from './ui.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
+import './profile.js';
 import * as dashboard from './views/dashboard.js';
 import * as monthly from './views/monthly.js';
 import * as report from './views/report.js';

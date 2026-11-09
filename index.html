@@ -65,11 +65,34 @@
                     <button type="button" class="btn btn-primary" data-add>
                         <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg><span>Add</span>
                     </button>
-                    <a href="#/settings" class="avatar-link" aria-label="Profile and settings"><span class="avatar" id="top-avatar" aria-hidden="true"></span></a>
+                    <button type="button" class="avatar-btn" id="profile-btn" popovertarget="profile-pop" aria-label="Your profile" aria-haspopup="dialog">
+                        <span class="avatar" id="top-avatar" aria-hidden="true"></span>
+                    </button>
                 </div>
             </header>
             <div id="view"></div>
         </main>
+    </div>
+
+    <!-- Profile popup (opens from the avatar, top right) -->
+    <div id="profile-pop" class="profile-pop" popover role="dialog" aria-labelledby="profile-pop-title">
+        <h2 id="profile-pop-title" class="sr-only">Your profile</h2>
+        <div class="profile-row">
+            <label class="avatar-edit">
+                <span class="avatar avatar-md" id="pop-avatar"></span>
+                <span class="avatar-badge"><svg class="icon" aria-hidden="true"><use href="#i-camera" /></svg></span>
+                <span class="sr-only" id="photo-label">Add photo</span>
+                <input type="file" accept="image/*" id="photo-input" class="sr-only" />
+            </label>
+            <label class="field profile-name">
+                <span>Your name</span>
+                <input type="text" id="name-input" maxlength="60" placeholder="Your name" autocomplete="name" />
+            </label>
+        </div>
+        <div class="pop-foot">
+            <button type="button" class="link-btn" id="photo-remove" hidden>Remove photo</button>
+            <a href="#/settings" class="pop-link">Settings<svg class="icon" aria-hidden="true"><use href="#i-chevron-right" /></svg></a>
+        </div>
     </div>
 
     <!-- Add / edit transaction -->

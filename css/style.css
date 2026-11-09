@@ -144,7 +144,8 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 .topbar h1 { font-size: 3rem; color: var(--blue); }
 .topbar p { font-size: 1.4rem; color: var(--muted); }
 .topbar-actions { display: flex; align-items: center; gap: 1.6rem; }
-.avatar-link { border-radius: 50%; }
+.avatar-btn { display: block; padding: 0; border: 0; border-radius: 50%; background: none; }
+.avatar-btn:hover .avatar, body:has(.profile-pop:popover-open) .avatar-btn .avatar { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 .avatar {
     display: grid;
@@ -474,7 +475,36 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 }
 
 .avatar-badge .icon { width: 1.3rem; height: 1.3rem; }
-.photo-remove { margin-top: 1rem; font-size: 1.3rem; }
+
+/* Profile popup, anchored under the header avatar (position set in profile.js) */
+.profile-pop {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: min(34rem, calc(100vw - 3.2rem));
+    padding: 2rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: inherit;
+    box-shadow: 0 12px 32px rgb(12 20 90 / .16);
+}
+
+.profile-pop:popover-open { animation: pop .15s ease-out; }
+
+.pop-foot {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.6rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    font-size: 1.3rem;
+}
+
+.pop-link { display: inline-flex; align-items: center; gap: .2rem; margin-left: auto; font-weight: 600; }
+.pop-link .icon { width: 1.6rem; height: 1.6rem; }
+.pop-link:hover { text-decoration: underline; }
 
 .cat-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3rem; }
 

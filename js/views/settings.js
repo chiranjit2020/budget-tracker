@@ -1,22 +1,11 @@
-import { getState, setProfile, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll } from '../store.js';
+import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll } from '../store.js';
 import { esc, toDecimal, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
-import { icon, avatarHTML, toast, confirmDialog, download } from '../ui.js';
+import { icon, toast, confirmDialog, download } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 
 export const title = 'Settings';
 
 const TYPE_LABEL = { expense: 'Expense categories', income: 'Income categories' };
-
-/** Crop to a square and shrink so the photo fits comfortably in localStorage. */
-async function resizePhoto(file, size = 256) {
-    const bitmap = await createImageBitmap(file);
-    const side = Math.min(bitmap.width, bitmap.height);
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    canvas.getContext('2d').drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
-    bitmap.close?.();
-    return canvas.toDataURL('image/jpeg', 0.85);
-}
 
 function csvCell(value) {
     let s = String(value);
@@ -54,23 +43,6 @@ export function render(root) {
     root.innerHTML = `
     <div class="settings">
       <div class="settings-col">
-        <section class="panel">
-            <h2>Profile</h2>
-            <div class="profile-row">
-                <label class="avatar-edit" title="${profile.photo ? 'Change photo' : 'Add photo'}">
-                    <span class="avatar avatar-md">${avatarHTML(profile)}</span>
-                    <span class="avatar-badge">${icon('camera')}</span>
-                    <span class="sr-only">${profile.photo ? 'Change photo' : 'Add photo'}</span>
-                    <input type="file" accept="image/*" id="photo-input" class="sr-only">
-                </label>
-                <label class="field profile-name">
-                    <span>Your name</span>
-                    <input type="text" id="name-input" maxlength="60" value="${esc(profile.name)}" placeholder="Your name" autocomplete="name">
-                </label>
-            </div>
-            ${profile.photo ? '<button type="button" class="link-btn photo-remove" id="photo-remove">Remove photo</button>' : ''}
-        </section>
-
         <section class="panel">
             <h2>Categories</h2>
             <p class="muted">Removing a category does not change transactions that already use it.</p>
@@ -143,16 +115,7 @@ export function render(root) {
 
     root.onchange = async (e) => {
         const el = e.target;
-        if (el.id === 'name-input') {
-            setProfile({ name: el.value.trim().slice(0, 60) });
-            toast('Name saved');
-        } else if (el.id === 'photo-input' && el.files[0]) {
-            try {
-                setProfile({ photo: await resizePhoto(el.files[0]) }) && toast('Photo updated');
-            } catch {
-                toast('That image could not be read. Try a JPG or PNG.');
-            }
-        } else if (el.id === 'import-input' && el.files[0]) {
+        if (el.id === 'import-input' && el.files[0]) {
             const file = el.files[0];
             el.value = '';
             let data;
@@ -207,8 +170,6 @@ export function render(root) {
                 if (!ok) return;
             }
             removeCategory(type, name);
-        } else if (el.id === 'photo-remove') {
-            setProfile({ photo: '' });
         } else if (el.id === 'export-json') {
             download(`budget-tracker-backup-${nowLocal().slice(0, 10)}.json`, JSON.stringify(exportBackup(), null, 2), 'application/json');
             markBackedUp();
