@@ -13,13 +13,16 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
 - Works on phone, tablet and desktop. Installs to the home screen and runs offline.
 
-## Your data
+## Your data and password
 
-Everything is saved in your browser's `localStorage` on that device. There are no accounts and no server.
+Everything is saved in your browser's `localStorage` on that device, **encrypted with your password**. There's no server and nothing is uploaded.
 
+- **Account:** the first time you open the app, you create an account (name + password, 8+ characters). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
+- **How it's protected:** the password is never stored. It's stretched into an AES-256 key with PBKDF2-SHA256 (600,000 rounds, random salt), and all data is encrypted with AES-256-GCM (Web Crypto API). A wrong password simply can't decrypt the data. After 5 wrong attempts the login makes you wait.
+- **No password recovery.** If you forget it, the data can't be decrypted. "Forgot password?" can only wipe the device and start over, so **export a backup regularly**. Backup files (JSON/CSV) are *not* encrypted; keep them private.
 - Data isn't shared between devices or browsers. Use **Settings → Export backup** and **Import backup** to move it.
-- Clearing your browser's site data deletes it, so **export a backup regularly**. Settings shows when you last did.
 - Amounts are stored as whole paise (integers), so totals never drift from rounding.
+- Encryption needs a secure page: the app works on `https://` (GitHub Pages) and `http://localhost`.
 
 ## Install it as an app
 
@@ -53,10 +56,13 @@ manifest.webmanifest    PWA manifest
 sw.js                   Service worker (offline support)
 css/style.css           All styles (responsive + print)
 js/app.js               Routing, header, global events
-js/store.js             Data storage, validation, backup/import, totals
+js/store.js             App state, validation, backup/import, totals
 js/format.js            ₹ formatting, amount parsing, dates
 js/ui.js                Dialogs, toasts, shared markup
 js/pwa.js               Install prompt, service worker registration
+js/vault.js             Password encryption (PBKDF2 + AES-GCM)
+js/auth.js              Registration, login, lock, auto-lock
+js/profile.js           Profile popup (avatar, name, photo, lock)
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark

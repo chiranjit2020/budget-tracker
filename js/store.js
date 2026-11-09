@@ -1,8 +1,7 @@
-// All app data lives in localStorage on this device, under one namespaced key.
-// (GitHub Pages serves every repo of a user from the same origin, so a
-// generic key like "userName" could clash with another project.)
+// App state. It lives in memory while unlocked and is saved encrypted
+// through the vault (see vault.js); nothing is written in plain text.
 
-const KEY = 'budget-tracker.v1';
+import * as vault from './vault.js';
 
 export const DEFAULT_CATEGORIES = {
     expense: ['Food & Drink', 'Groceries', 'Household', 'Rent', 'Bills & Utilities', 'Transport', 'Shopping', 'Health', 'Education', 'Entertainment', 'Travel', 'Other'],
@@ -42,7 +41,7 @@ function cleanTx(t) {
 }
 
 /** Validate and tidy data loaded from storage or an imported backup. */
-function normalize(data) {
+export function normalize(data) {
     if (!data || typeof data !== 'object' || !Array.isArray(data.transactions)) {
         throw new Error('This file is not a Budget Tracker backup.');
     }
@@ -64,53 +63,72 @@ function normalize(data) {
     return s;
 }
 
-function load() {
-    let raw = null;
-    try {
-        raw = localStorage.getItem(KEY);
-    } catch {
-        return blank(); // storage blocked (e.g. strict privacy mode)
-    }
-    if (!raw) return blank();
-    try {
-        return normalize(JSON.parse(raw));
-    } catch (err) {
-        // Never silently throw away data: keep the unreadable copy aside.
-        try { localStorage.setItem(`${KEY}.unreadable.${Date.now()}`, raw); } catch { /* ignore */ }
-        console.error('Saved data could not be read; a copy was kept.', err);
-        return blank();
-    }
-}
+let state = blank();
+let onExternalLock = () => {};
 
-let state = load();
+// Saves are encrypted asynchronously; chaining them keeps them in order.
+let writeChain = Promise.resolve();
 
 function emit() {
     for (const fn of listeners) fn(state);
 }
 
-/** Apply a change to a copy of the state, persist it, then publish it. */
+function persist() {
+    const snapshot = state;
+    writeChain = writeChain.then(() => vault.save(snapshot)).catch((err) => onSaveError(err));
+}
+
+/** Apply a change to a copy of the state, publish it, then save it encrypted. */
 function commit(mutate) {
+    if (!vault.isUnlocked()) return false;
     const draft = structuredClone(state);
     mutate(draft);
     draft.transactions.sort(byDateDesc);
-    try {
-        localStorage.setItem(KEY, JSON.stringify(draft));
-    } catch (err) {
-        onSaveError(err);
-        return false;
-    }
     state = draft;
     emit();
+    persist();
     return true;
 }
 
-// Keep several open tabs/windows in sync.
-window.addEventListener('storage', (e) => {
-    if (e.key === KEY) {
-        state = load();
+// Keep several open tabs/windows in sync. If another tab changed the
+// password or reset the app, our key no longer works, so lock this tab.
+window.addEventListener('storage', async (e) => {
+    if (e.key !== vault.VAULT_STORAGE_KEY || !vault.isUnlocked()) return;
+    const latest = e.newValue ? await vault.readLatest() : null;
+    if (latest) {
+        state = normalize(latest);
         emit();
+    } else {
+        onExternalLock();
     }
 });
+
+// ---- Session ----------------------------------------------------------------
+
+/** Called after a successful login/registration with the decrypted data. */
+export function openSession(data) {
+    state = data ? normalize(data) : blank();
+    emit();
+}
+
+/** Forget everything in memory (on lock). */
+export function closeSession() {
+    state = blank();
+}
+
+/** Resolves once all pending encrypted saves are written. */
+export const flush = () => writeChain;
+
+export function setExternalLockHandler(fn) {
+    onExternalLock = fn;
+}
+
+/** Re-encrypt with a new password, after any pending saves. Resolves to false if `current` is wrong. */
+export function changePassword(current, next) {
+    const result = writeChain.then(() => vault.changePassword(current, next, state));
+    writeChain = result.catch(() => {});
+    return result;
+}
 
 // ---- Public API ---------------------------------------------------------
 
@@ -208,7 +226,9 @@ export function markBackedUp() {
 
 export function clearAll() {
     return commit((d) => {
+        const name = d.profile.name; // the account's name stays
         Object.assign(d, blank());
+        d.profile.name = name;
     });
 }
 

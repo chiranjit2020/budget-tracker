@@ -4,6 +4,8 @@ import { getState, subscribe, setSaveErrorHandler } from './store.js';
 import { currentMonthKey, shiftMonth, fmtMonth } from './format.js';
 import { openTxDialog, avatarHTML, toast } from './ui.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
+import { isUnlocked } from './vault.js';
+import { initAuth } from './auth.js';
 import './profile.js';
 import * as dashboard from './views/dashboard.js';
 import * as monthly from './views/monthly.js';
@@ -48,6 +50,7 @@ function currentRoute() {
 }
 
 function render() {
+    if (!isUnlocked()) return; // nothing is shown until the password unlocks the data
     const route = currentRoute();
     const page = routes[route];
     ctx.entered = route !== lastRoute;
@@ -126,5 +129,18 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-render();
+initAuth({
+    onUnlock() {
+        lastRoute = null; // treat it as a fresh visit
+        ctx.month = currentMonthKey();
+        render();
+    },
+    onLock() {
+        // Remove everything private from the page while locked.
+        view.onclick = view.oninput = view.onchange = view.onsubmit = null;
+        view.replaceChildren();
+        avatarEl.replaceChildren();
+        subtitleEl.textContent = '';
+    },
+});
 registerServiceWorker();

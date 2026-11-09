@@ -4,6 +4,7 @@
 
 import { getState, setProfile, subscribe } from './store.js';
 import { avatarHTML, toast } from './ui.js';
+import { lock } from './auth.js';
 
 const button = document.getElementById('profile-btn');
 const pop = document.getElementById('profile-pop');
@@ -80,6 +81,7 @@ photoInput.addEventListener('change', async () => {
 });
 
 removeBtn.addEventListener('click', () => setProfile({ photo: '' }));
+document.getElementById('lock-btn').addEventListener('click', () => lock());
 pop.querySelector('.pop-link').addEventListener('click', () => pop.hidePopover());
 
 window.addEventListener('resize', () => {

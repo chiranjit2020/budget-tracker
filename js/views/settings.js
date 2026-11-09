@@ -1,4 +1,5 @@
-import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll } from '../store.js';
+import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll, changePassword } from '../store.js';
+import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
 import { esc, toDecimal, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
 import { icon, toast, confirmDialog, download } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
@@ -73,13 +74,37 @@ export function render(root) {
                     .join('')}
             </div>
         </section>
+
+        <section class="panel">
+            <h2>Security</h2>
+            <p class="muted">Your data is encrypted on this device with your password. Nobody can open the app without it.</p>
+            <label class="field">
+                <span>Auto-lock</span>
+                <select id="autolock">
+                    ${AUTOLOCK_OPTIONS.map(([m, label]) => `<option value="${m}"${m === getAutoLock() ? ' selected' : ''}>${label}</option>`).join('')}
+                </select>
+            </label>
+            <details class="pw-change">
+                <summary>Change password</summary>
+                <form id="pw-form" novalidate>
+                    <input type="text" autocomplete="username" value="${esc(profile.name)}" class="sr-only" tabindex="-1" aria-hidden="true">
+                    <label class="field"><span>Current password</span><input name="current" type="password" autocomplete="current-password" required></label>
+                    <label class="field"><span>New password <small>(at least ${MIN_PASSWORD} characters)</small></span><input name="next" type="password" autocomplete="new-password" minlength="${MIN_PASSWORD}" required></label>
+                    <label class="field"><span>Confirm new password</span><input name="confirm" type="password" autocomplete="new-password" required></label>
+                    <p class="field-error" role="alert" hidden></p>
+                    <button type="submit" class="btn btn-primary">Update password</button>
+                </form>
+            </details>
+            <button type="button" class="btn btn-ghost" id="lock-now">${icon('lock')}<span>Lock now</span></button>
+        </section>
       </div>
 
       <div class="settings-col">
         <section class="panel">
             <h2>Backup &amp; restore</h2>
             <p class="muted">Your data is stored only in this browser on this device. Nothing is uploaded anywhere.
-            Export a backup regularly, and use it to move your data to another phone or computer.</p>
+            Export a backup regularly, and use it to move your data to another phone or computer.
+            Backup files are <strong>not</strong> password-protected, so keep them somewhere private.</p>
             ${backupText ? `<p class="backup-status${lastBackup ? '' : ' warn'}">${backupText}</p>` : ''}
             <div class="btn-row">
                 <button type="button" class="btn btn-primary" id="export-json" ${transactions.length ? '' : 'disabled'}>${icon('download')}<span>Export backup</span></button>
@@ -98,8 +123,8 @@ export function render(root) {
 
         <section class="panel panel-danger">
             <h2>Delete all data</h2>
-            <p class="muted">Permanently removes every transaction, category and your profile from this device.</p>
-            <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.name ? '' : 'disabled'}>Delete all data</button>
+            <p class="muted">Permanently removes every transaction, category and your profile photo from this device. Your account and password stay.</p>
+            <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.photo ? "" : "disabled"}>Delete all data</button>
         </section>
       </div>
     </div>`;
@@ -115,7 +140,10 @@ export function render(root) {
 
     root.onchange = async (e) => {
         const el = e.target;
-        if (el.id === 'import-input' && el.files[0]) {
+        if (el.id === 'autolock') {
+            setAutoLock(Number(el.value));
+            toast('Auto-lock updated');
+        } else if (el.id === 'import-input' && el.files[0]) {
             const file = el.files[0];
             el.value = '';
             let data;
@@ -141,7 +169,44 @@ export function render(root) {
         }
     };
 
-    root.onsubmit = (e) => {
+    root.onsubmit = async (e) => {
+        if (e.target.id === 'pw-form') {
+            e.preventDefault();
+            const form = e.target;
+            const { current, next, confirm } = form.elements;
+            const error = form.querySelector('.field-error');
+            const fail = (msg) => {
+                error.textContent = msg;
+                error.hidden = false;
+            };
+            if (!current.value) return fail('Enter your current password.');
+            if (next.value.length < MIN_PASSWORD) return fail(`Use at least ${MIN_PASSWORD} characters for the new password.`);
+            if (next.value !== confirm.value) return fail('The new passwords don’t match.');
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Updating…';
+            let ok = false;
+            try {
+                ok = await changePassword(current.value, next.value);
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = 'Update password';
+                return fail('Could not update the password. Browser storage may be full.');
+            }
+            btn.disabled = false;
+            btn.textContent = 'Update password';
+            if (!ok) {
+                current.select();
+                return fail('Your current password is wrong.');
+            }
+            form.reset();
+            error.hidden = true;
+            form.closest('details').open = false;
+            toast('Password updated');
+            return;
+        }
+
         const form = e.target.closest('.add-cat');
         if (!form) return;
         e.preventDefault();
@@ -170,6 +235,8 @@ export function render(root) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.id === 'lock-now') {
+            lock();
         } else if (el.id === 'export-json') {
             download(`budget-tracker-backup-${nowLocal().slice(0, 10)}.json`, JSON.stringify(exportBackup(), null, 2), 'application/json');
             markBackedUp();
