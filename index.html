@@ -140,6 +140,26 @@
         </form>
     </dialog>
 
+    <!-- Monthly budgets -->
+    <dialog id="budget-dialog" class="sheet" aria-labelledby="budget-title">
+        <form id="budget-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="budget-title">Monthly budgets</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
+            </div>
+            <p class="muted budget-intro">Set a monthly limit for any expense category. Budgets repeat every month; leave a field empty for no limit. <span id="budget-hint"></span></p>
+            <div id="budget-fields" class="budget-fields"></div>
+            <p class="field-error" id="budget-error" role="alert" hidden></p>
+            <div class="budget-total"><span>Total monthly budget</span><strong id="budget-total">₹0.00</strong></div>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save budgets</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- Confirmation -->
     <dialog id="confirm-dialog" class="sheet sheet-sm" aria-labelledby="confirm-title">
         <form method="dialog" class="sheet-body">

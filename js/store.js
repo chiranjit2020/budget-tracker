@@ -21,6 +21,7 @@ function blank() {
         profile: { name: '', photo: '' },
         categories: structuredClone(DEFAULT_CATEGORIES),
         transactions: [],
+        budgets: {}, // { [expense category]: monthly limit in paise }
         lastBackup: '',
     };
 }
@@ -38,6 +39,18 @@ function cleanTx(t) {
         note: String(t.note ?? '').trim().slice(0, 200),
         date: t.date.slice(0, 16),
     };
+}
+
+/** Keep only positive whole-paise limits keyed by a category name. */
+function cleanBudgets(input) {
+    const out = {};
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
+    for (const [cat, value] of Object.entries(input)) {
+        const name = String(cat).trim().slice(0, 40);
+        const amount = Math.round(Number(value));
+        if (name && Number.isSafeInteger(amount) && amount > 0) out[name] = amount;
+    }
+    return out;
 }
 
 /** Validate and tidy data loaded from storage or an imported backup. */
@@ -59,6 +72,7 @@ export function normalize(data) {
         }
     }
     s.transactions = data.transactions.map(cleanTx).filter(Boolean).sort(byDateDesc);
+    s.budgets = cleanBudgets(data.budgets);
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -188,6 +202,15 @@ export function removeCategory(type, name) {
     if (state.categories[type].length <= 1) return false;
     return commit((d) => {
         d.categories[type] = d.categories[type].filter((c) => c !== name);
+        if (type === 'expense') delete d.budgets[name];
+    });
+}
+
+/** Replace all monthly budgets: { category: paise }. Empty/zero entries mean "no limit". */
+export function setBudgets(budgets) {
+    const clean = cleanBudgets(budgets);
+    return commit((d) => {
+        d.budgets = clean;
     });
 }
 
@@ -207,6 +230,9 @@ export function importBackup(data) {
             for (const c of incoming.categories[type]) {
                 if (!d.categories[type].includes(c)) d.categories[type].push(c);
             }
+        }
+        for (const [cat, limit] of Object.entries(incoming.budgets)) {
+            if (!(cat in d.budgets)) d.budgets[cat] = limit; // keep budgets you already set
         }
         if (!d.profile.name) d.profile.name = incoming.profile.name;
         if (!d.profile.photo) d.profile.photo = incoming.profile.photo;

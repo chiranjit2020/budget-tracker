@@ -123,7 +123,7 @@ export function render(root) {
 
         <section class="panel panel-danger">
             <h2>Delete all data</h2>
-            <p class="muted">Permanently removes every transaction, category and your profile photo from this device. Your account and password stay.</p>
+            <p class="muted">Permanently removes every transaction, category, budget and your profile photo from this device. Your account and password stay.</p>
             <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.photo ? "" : "disabled"}>Delete all data</button>
         </section>
       </div>

@@ -80,6 +80,7 @@ h1, h2 { font-weight: 800; letter-spacing: -.01em; }
 .net { color: var(--dark-blue); }
 .nowrap { white-space: nowrap; }
 .link { font-size: 1.3rem; font-weight: 500; }
+button.link { padding: 0; border: 0; background: none; color: var(--blue); cursor: pointer; }
 .link:hover { text-decoration: underline; }
 .link-btn { border: 0; background: none; color: var(--blue); font-weight: 500; text-decoration: underline; padding: 0; }
 
@@ -635,6 +636,52 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 }
 
 .noscript { padding: 2rem; text-align: center; }
+
+/* ---- Budgets ------------------------------------------------------------- */
+
+.budget-overall, .budget-row { --level: var(--blue); --level-text: var(--blue); }
+.level-warn { --level: #E8A33D; --level-text: #9a5b00; }
+.level-over { --level: var(--danger); --level-text: var(--danger); }
+
+.bar { height: .8rem; border-radius: 1rem; background: var(--soft); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: inherit; background: var(--level); transition: width .3s ease; }
+
+.budget-overall { padding: 1.6rem; margin-bottom: 1.4rem; border: 1px solid var(--line); border-radius: var(--radius); }
+.budget-overall .bar { height: 1.2rem; margin: 1rem 0 0; background: #e9edf5; }
+.bo-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .4rem 1rem; font-size: 1.4rem; }
+.bo-top strong { font-size: 1.8rem; }
+.bo-left { font-weight: 600; color: var(--level-text); }
+.bo-note { margin-top: 1rem; font-size: 1.3rem; color: var(--muted); }
+.bo-note strong { color: var(--dark-blue); }
+.level-over .bo-note strong { color: var(--danger); }
+
+.budget-list { display: grid; gap: 1.4rem; }
+.br-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .5rem; font-size: 1.4rem; }
+.br-name { font-weight: 600; color: var(--dark-blue); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.br-amt { font-weight: 600; white-space: nowrap; }
+.br-amt small { font-weight: 400; color: var(--muted); }
+.br-status { display: block; margin-top: .4rem; font-size: 1.2rem; color: var(--level-text); }
+.budget-outside { margin-top: 1.4rem; font-size: 1.3rem; }
+
+.budget-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.6rem; border: 1px dashed #cfd6e4; border-radius: var(--radius); }
+.budget-empty p { flex: 1 1 22rem; font-size: 1.4rem; color: var(--muted); }
+
+/* Budget form */
+.budget-intro { font-size: 1.35rem; margin-bottom: 1.6rem; }
+.budget-fields { display: grid; gap: .2rem; max-height: min(48vh, 46rem); overflow-y: auto; padding-right: .4rem; overscroll-behavior: contain; }
+.budget-field { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; align-items: center; gap: 1.2rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.bf-name { display: flex; flex-direction: column; font-weight: 500; font-size: 1.4rem; min-width: 0; }
+.bf-name small { font-weight: 400; color: var(--muted); font-size: 1.2rem; }
+.budget-field .amount-wrap b { left: 1.1rem; font-size: 1.5rem; }
+.budget-field input { width: 100%; padding: .8rem 1rem .8rem 2.8rem; border: 1px solid #cfd6e4; border-radius: var(--radius-sm); font-size: 1.6rem; text-align: right; background: #fff; }
+.budget-field input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgb(53 70 171 / .15); }
+.budget-field input[aria-invalid] { border-color: var(--danger); }
+.budget-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 1.6rem; font-weight: 500; }
+.budget-total strong { font-size: 1.8rem; color: var(--dark-blue); }
+#budget-form .field-error { margin: 1rem 0 0; }
+
+/* Report: budget column */
+.data-table small.over { color: var(--danger); font-weight: 600; }
 
 /* ---- Login / registration ---------------------------------------------- */
 

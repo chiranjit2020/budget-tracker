@@ -18,6 +18,11 @@ const inrCompact = new Intl.NumberFormat('en-IN', {
 /** 123456 paise -> "₹1,234.56" */
 export const money = (paise) => inr.format(paise / 100);
 
+const inrWhole = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+
+/** 583894 paise -> "₹5,839" (rounded to whole rupees, for hints) */
+export const moneyWhole = (paise) => inrWhole.format(Math.round(paise / 100));
+
 /** 12345600 paise -> "₹1.2L" (for tight spaces such as chart labels) */
 export const moneyShort = (paise) => inrCompact.format(paise / 100);
 

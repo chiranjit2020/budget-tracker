@@ -2,6 +2,7 @@
 
 import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth } from './format.js';
+import { budgetAlert, categorySpent } from './budgets.js';
 
 export const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
@@ -196,10 +197,18 @@ txForm.addEventListener('submit', (e) => {
         note: txForm.note.value,
         date: txForm.date.value || nowLocal(),
     };
+    // Category spending before this save (not counting the old version of an edited entry).
+    let before = 0;
+    if (data.type === 'expense') {
+        before = categorySpent(data.category, data.date);
+        const old = editingId && getState().transactions.find((t) => t.id === editingId);
+        if (old && old.type === 'expense' && old.category === data.category && old.date.slice(0, 7) === data.date.slice(0, 7)) before -= old.amount;
+    }
     const saved = editingId ? updateTx(editingId, data) : addTx(data);
     if (!saved) return; // the save-error handler already told the user
     txDialog.close();
-    toast(editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`);
+    const alert = data.type === 'expense' ? budgetAlert(data.category, data.date, before) : null;
+    toast(alert ?? (editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`));
 });
 
 deleteBtn.addEventListener('click', () => {

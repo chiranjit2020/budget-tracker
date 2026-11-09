@@ -6,6 +6,7 @@ import { openTxDialog, avatarHTML, toast } from './ui.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
 import { isUnlocked } from './vault.js';
 import { initAuth } from './auth.js';
+import { openBudgetDialog } from './budgets.js';
 import './profile.js';
 import * as dashboard from './views/dashboard.js';
 import * as monthly from './views/monthly.js';
@@ -81,6 +82,10 @@ function render() {
 }
 
 document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-budgets]')) {
+        openBudgetDialog();
+        return;
+    }
     const add = e.target.closest('[data-add]');
     if (add) {
         const type = add.dataset.add || (currentRoute() === 'income' ? 'income' : 'expense');

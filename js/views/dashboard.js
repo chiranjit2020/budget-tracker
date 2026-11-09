@@ -1,6 +1,7 @@
 import { getState, inMonth, totals, byCategory } from '../store.js';
 import { money, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
 import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
+import { budgetSection } from '../budgets.js';
 
 export const title = 'Overview';
 
@@ -30,7 +31,8 @@ function miniBars(series, field) {
 }
 
 export function render(root, ctx) {
-    const { transactions } = getState();
+    const state = getState();
+    const { transactions } = state;
     const key = ctx.month;
     const monthTx = inMonth(transactions, key);
     const t = totals(monthTx);
@@ -62,6 +64,8 @@ export function render(root, ctx) {
                     <div><small>Net</small><strong class="${t.net < 0 ? 'expense' : 'net'}">${t.net < 0 ? '−' : ''}${money(Math.abs(t.net))}</strong></div>
                 </div>
             </section>
+
+            ${budgetSection(state, key)}
 
             <section class="block">
                 <div class="section-head">

@@ -6,6 +6,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 ## Features
 
 - **Dashboard:** this month's expense, income and net, recent transactions, a 6-month trend and the top expense categories.
+- **Monthly budgets:** set a limit per expense category. The dashboard shows what's left (blue, amber at 80%, red when over) and how much you can spend per day for the rest of the month. Alerts appear when an expense crosses 80% or the limit, and the report shows budget vs actual.
 - **Add, edit or delete** any transaction (Spent / Received, amount, category, date & time, note). Deleting can be undone.
 - **Monthly:** a year at a glance with an income vs expense chart and a table of totals and savings rate.
 - **Expenses / Income:** full lists filtered by month and category, with search.
@@ -63,6 +64,7 @@ js/pwa.js               Install prompt, service worker registration
 js/vault.js             Password encryption (PBKDF2 + AES-GCM)
 js/auth.js              Registration, login, lock, auto-lock
 js/profile.js           Profile popup (avatar, name, photo, lock)
+js/budgets.js           Monthly category budgets (dashboard, form, alerts)
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark

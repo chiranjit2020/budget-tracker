@@ -6,26 +6,34 @@ export const title = 'Report';
 
 const signed = (n) => `${n < 0 ? '−' : ''}${money(Math.abs(n))}`;
 
-function categoryTable(rows, total, kind) {
+function categoryTable(rows, total, kind, budgets = {}) {
     if (!rows.length) return `<p class="muted">No ${kind} this month.</p>`;
+    const showBudget = rows.some((r) => budgets[r.category]);
+    const budgetCell = (r) => {
+        const limit = budgets[r.category];
+        if (!limit) return '<td class="muted">—</td>';
+        const diff = limit - r.amount;
+        return `<td class="nowrap">${money(limit)}<br><small class="${diff < 0 ? 'over' : 'muted'}">${diff < 0 ? `${money(-diff)} over` : `${money(diff)} left`}</small></td>`;
+    };
     return `
     <div class="table-wrap">
         <table class="data-table">
-            <thead><tr><th scope="col">Category</th><th scope="col">Entries</th><th scope="col">Amount</th><th scope="col">Share</th></tr></thead>
+            <thead><tr><th scope="col">Category</th><th scope="col">Entries</th><th scope="col">Amount</th>${showBudget ? '<th scope="col">Budget</th>' : ''}<th scope="col">Share</th></tr></thead>
             <tbody>
                 ${rows
                     .map(
-                        (r) => `<tr><th scope="row">${esc(r.category)}</th><td>${r.count}</td><td>${money(r.amount)}</td><td>${((r.amount / total) * 100).toFixed(1)}%</td></tr>`,
+                        (r) => `<tr><th scope="row">${esc(r.category)}</th><td>${r.count}</td><td>${money(r.amount)}</td>${showBudget ? budgetCell(r) : ''}<td>${((r.amount / total) * 100).toFixed(1)}%</td></tr>`,
                     )
                     .join('')}
             </tbody>
-            <tfoot><tr><th scope="row">Total</th><td>${rows.reduce((n, r) => n + r.count, 0)}</td><td>${money(total)}</td><td>100%</td></tr></tfoot>
+            <tfoot><tr><th scope="row">Total</th><td>${rows.reduce((n, r) => n + r.count, 0)}</td><td>${money(total)}</td>${showBudget ? '<td></td>' : ''}<td>100%</td></tr></tfoot>
         </table>
     </div>`;
 }
 
+
 export function render(root, ctx) {
-    const { transactions, profile } = getState();
+    const { transactions, profile, budgets } = getState();
     const key = ctx.month;
     const list = inMonth(transactions, key);
     const t = totals(list);
@@ -54,7 +62,7 @@ export function render(root, ctx) {
         </div>
 
         <h3>Expenses by category</h3>
-        ${categoryTable(byCategory(list.filter((x) => x.type === 'expense')), t.expense, 'expenses')}
+        ${categoryTable(byCategory(list.filter((x) => x.type === 'expense')), t.expense, 'expenses', budgets)}
 
         <h3>Income by category</h3>
         ${categoryTable(byCategory(list.filter((x) => x.type === 'income')), t.income, 'income')}
