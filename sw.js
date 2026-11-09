@@ -3,7 +3,7 @@
 // falling back to the cached copy when offline or the network is slow.
 // Bump VERSION when files are added or removed from APP_SHELL.
 
-const VERSION = 'bt-v1.6.0';
+const VERSION = 'bt-v1.7.0';
 const FONT_CACHE = 'bt-fonts-v2'; // renamed so old font files get cleaned up
 const NETWORK_TIMEOUT_MS = 3000;
 
@@ -33,6 +33,9 @@ const APP_SHELL = [
     './icons/icon-512.png',
     './icons/maskable-512.png',
     './icons/apple-touch-icon.png',
+    './icons/shortcut-expense-96.png',
+    './icons/shortcut-income-96.png',
+    './icons/shortcut-monthly-96.png',
 ];
 
 self.addEventListener('install', (event) => {

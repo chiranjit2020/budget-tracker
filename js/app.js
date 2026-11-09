@@ -135,7 +135,30 @@ subscribe(render);
 onInstallChange(() => {
     if (currentRoute() === 'settings') render();
 });
-window.addEventListener('hashchange', render);
+// App-icon shortcuts ("Add expense" / "Add income") open ./#/?add=expense etc.
+// The request is remembered through the login screen, then the form opens.
+function takeAddIntent() {
+    const query = new URLSearchParams(location.hash.split('?')[1] ?? '');
+    const type = query.get('add');
+    if (type !== 'expense' && type !== 'income') return null;
+    history.replaceState(null, '', `${location.pathname}${location.search}#/`); // tidy the address
+    return type;
+}
+
+let pendingAdd = takeAddIntent();
+
+function openPendingAdd() {
+    if (!pendingAdd || !isUnlocked()) return;
+    openTxDialog(null, { type: pendingAdd });
+    pendingAdd = null;
+}
+
+window.addEventListener('hashchange', () => {
+    pendingAdd = takeAddIntent() ?? pendingAdd;
+    render();
+    openPendingAdd();
+});
+
 
 // Keep "today" correct if the app stays open past midnight at the end of a month.
 let lastSeenMonth = currentMonthKey();
@@ -156,6 +179,7 @@ initAuth({
         ctx.month = currentMonthKey();
         render();
         addDueRecurring();
+        openPendingAdd();
     },
     onLock() {
         // Remove everything private from the page while locked.

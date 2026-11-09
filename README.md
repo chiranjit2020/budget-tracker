@@ -8,7 +8,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Dashboard:** this month's expense, income and net, recent transactions, a 6-month trend and the top expense categories.
 - **Monthly budgets:** set a limit per expense category. The dashboard shows what's left (blue, amber at 80%, red when over) and how much you can spend per day for the rest of the month. Alerts appear when an expense crosses 80% or the limit, and the report shows budget vs actual.
 - **Recurring transactions:** mark any entry to repeat every week, month or year (rent, salary, SIPs, EMIs, subscriptions). Due entries are added automatically when you open the app, including any missed while it was closed, and are marked ↻. Pause, resume or stop them in Settings.
-- **Quick-add favourites:** tick "Save as a quick-add favourite" when adding (e.g. Tea ₹20, Metro ₹40). They appear as one-tap buttons on the dashboard (with Undo), and can be removed in Settings.
+- **Quick-add favourites:** tick "Save as a quick-add favourite" when adding (e.g. Tea ₹20, Metro ₹40). They appear as one-tap buttons on the dashboard (with Undo). Change a price or remove one in Settings (or via the dashboard's Edit link).
 - **Add, edit or delete** any transaction (Spent / Received, amount, category, date & time, note). Deleting can be undone.
 - **Monthly:** a year at a glance with an income vs expense chart and a table of totals and savings rate.
 - **Expenses / Income:** full lists filtered by month and category, with search.
@@ -32,6 +32,8 @@ Everything is saved in your browser's `localStorage` on that device, **encrypted
 
 - **Android / Chrome / Edge:** open the site, then use **Settings → Install app** (or the browser menu's *Install app*).
 - **iPhone / iPad:** open the site in Safari, tap **Share → Add to Home Screen**.
+
+Once installed, **long-press the app icon** (Android) or right-click it in the taskbar/dock (desktop) for shortcuts: **Add expense**, **Add income** and **Monthly overview**. The form opens right after you unlock. (iPhone doesn't support app-icon shortcuts for web apps.)
 
 ## Run locally
 
