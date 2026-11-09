@@ -149,3 +149,17 @@ initAuth({
     },
 });
 registerServiceWorker();
+hideSplash();
+
+/** Fade out the opening splash once the first screen is ready (fonts loaded, ~1.2s minimum). */
+async function hideSplash() {
+    const splash = document.getElementById('splash');
+    if (!splash) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const minimum = reduced ? 500 : 1200; // ms since the page started loading
+    const fontsReady = document.fonts?.ready ?? Promise.resolve();
+    await Promise.race([fontsReady, new Promise((r) => setTimeout(r, 1500))]);
+    await new Promise((r) => setTimeout(r, Math.max(0, minimum - performance.now())));
+    splash.classList.add('splash-out');
+    setTimeout(() => splash.remove(), 500); // after the fade
+}
