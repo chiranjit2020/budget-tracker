@@ -2,6 +2,7 @@ import { getState, inMonth, totals, byCategory } from '../store.js';
 import { money, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
 import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
 import { budgetSection } from '../budgets.js';
+import { backupReminder } from '../backup.js';
 
 export const title = 'Overview';
 
@@ -30,6 +31,23 @@ function miniBars(series, field) {
     return `<div class="mini-bars" aria-hidden="true">${cols}</div>`;
 }
 
+function backupBanner() {
+    const due = backupReminder();
+    if (!due) return '';
+    const text = due.days === null
+        ? 'You haven’t made a backup yet. If this phone is lost or the browser data is cleared, your entries are gone.'
+        : `Your last backup was ${due.days} days ago.`;
+    return `
+    <div class="backup-banner" role="status">
+        <span class="bb-icon">${icon('lock')}</span>
+        <p><strong>Time for a backup.</strong> ${text}</p>
+        <div class="bb-actions">
+            <button type="button" class="btn btn-primary btn-sm" data-backup-now>Back up now</button>
+            <button type="button" class="link" data-backup-later>Later</button>
+        </div>
+    </div>`;
+}
+
 export function render(root, ctx) {
     const state = getState();
     const { transactions } = state;
@@ -50,6 +68,7 @@ export function render(root, ctx) {
     const recent = monthTx.slice(0, RECENT_LIMIT);
 
     root.innerHTML = `
+    ${backupBanner()}
     <div class="grid-2">
         <div class="col">
             <section class="block summary">

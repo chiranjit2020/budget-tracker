@@ -1,7 +1,8 @@
-import { getState, addCategory, removeCategory, exportBackup, importBackup, markBackedUp, clearAll, changePassword, setRecurringActive, deleteRecurring } from '../store.js';
+import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring } from '../store.js';
+import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
-import { esc, money, toDecimal, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
-import { icon, toast, confirmDialog, download } from '../ui.js';
+import { esc, money, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
+import { icon, toast, confirmDialog } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 
 export const title = 'Settings';
@@ -46,21 +47,6 @@ function recurringPanel(rules) {
             </ul>`
                 : `<p class="muted">Nothing repeats yet. When you add a transaction, choose <strong>Repeat</strong> (every week, month or year), e.g. rent, salary, SIPs, EMIs or subscriptions, and it will be added automatically.</p>`}
         </section>`;
-}
-
-function csvCell(value) {
-    let s = String(value);
-    const isNumber = /^-?\d+(\.\d+)?$/.test(s);
-    if (!isNumber && /^[=+\-@\t\r]/.test(s)) s = `'${s}`; // stop spreadsheets treating text as a formula
-    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function buildCSV(transactions) {
-    const rows = [['Date', 'Time', 'Type', 'Category', 'Note', 'Amount (INR)']];
-    for (const t of [...transactions].reverse()) {
-        rows.push([t.date.slice(0, 10), t.date.slice(11, 16), t.type === 'income' ? 'Income' : 'Expense', t.category, t.note, (t.type === 'income' ? '' : '-') + toDecimal(t.amount)]);
-    }
-    return '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n'); // BOM so Excel reads ₹ and UTF-8 correctly
 }
 
 function installSection() {
@@ -145,11 +131,14 @@ export function render(root) {
         <section class="panel">
             <h2>Backup &amp; restore</h2>
             <p class="muted">Your data is stored only in this browser on this device. Nothing is uploaded anywhere.
-            Export a backup regularly, and use it to move your data to another phone or computer.
-            Backup files are <strong>not</strong> password-protected, so keep them somewhere private.</p>
+            Export a backup regularly, and use it to move your data to another phone or computer.</p>
+            <ul class="backup-facts">
+                <li>${icon('lock')}<span><strong>Backups are encrypted</strong> with your password. To restore one, you'll need the password you had when you made it.</span></li>
+                <li>${icon('download')}<span><strong>CSV exports are not encrypted.</strong> They're plain spreadsheets for Excel, so keep them private.</span></li>
+            </ul>
             ${backupText ? `<p class="backup-status${lastBackup ? '' : ' warn'}">${backupText}</p>` : ''}
             <div class="btn-row">
-                <button type="button" class="btn btn-primary" id="export-json" ${transactions.length ? '' : 'disabled'}>${icon('download')}<span>Export backup</span></button>
+                <button type="button" class="btn btn-primary" id="export-json" ${transactions.length ? '' : 'disabled'}>${icon('lock')}<span>Export encrypted backup</span></button>
                 <button type="button" class="btn btn-ghost" id="export-csv" ${transactions.length ? '' : 'disabled'}>${icon('download')}<span>Export CSV (Excel)</span></button>
                 <label class="btn btn-ghost file-btn">${icon('upload')}<span>Import backup</span>
                     <input type="file" accept=".json,application/json" id="import-input" class="sr-only">
@@ -188,26 +177,7 @@ export function render(root) {
         } else if (el.id === 'import-input' && el.files[0]) {
             const file = el.files[0];
             el.value = '';
-            let data;
-            try {
-                data = JSON.parse(await file.text());
-            } catch {
-                toast('That file is not a valid backup (.json).');
-                return;
-            }
-            const count = Array.isArray(data?.transactions) ? data.transactions.length : 0;
-            const ok = await confirmDialog({
-                title: 'Import backup?',
-                message: `The file contains ${count} transaction${count === 1 ? '' : 's'}. They will be added to your current data; transactions you already have are skipped.`,
-                ok: 'Import',
-            });
-            if (!ok) return;
-            try {
-                const added = importBackup(data);
-                if (added !== null) toast(`Imported ${added} new transaction${added === 1 ? '' : 's'}`);
-            } catch (err) {
-                toast(err.message);
-            }
+            await importFile(file);
         }
     };
 
@@ -295,11 +265,9 @@ export function render(root) {
         } else if (el.id === 'lock-now') {
             lock();
         } else if (el.id === 'export-json') {
-            download(`budget-tracker-backup-${nowLocal().slice(0, 10)}.json`, JSON.stringify(exportBackup(), null, 2), 'application/json');
-            markBackedUp();
-            toast('Backup downloaded');
+            await downloadBackup();
         } else if (el.id === 'export-csv') {
-            download(`budget-tracker-${nowLocal().slice(0, 10)}.csv`, buildCSV(getState().transactions), 'text/csv;charset=utf-8');
+            downloadCSV();
         } else if (el.id === 'install-btn') {
             await promptInstall();
         } else if (el.id === 'persist-btn') {

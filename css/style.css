@@ -704,6 +704,30 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .rec-item.is-paused .tx-icon, .rec-item.is-paused .rec-main { opacity: .55; }
 .btn-sm { padding: .5rem 1.2rem; font-size: 1.3rem; }
 
+/* ---- Backups ------------------------------------------------------------- */
+
+.backup-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem 1.6rem;
+    margin-bottom: 2.4rem;
+    padding: 1.4rem 1.6rem;
+    border: 1px solid #f1d39b;
+    border-radius: var(--radius);
+    background: #fff8ea;
+}
+
+.bb-icon { display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border-radius: 50%; background: #fdebc6; color: #9a5b00; flex-shrink: 0; }
+.backup-banner p { flex: 1 1 26rem; font-size: 1.4rem; color: #5c3b00; }
+.bb-actions { display: flex; align-items: center; gap: 1.4rem; }
+
+.backup-facts { display: grid; gap: .8rem; margin-bottom: 1.4rem; }
+.backup-facts li { display: flex; gap: 1rem; align-items: flex-start; font-size: 1.3rem; color: var(--muted); }
+.backup-facts .icon { width: 1.7rem; height: 1.7rem; margin-top: .1rem; color: var(--blue); }
+.backup-facts strong { color: var(--dark-blue); }
+.pw-dialog-field { margin-top: 1.6rem; }
+
 /* ---- Login / registration ---------------------------------------------- */
 
 .auth {

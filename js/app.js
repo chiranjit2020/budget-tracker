@@ -7,6 +7,7 @@ import { registerServiceWorker, onInstallChange } from './pwa.js';
 import { isUnlocked } from './vault.js';
 import { initAuth } from './auth.js';
 import { openBudgetDialog } from './budgets.js';
+import { downloadBackup, snoozeReminder } from './backup.js';
 import './profile.js';
 import * as dashboard from './views/dashboard.js';
 import * as monthly from './views/monthly.js';
@@ -82,6 +83,15 @@ function render() {
 }
 
 document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-backup-now]')) {
+        downloadBackup();
+        return;
+    }
+    if (e.target.closest('[data-backup-later]')) {
+        snoozeReminder();
+        render();
+        return;
+    }
     if (e.target.closest('[data-budgets]')) {
         openBudgetDialog();
         return;

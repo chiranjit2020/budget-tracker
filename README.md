@@ -21,7 +21,8 @@ Everything is saved in your browser's `localStorage` on that device, **encrypted
 
 - **Account:** the first time you open the app, you create an account (name + password, 8+ characters). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
 - **How it's protected:** the password is never stored. It's stretched into an AES-256 key with PBKDF2-SHA256 (600,000 rounds, random salt), and all data is encrypted with AES-256-GCM (Web Crypto API). A wrong password simply can't decrypt the data. After 5 wrong attempts the login makes you wait.
-- **No password recovery.** If you forget it, the data can't be decrypted. "Forgot password?" can only wipe the device and start over, so **export a backup regularly**. Backup files (JSON/CSV) are *not* encrypted; keep them private.
+- **No password recovery.** If you forget it, the data can't be decrypted. "Forgot password?" can only wipe the device and start over, so **export a backup regularly**. The dashboard reminds you if your last backup is over 30 days old.
+- **Backups are encrypted** with your password (AES-256-GCM). Restoring one asks for the password you had when it was made; older unencrypted backups still import. CSV exports are plain spreadsheets, so keep those private.
 - Data isn't shared between devices or browsers. Use **Settings → Export backup** and **Import backup** to move it.
 - Amounts are stored as whole paise (integers), so totals never drift from rounding.
 - Encryption needs a secure page: the app works on `https://` (GitHub Pages) and `http://localhost`.
@@ -66,6 +67,7 @@ js/vault.js             Password encryption (PBKDF2 + AES-GCM)
 js/auth.js              Registration, login, lock, auto-lock
 js/profile.js           Profile popup (avatar, name, photo, lock)
 js/budgets.js           Monthly category budgets (dashboard, form, alerts)
+js/backup.js            Encrypted backup export/import, CSV export, backup reminder
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark

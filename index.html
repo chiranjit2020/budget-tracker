@@ -213,6 +213,26 @@
         </form>
     </dialog>
 
+    <!-- Password prompt (e.g. to open an encrypted backup) -->
+    <dialog id="password-dialog" class="sheet sheet-sm" aria-labelledby="pw-dialog-title">
+        <form id="pw-dialog-form" class="sheet-body" novalidate>
+            <h2 id="pw-dialog-title">Enter password</h2>
+            <p id="pw-dialog-msg" class="muted"></p>
+            <div class="field pw-dialog-field">
+                <label for="pw-dialog-input">Password</label>
+                <span class="pw-wrap">
+                    <input id="pw-dialog-input" type="password" autocomplete="current-password" required />
+                    <button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+                </span>
+            </div>
+            <p class="field-error" role="alert" hidden></p>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-ghost" data-cancel>Cancel</button>
+                <button type="submit" class="btn btn-primary">Unlock</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- Confirmation -->
     <dialog id="confirm-dialog" class="sheet sheet-sm" aria-labelledby="confirm-title">
         <form method="dialog" class="sheet-body">

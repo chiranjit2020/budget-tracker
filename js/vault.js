@@ -140,6 +140,29 @@ export function lock() {
     session = null;
 }
 
+// ---- Encrypted backup files ---------------------------------------------------------
+// A backup is sealed with the same key as the vault, and carries the salt and
+// rounds needed to re-derive that key from the password on any device.
+
+const BACKUP_KIND = 'encrypted-backup';
+
+export const isEncryptedBackup = (file) => file?.app === 'budget-tracker' && file?.kind === BACKUP_KIND && Boolean(file.kdf?.salt && file.iv && file.data);
+
+export async function exportEncrypted(data) {
+    if (!session) throw new Error('Locked');
+    return seal(session.key, data, { app: 'budget-tracker', kind: BACKUP_KIND, v: 1, exportedAt: new Date().toISOString(), kdf: session.header.kdf });
+}
+
+/** Decrypt a backup file with the password it was made with; null if the password is wrong. */
+export async function decryptBackup(file, password) {
+    const key = await deriveKey(password, fromBase64(file.kdf.salt), file.kdf.iter);
+    try {
+        return await unseal(key, file);
+    } catch {
+        return null;
+    }
+}
+
 /** Forgot password: the only way out is wiping this device's data. */
 export function deleteAccount() {
     session = null;

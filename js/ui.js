@@ -242,3 +242,74 @@ deleteBtn.addEventListener('click', () => {
     txDialog.close();
     if (removed) toast('Transaction deleted', { label: 'Undo', run: () => restoreTx(removed) });
 });
+
+// ---- Password prompt ------------------------------------------------------------
+
+const pwDialog = document.getElementById('password-dialog');
+const pwForm = document.getElementById('pw-dialog-form');
+const pwInput = document.getElementById('pw-dialog-input');
+const pwError = pwForm.querySelector('.field-error');
+const pwSubmit = pwForm.querySelector('button[type="submit"]');
+const pwToggle = pwForm.querySelector('.pw-toggle');
+let pwVerify = null;
+let pwResult = null;
+
+pwToggle.addEventListener('click', () => {
+    const show = pwInput.type === 'password';
+    pwInput.type = show ? 'text' : 'password';
+    pwToggle.textContent = show ? 'Hide' : 'Show';
+    pwToggle.setAttribute('aria-pressed', String(show));
+    pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+});
+pwForm.querySelector('[data-cancel]').addEventListener('click', () => pwDialog.close());
+closeOnBackdrop(pwDialog);
+
+pwForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!pwInput.value) {
+        pwError.textContent = 'Enter the password.';
+        pwError.hidden = false;
+        return;
+    }
+    pwSubmit.disabled = true;
+    const label = pwSubmit.textContent;
+    pwSubmit.textContent = 'Checking…';
+    let result = null;
+    try {
+        result = await pwVerify(pwInput.value);
+    } catch (err) {
+        console.error(err);
+    }
+    pwSubmit.disabled = false;
+    pwSubmit.textContent = label;
+    if (result) {
+        pwResult = result;
+        pwDialog.close();
+    } else {
+        pwError.textContent = 'That password doesn’t open this file. Try again.';
+        pwError.hidden = false;
+        pwInput.select();
+    }
+});
+
+/**
+ * Ask for a password. `verify(password)` resolves to a result (truthy) or null
+ * for a wrong password; the dialog stays open until it succeeds or is cancelled.
+ * Resolves to the result, or null if cancelled.
+ */
+export function askPassword({ title, message, submit = 'Unlock', verify }) {
+    document.getElementById('pw-dialog-title').textContent = title;
+    document.getElementById('pw-dialog-msg').textContent = message;
+    pwSubmit.textContent = submit;
+    pwForm.reset();
+    pwInput.type = 'password';
+    pwToggle.textContent = 'Show';
+    pwError.hidden = true;
+    pwVerify = verify;
+    pwResult = null;
+    pwDialog.showModal();
+    pwInput.focus();
+    return new Promise((resolve) => {
+        pwDialog.addEventListener('close', () => resolve(pwResult), { once: true });
+    });
+}
