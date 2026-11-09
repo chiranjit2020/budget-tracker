@@ -1,4 +1,4 @@
-import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring } from '../store.js';
+import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, removeFavorite, MAX_FAVORITES } from '../store.js';
 import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
 import { esc, money, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
@@ -17,6 +17,28 @@ function scheduleText(r) {
     if (r.freq === 'weekly') return `Every ${start.toLocaleDateString('en-IN', { weekday: 'long' })}`;
     if (r.freq === 'monthly') return `Monthly on the ${ordinal(start.getDate())}`;
     return `Every year on ${start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+}
+
+function favoritesPanel(favorites) {
+    return `
+        <section class="panel">
+            <h2>Quick-add favourites</h2>
+            ${favorites.length
+                ? `<p class="muted">One tap on the dashboard adds these with the current date and time. ${favorites.length} of ${MAX_FAVORITES} used.</p>
+            <ul class="fav-list">
+                ${favorites
+                    .map(
+                        (f) => `
+                <li class="fav-item">
+                    <span class="tx-icon ${f.type}">${icon('star')}</span>
+                    <span class="rec-main"><strong>${esc(f.note || f.category)}</strong><small><span class="${f.type}">${f.type === 'income' ? '+' : '−'} ${money(f.amount)}</span> · ${esc(f.category)}</small></span>
+                    <button type="button" class="icon-btn" data-fav-remove="${esc(f.id)}" aria-label="Remove ${esc(f.note || f.category)} from quick add">${icon('trash')}</button>
+                </li>`,
+                    )
+                    .join('')}
+            </ul>`
+                : `<p class="muted">No favourites yet. When adding a transaction, tick <strong>“Save as a quick-add favourite”</strong> and it will appear on the dashboard for one-tap adding.</p>`}
+        </section>`;
 }
 
 function recurringPanel(rules) {
@@ -62,7 +84,7 @@ function installSection() {
 }
 
 export function render(root) {
-    const { profile, categories, transactions, lastBackup, recurring } = getState();
+    const { profile, categories, transactions, lastBackup, recurring, favorites } = getState();
     const backupText = lastBackup
         ? `Last backup: ${fmtDate(toLocalString(new Date(lastBackup)))} at ${fmtTime(toLocalString(new Date(lastBackup)))}`
         : transactions.length ? 'You have not made a backup yet.' : '';
@@ -100,6 +122,8 @@ export function render(root) {
                     .join('')}
             </div>
         </section>
+
+        ${favoritesPanel(favorites)}
 
         <section class="panel">
             <h2>Security</h2>
@@ -154,7 +178,7 @@ export function render(root) {
 
         <section class="panel panel-danger">
             <h2>Delete all data</h2>
-            <p class="muted">Permanently removes every transaction, category, budget, repeat and your profile photo from this device. Your account and password stay.</p>
+            <p class="muted">Permanently removes every transaction, category, budget, repeat, favourite and your profile photo from this device. Your account and password stay.</p>
             <button type="button" class="btn btn-danger" id="clear-all" ${transactions.length || profile.photo ? "" : "disabled"}>Delete all data</button>
         </section>
       </div>
@@ -247,6 +271,9 @@ export function render(root) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.dataset.favRemove) {
+            const fav = getState().favorites.find((x) => x.id === el.dataset.favRemove);
+            if (fav && removeFavorite(fav.id)) toast(`Removed “${fav.note || fav.category}” from quick add`);
         } else if (el.dataset.recToggle) {
             const rule = getState().recurring.find((r) => r.id === el.dataset.recToggle);
             if (!rule) return;

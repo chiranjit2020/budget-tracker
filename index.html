@@ -80,6 +80,7 @@
         <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
         <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></symbol>
         <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></symbol>
         <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
     </svg>
 
@@ -185,6 +186,10 @@
             <label class="field">
                 <span>Note <small>(optional)</small></span>
                 <input name="note" type="text" maxlength="200" placeholder="e.g. Lunch with team" autocomplete="off" />
+            </label>
+            <label class="check-field" id="favorite-field">
+                <input type="checkbox" name="favorite" />
+                <span>Save as a quick-add favourite <small>(one tap on the dashboard next time)</small></span>
             </label>
             <div class="sheet-actions">
                 <button type="button" class="btn btn-danger-ghost" id="tx-delete" hidden>Delete</button>

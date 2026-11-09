@@ -1,6 +1,6 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring } from './store.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
@@ -177,6 +177,7 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
 
     // "Repeat" is offered when adding; an edited entry that belongs to a repeat says so.
     repeatField.hidden = Boolean(tx);
+    document.getElementById('favorite-field').hidden = Boolean(tx);
     const rule = tx?.recurringId && getState().recurring.find((r) => r.id === tx.recurringId);
     repeatNote.hidden = !rule;
     if (rule) repeatNote.textContent = `This entry repeats ${FREQ_WORD[rule.freq]}. Changes here affect only this one. Manage repeats in Settings → Recurring.`;
@@ -234,6 +235,12 @@ txForm.addEventListener('submit', (e) => {
     const alert = data.type === 'expense' ? budgetAlert(data.category, data.date, before) : null;
     let message = editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`;
     if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
+    if (!editingId && txForm.favorite.checked) {
+        const fav = addFavorite(data);
+        if (fav === 'added') message += ' and saved as a quick-add favourite';
+        else if (fav === 'exists') message += ' (already a quick-add favourite)';
+        else if (fav === 'full') message += ' (quick-add is full: remove one in Settings)';
+    }
     toast(alert ?? message);
 });
 
@@ -312,4 +319,18 @@ export function askPassword({ title, message, submit = 'Unlock', verify }) {
     return new Promise((resolve) => {
         pwDialog.addEventListener('close', () => resolve(pwResult), { once: true });
     });
+}
+
+// ---- Quick add ---------------------------------------------------------------------------
+
+/** One-tap add from a favourite: now, with Undo and the usual budget alerts. */
+export function quickAdd(id) {
+    const fav = getState().favorites.find((f) => f.id === id);
+    if (!fav) return;
+    const data = { type: fav.type, amount: fav.amount, category: fav.category, note: fav.note, date: nowLocal() };
+    const before = fav.type === 'expense' ? categorySpent(fav.category, data.date) : 0;
+    const tx = addTx(data);
+    if (!tx) return;
+    const alert = fav.type === 'expense' ? budgetAlert(fav.category, data.date, before) : null;
+    toast(alert ?? `Added ${fav.note || fav.category} ${money(fav.amount)}`, { label: 'Undo', run: () => deleteTx(tx.id) });
 }

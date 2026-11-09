@@ -23,6 +23,7 @@ function blank() {
         transactions: [],
         budgets: {}, // { [expense category]: monthly limit in paise }
         recurring: [], // repeating transactions (see cleanRule)
+        favorites: [], // one-tap "quick add" entries (see cleanFavorite)
         lastBackup: '',
     };
 }
@@ -122,6 +123,7 @@ export function normalize(data) {
     s.transactions = data.transactions.map(cleanTx).filter(Boolean).sort(byDateDesc);
     s.budgets = cleanBudgets(data.budgets);
     s.recurring = Array.isArray(data.recurring) ? data.recurring.map(cleanRule).filter(Boolean) : [];
+    s.favorites = Array.isArray(data.favorites) ? data.favorites.map(cleanFavorite).filter(Boolean).slice(0, MAX_FAVORITES) : [];
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -260,6 +262,33 @@ export function setRecurringActive(id, active, today) {
     });
 }
 
+// ---- Quick-add favourites --------------------------------------------------------------
+
+export const MAX_FAVORITES = 12;
+
+function cleanFavorite(f) {
+    const tx = cleanTx({ ...f, date: '2000-01-01T00:00' }); // reuse the same validation
+    if (!tx) return null;
+    return { id: tx.id, type: tx.type, amount: tx.amount, category: tx.category, note: tx.note };
+}
+
+const sameFavorite = (a, b) => a.type === b.type && a.amount === b.amount && a.category === b.category && a.note.toLowerCase() === b.note.toLowerCase();
+
+/** Save an entry as a favourite. Returns 'added', 'exists' or 'full'. */
+export function addFavorite(input) {
+    const fav = cleanFavorite({ ...input, id: uid() });
+    if (!fav) return null;
+    if (state.favorites.some((f) => sameFavorite(f, fav))) return 'exists';
+    if (state.favorites.length >= MAX_FAVORITES) return 'full';
+    return commit((d) => d.favorites.push(fav)) ? 'added' : null;
+}
+
+export function removeFavorite(id) {
+    return commit((d) => {
+        d.favorites = d.favorites.filter((f) => f.id !== id);
+    });
+}
+
 /** Stop a repeat. Transactions it already added stay. */
 export function deleteRecurring(id) {
     return commit((d) => {
@@ -335,6 +364,9 @@ export function importBackup(data) {
             for (const c of incoming.categories[type]) {
                 if (!d.categories[type].includes(c)) d.categories[type].push(c);
             }
+        }
+        for (const fav of incoming.favorites) {
+            if (d.favorites.length < MAX_FAVORITES && !d.favorites.some((x) => sameFavorite(x, fav))) d.favorites.push(fav);
         }
         const ruleIds = new Set(d.recurring.map((r) => r.id));
         for (const r of incoming.recurring) if (!ruleIds.has(r.id)) d.recurring.push(r);

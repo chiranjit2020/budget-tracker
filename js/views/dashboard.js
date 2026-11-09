@@ -1,5 +1,5 @@
 import { getState, inMonth, totals, byCategory } from '../store.js';
-import { money, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
 import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
@@ -48,6 +48,28 @@ function backupBanner() {
     </div>`;
 }
 
+/** One-tap buttons for saved favourites (amounts without paise when they're whole rupees). */
+function quickAddRow(state) {
+    if (!state.favorites.length) {
+        if (state.transactions.length < 3) return '';
+        return `<p class="qa-tip">${icon('star')}<span>Tip: tick <strong>“Save as a quick-add favourite”</strong> when adding something you buy often, like tea or a metro ride. It’ll appear here for one-tap adding.</span></p>`;
+    }
+    const amount = (p) => (p % 100 === 0 ? moneyWhole(p) : money(p));
+    return `
+    <div class="quick-add">
+        <span class="qa-label">Quick add</span>
+        <div class="qa-chips">
+            ${state.favorites
+                .map(
+                    (f) => `<button type="button" class="qa-chip ${f.type}" data-quick="${esc(f.id)}" aria-label="Add ${esc(f.note || f.category)}, ${f.type === 'income' ? 'received' : 'spent'} ${money(f.amount)}, now">
+                        <span>${esc(f.note || f.category)}</span><b>${f.type === 'income' ? '+' : ''}${amount(f.amount)}</b>
+                    </button>`,
+                )
+                .join('')}
+        </div>
+    </div>`;
+}
+
 export function render(root, ctx) {
     const state = getState();
     const { transactions } = state;
@@ -82,6 +104,7 @@ export function render(root, ctx) {
                     <div><small>Total Income</small><strong class="income">${money(t.income)}</strong></div>
                     <div><small>Net</small><strong class="${t.net < 0 ? 'expense' : 'net'}">${t.net < 0 ? '−' : ''}${money(Math.abs(t.net))}</strong></div>
                 </div>
+                ${quickAddRow(state)}
             </section>
 
             ${budgetSection(state, key)}

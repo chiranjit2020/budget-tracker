@@ -2,7 +2,7 @@
 
 import { getState, subscribe, setSaveErrorHandler, runRecurring } from './store.js';
 import { currentMonthKey, shiftMonth, fmtMonth, nowLocal, money } from './format.js';
-import { openTxDialog, avatarHTML, toast } from './ui.js';
+import { openTxDialog, avatarHTML, toast, quickAdd } from './ui.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
 import { isUnlocked } from './vault.js';
 import { initAuth } from './auth.js';
@@ -83,6 +83,11 @@ function render() {
 }
 
 document.addEventListener('click', (e) => {
+    const quick = e.target.closest('[data-quick]');
+    if (quick) {
+        quickAdd(quick.dataset.quick);
+        return;
+    }
     if (e.target.closest('[data-backup-now]')) {
         downloadBackup();
         return;
