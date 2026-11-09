@@ -7,7 +7,7 @@ import { budgetAlert, categorySpent } from './budgets.js';
 export const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 
 /** Colours for category charts, starting with the brand palette. */
-export const CHART_COLORS = ['#F0582E', '#3546AB', '#0C145A', '#F2A541', '#2A9D8F', '#8E6FD8', '#E76F96', '#7E8CAC'];
+export const CHART_COLORS = Array.from({ length: 8 }, (_, i) => `var(--chart-${i + 1})`); // defined per theme in style.css
 
 export function avatarHTML(profile) {
     if (profile.photo) return `<img src="${esc(profile.photo)}" alt="">`;
@@ -41,7 +41,7 @@ export function txItem(t) {
     const sign = t.type === 'income' ? '+' : '−';
     return `
         <li>
-            <button type="button" class="tx-item" data-edit="${esc(t.id)}" aria-label="Edit ${esc(title)}, ${t.type === 'income' ? 'received' : 'spent'} ${money(t.amount)}">
+            <button type="button" class="tx-item" data-edit="${esc(t.id)}">
                 <span class="tx-icon ${t.type}">${icon(t.type)}</span>
                 <span class="tx-main"><strong>${esc(title)}</strong><small>${sub}</small></span>
                 <span class="tx-amount ${t.type}">${sign} ${money(t.amount)}</span>

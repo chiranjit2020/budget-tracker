@@ -3,7 +3,8 @@
 // closes it and focus returns to the avatar button automatically.
 
 import { getState, setProfile, subscribe } from './store.js';
-import { avatarHTML, toast } from './ui.js';
+import { avatarHTML, toast, icon } from './ui.js';
+import { themeSwitchHTML } from './theme.js';
 import { lock } from './auth.js';
 
 const button = document.getElementById('profile-btn');
@@ -14,6 +15,7 @@ const photoLabel = document.getElementById('photo-label');
 const photoInput = document.getElementById('photo-input');
 const nameInput = document.getElementById('name-input');
 const removeBtn = document.getElementById('photo-remove');
+document.getElementById('pop-theme').innerHTML = `<span class="pop-theme-label">Appearance</span>${themeSwitchHTML(icon, 'theme-choice-popup')}`;
 
 /** Crop to a square and shrink so the photo fits comfortably in localStorage. */
 async function resizePhoto(file, size = 256) {

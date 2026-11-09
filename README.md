@@ -14,6 +14,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Expenses / Income:** full lists filtered by month and category, with search.
 - **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.
 - **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
+- **Light and dark mode:** Auto (follows your device), Light or Dark, switchable from the profile popup or Settings → Appearance.
 - Works on phone, tablet and desktop. Installs to the home screen and runs offline.
 
 ## Your data and password
@@ -71,6 +72,7 @@ js/auth.js              Registration, login, lock, auto-lock
 js/profile.js           Profile popup (avatar, name, photo, lock)
 js/budgets.js           Monthly category budgets (dashboard, form, alerts)
 js/backup.js            Encrypted backup export/import, CSV export, backup reminder
+js/theme.js             Light/dark mode (Auto, Light, Dark)
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark

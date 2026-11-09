@@ -4,6 +4,7 @@ import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '
 import { esc, money, parseAmount, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
 import { icon, toast, confirmDialog } from '../ui.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
+import { themeSwitchHTML } from '../theme.js';
 
 export const title = 'Settings';
 
@@ -174,6 +175,12 @@ export function render(root, ctx = {}) {
                 </form>
             </details>
             <button type="button" class="btn btn-ghost" id="lock-now">${icon('lock')}<span>Lock now</span></button>
+        </section>
+
+        <section class="panel">
+            <h2>Appearance</h2>
+            <p class="muted">Auto follows your phone or computer's light/dark setting.</p>
+            ${themeSwitchHTML(icon)}
         </section>
       </div>
 

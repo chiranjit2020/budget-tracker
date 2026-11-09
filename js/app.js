@@ -1,5 +1,6 @@
 // Entry point: routing, header and global click handling.
 
+import './theme.js';
 import { getState, subscribe, setSaveErrorHandler, runRecurring } from './store.js';
 import { currentMonthKey, shiftMonth, fmtMonth, nowLocal, money } from './format.js';
 import { openTxDialog, avatarHTML, toast, quickAdd } from './ui.js';
@@ -29,6 +30,7 @@ const view = document.getElementById('view');
 const titleEl = document.getElementById('page-title');
 const subtitleEl = document.getElementById('page-subtitle');
 const avatarEl = document.getElementById('top-avatar');
+const profileBtn = document.getElementById('profile-btn');
 const addLabelEl = document.getElementById('add-label');
 
 /** The header button says what it adds; on Expenses/Income it opens that type. */
@@ -72,6 +74,8 @@ function render() {
         : '';
     subtitleEl.hidden = route !== '';
     avatarEl.innerHTML = avatarHTML(profile);
+    const initials = profile.photo ? '' : avatarEl.textContent.trim();
+    profileBtn.setAttribute('aria-label', profile.name && initials ? `${initials}, your profile` : 'Your profile');
     document.title = route ? `${page.title} · Budget Tracker` : 'Budget Tracker';
 
     document.querySelectorAll('.nav a').forEach((a) => {

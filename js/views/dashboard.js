@@ -61,7 +61,7 @@ function quickAddRow(state) {
         <div class="qa-chips">
             ${state.favorites
                 .map(
-                    (f) => `<button type="button" class="qa-chip ${f.type}" data-quick="${esc(f.id)}" aria-label="Add ${esc(f.note || f.category)}, ${f.type === 'income' ? 'received' : 'spent'} ${money(f.amount)}, now">
+                    (f) => `<button type="button" class="qa-chip ${f.type}" data-quick="${esc(f.id)}" title="Add now">
                         <span>${esc(f.note || f.category)}</span><b>${f.type === 'income' ? '+' : ''}${amount(f.amount)}</b>
                     </button>`,
                 )
