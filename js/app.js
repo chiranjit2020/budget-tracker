@@ -1,331 +1,124 @@
-const calDateButtons = document.querySelector("#cal-date-buttons");
-const body = document.body;
-const main = document.querySelector("main");
-const userprofileBtn = document.querySelector("#user-profile-btn");
-const date = new Date();
-localStorage.setItem("trDate", date);
-let userName = localStorage.getItem("userName");
-let userEmail = localStorage.getItem("userEmail");
-sessionStorage.removeItem("profileBlob");
+// Entry point: routing, header and global click handling.
 
-generateFirstLine();
+import { getState, subscribe, setSaveErrorHandler } from './store.js';
+import { currentMonthKey, shiftMonth, fmtMonth } from './format.js';
+import { openTxDialog, avatarHTML, toast } from './ui.js';
+import { registerServiceWorker, onInstallChange } from './pwa.js';
+import * as dashboard from './views/dashboard.js';
+import * as monthly from './views/monthly.js';
+import * as report from './views/report.js';
+import * as settings from './views/settings.js';
+import { listView } from './views/transactions.js';
 
-function generateFirstLine() {
-    userName = localStorage.getItem("userName");
-    if (!userName) {
-        userName = "RandomUser";
-    }
-    const titleBlock = main.querySelector("header .app-subtitle");
-    titleBlock.innerHTML = "";
-    const title = document.createElement("p");
-    title.innerHTML = `Hi <span>${userName.replace(
-    / .*/,
-    ""
-  )}</span>, get your summary of your monthly
-              transaction here.`;
-    titleBlock.appendChild(title);
+const routes = {
+    '': dashboard,
+    monthly,
+    expenses: listView('expense'),
+    income: listView('income'),
+    transactions: listView('all'),
+    report,
+    settings,
+};
+
+const view = document.getElementById('view');
+const titleEl = document.getElementById('page-title');
+const subtitleEl = document.getElementById('page-subtitle');
+const avatarEl = document.getElementById('top-avatar');
+
+/** Shared between views: the month being looked at. */
+const ctx = {
+    month: currentMonthKey(),
+    entered: false,
+    setMonth(key) {
+        this.month = key;
+        render();
+    },
+};
+
+let lastRoute = null;
+
+function currentRoute() {
+    const route = location.hash.replace(/^#\/?/, '').split('?')[0];
+    return Object.hasOwn(routes, route) ? route : '';
 }
 
-userprofileBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    let userName = "";
-    const userProfile = document.createElement("div");
-    userProfile.className = "user-profile";
-    userProfile.innerHTML = makeUserProfile();
-    main.appendChild(userProfile);
-    body.className = "defuse";
-    const file = userProfile.querySelector("input");
-    const img = userProfile.querySelector(".image-block");
-    file.addEventListener("input", (e) => {
-        sessionStorage.setItem(
-            "profileBlob",
-            URL.createObjectURL(e.target.files[0])
-        );
-        img.style.backgroundImage = `url(${URL.createObjectURL(
-      e.target.files[0]
-    )})`;
-        userprofileBtn.querySelector("img").src = `${URL.createObjectURL(
-      e.target.files[0]
-    )}`;
+function render() {
+    const route = currentRoute();
+    const page = routes[route];
+    ctx.entered = route !== lastRoute;
+    lastRoute = route;
+
+    // Views attach their own handlers with on* properties; clear the previous view's.
+    view.onclick = view.oninput = view.onchange = view.onsubmit = null;
+    page.render(view, ctx);
+
+    const { profile } = getState();
+    const firstName = profile.name.split(/\s+/)[0];
+    titleEl.textContent = page.title;
+    subtitleEl.textContent = route === ''
+        ? `Hi ${firstName || 'there'}, here’s your summary for ${fmtMonth(ctx.month)}.`
+        : '';
+    subtitleEl.hidden = route !== '';
+    avatarEl.innerHTML = avatarHTML(profile);
+    document.title = route ? `${page.title} · Budget Tracker` : 'Budget Tracker';
+
+    document.querySelectorAll('.nav a').forEach((a) => {
+        const active = a.dataset.route === route || (route === 'transactions' && a.dataset.route === '');
+        if (active) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
     });
-    userProfile.querySelector("button.done").addEventListener("click", () => {
-        userName = userProfile.querySelector("h2").innerText;
-        userEmail = userProfile.querySelector("p").innerText;
-        localStorage.setItem("userName", userName);
-        localStorage.setItem("userEmail", userEmail);
-        closeUI(userProfile);
-        generateFirstLine();
-    });
-    userProfile.querySelector("h2").addEventListener("click", (e) => {
-        e.target.setAttribute("contenteditable", "true");
-        e.target.focus();
-    });
-    userProfile.querySelector("p").addEventListener("click", (e) => {
-        e.target.setAttribute("contenteditable", "true");
-        e.target.focus();
-    });
+
+    if (ctx.entered) window.scrollTo(0, 0);
+}
+
+document.addEventListener('click', (e) => {
+    const add = e.target.closest('[data-add]');
+    if (add) {
+        const type = add.dataset.add || (currentRoute() === 'income' ? 'income' : 'expense');
+        openTxDialog(null, { type });
+        return;
+    }
+    const edit = e.target.closest('[data-edit]');
+    if (edit) {
+        const tx = getState().transactions.find((t) => t.id === edit.dataset.edit);
+        if (tx) openTxDialog(tx);
+        return;
+    }
+    const month = e.target.closest('[data-month]');
+    if (month) {
+        ctx.setMonth(shiftMonth(ctx.month, Number(month.dataset.month)));
+        return;
+    }
+    const goto = e.target.closest('[data-goto-month]');
+    if (goto) {
+        e.preventDefault();
+        ctx.month = goto.dataset.gotoMonth;
+        if (currentRoute() === '') render();
+        else location.hash = '#/';
+    }
 });
 
-calDateButtons.querySelectorAll("a").forEach((anc, idx) => {
-    anc.addEventListener("click", () => {
-        // if (idx == 0) {
-        //   const calenderUi = document.createElement("div");
-        //   calenderUi.className = "calendar-ui";
-        //   calenderUi.innerHTML = makeCalenderUi();
-
-        //   const calenderUiclose = calenderUi.querySelector(".calendar-close");
-
-        //   calenderUiclose.addEventListener("click", () => {
-        //     closeUI(calenderUi);
-        //   });
-        //   main.appendChild(calenderUi);
-        //   calenderFunctionality();
-        // }
-        if (idx == 0) {
-            const addTransactionSection = document.createElement("div");
-            addTransactionSection.className = "add-transaction-section";
-            addTransactionSection.innerHTML = makeTransactionSection();
-
-            const addTransactionClose = addTransactionSection.querySelector(
-                ".close-button"
-            );
-            addTransactionClose.addEventListener("click", () => {
-                closeUI(addTransactionSection);
-            });
-            main.appendChild(addTransactionSection);
-            flatpickr("#datetime", {
-                enableTime: true,
-                dateFormat: "J M, Y G:i K",
-                onChange: showDate,
-            });
-
-            function showDate(e) {
-                const date = e[0];
-                const dateTimeTitle = addTransactionSection.querySelector("h2");
-                dateTimeTitle.innerText = userFriendlyDate(date);
-                console.log(date);
-                console.log(localStorage.getItem("trDate"));
-            }
-            body.className = "defuse";
-        }
-    });
+setSaveErrorHandler(() => {
+    toast('Could not save. Browser storage is full or blocked; export a backup and free up space.');
 });
 
-function userFriendlyDate(date) {
-    function ordinal_suffix_of(i) {
-        var j = i % 10,
-            k = i % 100;
-        if (j == 1 && k != 11) {
-            return i + "st";
-        }
-        if (j == 2 && k != 12) {
-            return i + "nd";
-        }
-        if (j == 3 && k != 13) {
-            return i + "rd";
-        }
-        return i + "th";
+subscribe(render);
+onInstallChange(() => {
+    if (currentRoute() === 'settings') render();
+});
+window.addEventListener('hashchange', render);
+
+// Keep "today" correct if the app stays open past midnight at the end of a month.
+let lastSeenMonth = currentMonthKey();
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const now = currentMonthKey();
+    if (now !== lastSeenMonth) {
+        if (ctx.month === lastSeenMonth) ctx.month = now;
+        lastSeenMonth = now;
+        render();
     }
-    const month_names_short = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+});
 
-    let hour = date.getHours() <= 12 ? date.getHours() : date.getHours() - 12;
-    hour = hour < 10 ? "0" + hour : hour;
-    let min = date.getMinutes();
-    min = min < 10 ? "0" + min : min;
-    const ampm = date.getHours() < 12 ? "AM" : "PM";
-
-    return `${ordinal_suffix_of(date.getDate())}  ${
-    month_names_short[date.getMonth()]
-  }, ${date.getFullYear()}	@ ${hour}:${min} ${ampm}`;
-}
-
-function closeUI(sectionName) {
-    sectionName.remove();
-    body.className = "";
-}
-
-function makeTransactionSection() {
-    return `
-      <div class="block">
-        <button class="close-button">
-          <i class="fas fa-times-circle"></i>
-        </button>
-        <h4>Transaction Details</h4>
-        <h2>${userFriendlyDate(new Date())}</h2>
-        <input
-        class="flatpickr flatpickr-input active"
-        id="datetime"
-        type="text"
-        placeholder="Select Transaction Date"
-        data-id="datetime"
-        readonly="readonly"
-      />
-        
-        <div class="form-block">
-          <label for="purpose">Transaction Purpose</label>
-          <input type="text" class="tr-input" id="purpose"/>
-          <div class="radio-box">
-            <div class="box">
-              <label for="received">Received</label>
-              <input type="radio" name="tr" id="received" />
-            </div>
-            <div class="box">
-              <label for="spent">Spent</label>
-              <input type="radio" name="tr" id="spent" />
-            </div>
-            <div class="bottom-block">
-              <div class="amount-section">
-                <label for="number">Amount</label>
-                <input type="number" class="tr-input number" id="number"/>
-              </div>
-            </div>
-          </div>
-              <button id="save-transaction">Save</button>
-        </div>
-      </div>
-    `;
-}
-
-// function makeCalenderUi() {
-//   const date = new Date();
-//   let hour = date.getHours() <= 12 ? date.getHours() : date.getHours() - 12;
-//   hour = hour < 10 ? "0" + hour : hour;
-//   let min = date.getMinutes();
-//   min = min < 10 ? "0" + min : min;
-//   const ampm = date.getHours() < 12 ? "AM" : "PM";
-//   return `
-//       <div class="content-block">
-//         <div class="month-year-panel">
-//           <div class="month">
-//             <select name="months" id="">
-//               <option value="january">January</option>
-//               <option value="february">February</option>
-//               <option value="march">March</option>
-//               <option value="april">April</option>
-//               <option value="may">May</option>
-//               <option value="june">June</option>
-//               <option value="july">July</option>
-//               <option value="august">August</option>
-//               <option value="september">September</option>
-//               <option value="october">October</option>
-//               <option value="november">November</option>
-//               <option value="december">December</option>
-//             </select>
-//           </div>
-//           <!-- .month -->
-//           <div class="year">
-//             <select name="" id="">
-//               <option value="">2020</option>
-//               <option value="" selected>2021</option>
-//               <option value="">2022</option>
-//               <option value="">2023</option>
-//               <option value="">2024</option>
-//               <option value="">2025</option>
-//               <option value="">2026</option>
-//             </select>
-//           </div>
-//         </div>
-//         <!-- .month-year-panel -->
-//         <div class="day-date-panel">
-//           <div class="day">
-//             <ul>
-//               <li>Su</li>
-//               <li>Mo</li>
-//               <li>Tu</li>
-//               <li>We</li>
-//               <li>Th</li>
-//               <li>Fr</li>
-//               <li>Sa</li>
-//             </ul>
-//           </div>
-//           <div class="date">
-//             <ul>
-//               <li>01</li>
-//               <li>02</li>
-//               <li>03</li>
-//               <li>04</li>
-//               <li>05</li>
-//               <li>06</li>
-//               <li>07</li>
-//               <li>08</li>
-//               <li>09</li>
-//               <li>10</li>
-//               <li>11</li>
-//               <li>12</li>
-//               <li>13</li>
-//               <li>14</li>
-//               <li>15</li>
-//               <li>16</li>
-//               <li>17</li>
-//               <li>18</li>
-//               <li>19</li>
-//               <li>20</li>
-//               <li class="current">21</li>
-//               <li>22</li>
-//               <li>23</li>
-//               <li>24</li>
-//               <li>25</li>
-//               <li>26</li>
-//               <li>27</li>
-//               <li>28</li>
-//               <li>29</li>
-//               <li>30</li>
-//               <li>31</li>
-//             </ul>
-//           </div>
-//           <!-- .date -->
-//           <div class="time-panel" style="position:relative">
-//             <input
-//               type="time"
-//               placeholder=""
-//               class="form-control"
-//               style="position:absolute; top:12; left:0; opacity:0; z-index:9; transform:rotate(180deg)"
-//             />
-//             <input
-//               type="text"
-//               placeholder="${hour + ":" + min + " " + ampm}"
-//               class="form-control"
-
-//             />
-//           </div>
-//         </div>
-//       </div>
-//       <button class="calendar-close">
-//         <i class="fas fa-times-circle"></i>
-//       </button>
-//     `;
-// }
-
-function makeUserProfile() {
-    return `
-      <div class="image-block" style="background-image: url('${
-        sessionStorage.getItem("profileBlob")
-          ? sessionStorage.getItem("profileBlob")
-          : `images/profile.jpg`
-      }');">
-        <div class="edit-icon">
-          <label for="file"><i class="fas fa-edit"></i></label>
-          <input type="file" accept="image/gif, image/jpeg, image/png" id="file" />
-        </div>
-      </div>
-
-      <div class="user-details">
-        <h2>${userName ? userName : "Random User"}</h2>
-        <p>${userEmail ? userEmail : "example@gmail.com"}</p>
-        <button class="done">Done</button>
-      </div>
-    `;
-}
+render();
+registerServiceWorker();

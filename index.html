@@ -1,282 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Budget Tracker</title>
-    <link rel="icon" href="favicon.svg" sizes="32X32" />
-    <!-- plugins -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-    <!-- Custom CSS -->
+    <meta name="description" content="Track your daily income and expenses in rupees. Works offline; your data stays on your device." />
+    <meta name="theme-color" content="#3546AB" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Budget" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
-    <main>
-        <div class="menu-bar">
-            <div class="brand">
-                <a href="index.html">
-                    <img src="images/logo.svg" alt="Budget Tracker Logo" class="img-fluid" />
-                </a>
-            </div>
-            <ul>
-                <li>
-                    <a href="#" class="active">
-                        <i class="fas fa-th"></i> Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-chart-line"></i> Monthly Transaction
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-credit-card"></i> Detail Expenses
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-receipt"></i> Detail Income
-                    </a>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-file-import"></i> Print
-                    </a>
-                </li>
+    <!-- Icon sprite (inline so the app works fully offline) -->
+    <svg xmlns="http://www.w3.org/2000/svg" hidden>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></symbol>
+        <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></symbol>
+        <symbol id="i-expense" viewBox="0 0 24 24"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></symbol>
+        <symbol id="i-income" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></symbol>
+        <symbol id="i-printer" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><line x1="21" y1="4" x2="14" y2="4" /><line x1="10" y1="4" x2="3" y2="4" /><line x1="21" y1="12" x2="12" y2="12" /><line x1="8" y1="12" x2="3" y2="12" /><line x1="21" y1="20" x2="16" y2="20" /><line x1="12" y1="20" x2="3" y2="20" /><line x1="14" y1="2" x2="14" y2="6" /><line x1="8" y1="10" x2="8" y2="14" /><line x1="16" y1="18" x2="16" y2="22" /></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></symbol>
+        <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
+    </svg>
+
+    <div class="app">
+        <nav class="sidebar" aria-label="Main">
+            <a class="brand" href="#/" aria-label="Budget Tracker home">
+                <img src="images/logo.svg" alt="" width="48" height="60" />
+            </a>
+            <ul class="nav">
+                <li><a href="#/" data-route=""><svg class="icon" aria-hidden="true"><use href="#i-grid" /></svg><span>Dashboard</span></a></li>
+                <li><a href="#/monthly" data-route="monthly"><svg class="icon" aria-hidden="true"><use href="#i-chart" /></svg><span>Monthly</span></a></li>
+                <li><a href="#/expenses" data-route="expenses"><svg class="icon" aria-hidden="true"><use href="#i-expense" /></svg><span>Expenses</span></a></li>
+                <li><a href="#/income" data-route="income"><svg class="icon" aria-hidden="true"><use href="#i-income" /></svg><span>Income</span></a></li>
+                <li><a href="#/report" data-route="report"><svg class="icon" aria-hidden="true"><use href="#i-printer" /></svg><span>Report</span></a></li>
+                <li><a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings" /></svg><span>Settings</span></a></li>
             </ul>
-        </div>
-        <div class="app-window">
-            <header>
+        </nav>
+
+        <main class="pane">
+            <header class="topbar">
                 <div class="title-block">
-                    <h2>Overview</h2>
-                    <div class="app-subtitle"></div>
+                    <h1 id="page-title">Overview</h1>
+                    <p id="page-subtitle"></p>
                 </div>
-                <div class="user-block">
-                    <ul>
-                        <li>
-                            <a href="#" title="Notification"><i class="far fa-bell"></i></a>
-                        </li>
-                        <li>
-                            <a href="#" title="Email"><i class="far fa-envelope"></i></a>
-                        </li>
-                        <li>
-                            <a href="#" title="User" id="user-profile-btn"><img src="images/user.jpg" alt="user" /></a>
-                        </li>
-                    </ul>
+                <div class="topbar-actions">
+                    <button type="button" class="btn btn-primary" data-add>
+                        <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg><span>Add</span>
+                    </button>
+                    <a href="#/settings" class="avatar-link" aria-label="Profile and settings"><span class="avatar" id="top-avatar" aria-hidden="true"></span></a>
                 </div>
             </header>
-            <div class="row">
-                <!-- Daily Transaction -->
-                <div class="col-6">
-                    <div class="daily-transaction">
-                        <div class="title-block">
-                            <h2>Daily Transaction</h2>
-                            <div class="icon-block" id="cal-date-buttons">
-                                <!-- <a href="#"><i class="far fa-calendar-alt"></i></a> -->
-                                <a href="#"><i class="fas fa-plus-circle"></i></a>
-                            </div>
-                        </div>
-                        <!-- .title-block -->
-                        <div class="amount-block">
-                            <div class="block">
-                                <small>Total Expense</small>
-                                <h4>$742.56</h4>
-                            </div>
-                            <div class="block">
-                                <small>Total Income</small>
-                                <h4>$120.56</h4>
-                            </div>
-                            <div class="block">
-                                <small>Net</small>
-                                <h4>$198.56</h4>
-                            </div>
-                        </div>
-                        <!-- .amount-block -->
-                    </div>
-                    <!-- .daily-transaction -->
-                    <div class="transaction-history">
-                        <div class="title-block">
-                            <h2>Transaction history</h2>
-                            <div class="icon-block">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </div>
-                        </div>
-                        <!-- .title-block -->
-                        <div class="date">
-                            <p>21 January 2021</p>
-                        </div>
-                        <div class="transaction-desc">
-                            <div class="item">
-                                <div class="purpose">
-                                    <h5>John Doe</h5>
-                                    <small>4 January 2021, at 10:45 AM</small>
-                                </div>
-                                <div class="amount">
-                                    <h5 class="comes-in">+ $450.00</h5>
-                                    <small>Payment</small>
-                                </div>
-                            </div>
-                            <!-- .item -->
-                            <div class="item">
-                                <div class="purpose">
-                                    <h5>Jane Doe</h5>
-                                    <small>3 January 2021, at 02:30 PM</small>
-                                </div>
-                                <div class="amount">
-                                    <h5 class="goes-out">- $250.00</h5>
-                                    <small>Transfer</small>
-                                </div>
-                            </div>
-                            <!-- .item -->
-                            <div class="item">
-                                <div class="purpose">
-                                    <h5>Jack Sparrow</h5>
-                                    <small>2 January 2021, at 01:39 PM</small>
-                                </div>
-                                <div class="amount">
-                                    <h5 class="goes-out">- $1250.00</h5>
-                                    <small>Transfer</small>
-                                </div>
-                            </div>
-                            <!-- .item -->
-                        </div>
-                    </div>
-                </div>
-                <!-- .col-6 -->
-                <!-- Monthly Transaction -->
-                <div class="col-6">
-                    <div class="monthly-transaction">
-                        <div class="title-block">
-                            <h2>Monthly Transaction</h2>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="expense-block">
-                                    <small>Expense</small>
-                                    <div class="chart">
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                    </div>
-                                    <div class="amount">
-                                        <h4>$120.56</h4>
-                                        <small>+71.22</small>
-                                    </div>
-                                </div>
-                                <!-- .expense-block -->
-                            </div>
-                            <!-- .col-6 -->
-                            <div class="col-6">
-                                <div class="income-block">
-                                    <small>Income</small>
-                                    <div class="chart">
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                    </div>
-                                    <div class="amount">
-                                        <h4>$120.56</h4>
-                                        <small>+71.22</small>
-                                    </div>
-                                </div>
-                                <!-- .income-block -->
-                            </div>
-                            <!-- .col-6 -->
-                        </div>
-                        <!-- .row -->
-                        <div class="lower-block">
-                            <div class="title-block">
-                                <h2>Expenses by category</h2>
-                            </div>
-                            <div class="card">
-                                <div class="row">
-                                    <div class="col-10">
-                                        <div class="pie"></div>
-                                        <div class="amount">
-                                            <small>Food and Drink</small>
-                                            <h4>$120.56</h4>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                    <div class="col-2">
-                                        <div class="percentage">
-                                            <small>47%</small>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                </div>
-                                <!-- .row -->
-                            </div>
-                            <!-- .card -->
-                            <div class="card">
-                                <div class="row">
-                                    <div class="col-10">
-                                        <div class="pie"></div>
-                                        <div class="amount">
-                                            <small>Groceries</small>
-                                            <h4>$120.56</h4>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                    <div class="col-2">
-                                        <div class="percentage">
-                                            <small>18%</small>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                </div>
-                                <!-- .row -->
-                            </div>
-                            <!-- .card -->
-                            <div class="card">
-                                <div class="row">
-                                    <div class="col-10">
-                                        <div class="pie"></div>
-                                        <div class="amount">
-                                            <small>Household</small>
-                                            <h4>$120.56</h4>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                    <div class="col-2">
-                                        <div class="percentage">
-                                            <small>12%</small>
-                                        </div>
-                                    </div>
-                                    <!-- .col-6 -->
-                                </div>
-                                <!-- .row -->
-                            </div>
-                            <!-- .card -->
-                        </div>
-                        <!-- .lower-block -->
-                    </div>
-                    <!-- .monthly-transaction -->
-                </div>
-                <!-- .col-6 -->
+            <div id="view"></div>
+        </main>
+    </div>
+
+    <!-- Add / edit transaction -->
+    <dialog id="tx-dialog" class="sheet" aria-labelledby="tx-title">
+        <form id="tx-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="tx-title">Add transaction</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
             </div>
-            <!-- .row -->
-        </div>
-        <!-- .app-window -->
-    </main>
+            <fieldset class="segmented">
+                <legend class="sr-only">Transaction type</legend>
+                <label><input type="radio" name="type" value="expense" checked /><span>Spent</span></label>
+                <label><input type="radio" name="type" value="income" /><span>Received</span></label>
+            </fieldset>
+            <label class="field">
+                <span>Amount</span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="amount-error" autofocus /></span>
+            </label>
+            <p class="field-error" id="amount-error" role="alert" hidden></p>
+            <label class="field">
+                <span>Category</span>
+                <select name="category"></select>
+            </label>
+            <label class="field">
+                <span>Date &amp; time</span>
+                <input name="date" type="datetime-local" required />
+            </label>
+            <label class="field">
+                <span>Note <small>(optional)</small></span>
+                <input name="note" type="text" maxlength="200" placeholder="e.g. Lunch with team" autocomplete="off" />
+            </label>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-danger-ghost" id="tx-delete" hidden>Delete</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </dialog>
 
-    <!-- JS-->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        // flatpickr("#datetime", {});
+    <!-- Confirmation -->
+    <dialog id="confirm-dialog" class="sheet sheet-sm" aria-labelledby="confirm-title">
+        <form method="dialog" class="sheet-body">
+            <h2 id="confirm-title"></h2>
+            <p id="confirm-msg" class="muted"></p>
+            <div class="sheet-actions">
+                <button value="cancel" class="btn btn-ghost">Cancel</button>
+                <button value="ok" class="btn btn-primary" id="confirm-ok">OK</button>
+            </div>
+        </form>
+    </dialog>
 
-    </script>
-    <script src="js/app.js"></script>
+    <div id="toast" class="toast" role="status" aria-live="polite" popover="manual"></div>
+
+    <noscript><p class="noscript">Budget Tracker needs JavaScript to run.</p></noscript>
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>
