@@ -45,7 +45,13 @@ export function downloadCSV() {
 
 // ---- Import ----------------------------------------------------------------------------
 
+const MAX_BACKUP_BYTES = 25 * 1024 * 1024; // far above any real backup
+
 export async function importFile(file) {
+    if (file.size > MAX_BACKUP_BYTES) {
+        toast('That file is too big to be a Budget Tracker backup.');
+        return;
+    }
     let data;
     try {
         data = JSON.parse(await file.text());
@@ -54,6 +60,10 @@ export async function importFile(file) {
         return;
     }
 
+    if (vault.isDamagedBackup(data)) {
+        toast('This backup file looks damaged, so it can’t be opened.');
+        return;
+    }
     if (vault.isEncryptedBackup(data)) {
         const made = data.exportedAt ? ` (made on ${fmtDate(toLocalString(new Date(data.exportedAt)))})` : '';
         const encrypted = data;

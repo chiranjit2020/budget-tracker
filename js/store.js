@@ -250,6 +250,8 @@ export function openSession(data) {
 /** Forget everything in memory (on lock). */
 export function closeSession() {
     state = blank();
+    noteIndex = null; // the note-suggestion cache holds notes and categories too
+    noteIndexFor = null;
 }
 
 /** Resolves once all pending encrypted saves are written. */

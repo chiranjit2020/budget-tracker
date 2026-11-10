@@ -1,6 +1,7 @@
 import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, removeFavorite, updateFavorite, MAX_FAVORITES } from '../store.js';
 import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
+import { passwordProblem } from '../passwords.js';
 import { esc, money, parseAmount, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
 import { icon, toast, confirmDialog, askPassword } from '../ui.js';
 import * as vault from '../vault.js';
@@ -297,7 +298,9 @@ export function render(root, ctx = {}) {
                 error.hidden = false;
             };
             if (!current.value) return fail('Enter your current password.');
-            if (next.value.length < MIN_PASSWORD) return fail(`Use at least ${MIN_PASSWORD} characters for the new password.`);
+            const problem = passwordProblem(next.value, getState().profile.name);
+            if (problem) return fail(problem);
+            if (next.value === current.value) return fail('Pick a new password that’s different from the current one.');
             if (next.value !== confirm.value) return fail('The new passwords don’t match.');
             const btn = form.querySelector('button[type="submit"]');
             btn.disabled = true;

@@ -16,6 +16,13 @@ const LEGACY_KEY = 'budget-tracker.v1'; // unencrypted data from before accounts
 /** Fingerprint/face unlock record (see biometric.js). Removed whenever the account's key changes. */
 export const BIOMETRIC_KEY = 'budget-tracker.biometric.v1';
 const ITERATIONS = 600_000;
+// Key-stretching settings read from a file or storage must be sane: a booby-trapped
+// backup asking for billions of rounds would otherwise hang the app (and too few is weak).
+const MIN_ITER = 100_000;
+const MAX_ITER = 5_000_000;
+export const validKdf = (k) =>
+    Boolean(k) && Number.isSafeInteger(k.iter) && k.iter >= MIN_ITER && k.iter <= MAX_ITER &&
+    typeof k.salt === 'string' && k.salt.length >= 16 && k.salt.length <= 88;
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -277,6 +284,7 @@ export async function unlockWithRawKey(raw) {
 export async function unlock(password) {
     const vault = readVault();
     if (!vault) throw new Error('No account on this device.');
+    if (!validKdf(vault.kdf)) throw new Error('The saved data looks damaged.');
     const key = await deriveKey(password, fromBase64(vault.kdf.salt), vault.kdf.iter);
     let data;
     try {
@@ -329,7 +337,12 @@ export function lock() {
 
 const BACKUP_KIND = 'encrypted-backup';
 
-export const isEncryptedBackup = (file) => file?.app === 'budget-tracker' && file?.kind === BACKUP_KIND && Boolean(file.kdf?.salt && file.iv && file.data);
+export const isEncryptedBackup = (file) =>
+    file?.app === 'budget-tracker' && file?.kind === BACKUP_KIND && validKdf(file.kdf) &&
+    typeof file.iv === 'string' && file.iv.length === 16 && typeof file.data === 'string' && file.data.length > 0;
+
+/** Looks like an encrypted backup but its settings are damaged or unsafe. */
+export const isDamagedBackup = (file) => file?.app === 'budget-tracker' && file?.kind === BACKUP_KIND && !isEncryptedBackup(file);
 
 export async function exportEncrypted(data) {
     if (!session) throw new Error('Locked');
@@ -338,6 +351,7 @@ export async function exportEncrypted(data) {
 
 /** Decrypt a backup file with the password it was made with; null if the password is wrong. */
 export async function decryptBackup(file, password) {
+    if (!isEncryptedBackup(file)) return null;
     const key = await deriveKey(password, fromBase64(file.kdf.salt), file.kdf.iter);
     try {
         return await unseal(key, file);

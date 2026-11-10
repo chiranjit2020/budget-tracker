@@ -3,7 +3,7 @@
 // falling back to the cached copy when offline or the network is slow.
 // Bump VERSION when files are added or removed from APP_SHELL.
 
-const VERSION = 'bt-v1.23.0';
+const VERSION = 'bt-v1.25.0';
 const FONT_CACHE = 'bt-fonts-v2'; // renamed so old font files get cleaned up
 const NETWORK_TIMEOUT_MS = 3000;
 
@@ -32,6 +32,8 @@ const APP_SHELL = [
     './js/folds.js',
     './js/pie.js',
     './js/biometric.js',
+    './js/passwords.js',
+    './js/boot.js',
     './js/vendor/chart.umd.min.js',
     './js/views/dashboard.js',
     './js/views/transactions.js',

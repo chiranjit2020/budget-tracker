@@ -115,6 +115,31 @@ export function toast(message, action) {
     toastTimer = setTimeout(hideToast, action ? 6000 : 3000);
 }
 
+/**
+ * On lock: close every dialog and popup and wipe anything private left in them
+ * (form values, generated lists, titles with names, the toast), so nothing can
+ * be read from the page while it's locked.
+ */
+export function clearPrivateUI() {
+    clearTimeout(toastTimer);
+    hideToast();
+    toastEl.replaceChildren();
+    for (const d of document.querySelectorAll('dialog')) {
+        if (d.open) d.close();
+        d.querySelectorAll('form').forEach((f) => f.reset());
+    }
+    document.querySelectorAll(':popover-open').forEach((p) => p.hidePopover?.());
+    for (const id of ['budget-fields', 'budget-hint', 'budget-total', 'debt-people', 'note-suggest', 'note-hint', 'goal-money-hint', 'goal-money-title',
+        'settle-hint', 'settle-title', 'repeat-note', 'repeat-hint', 'confirm-title', 'confirm-msg', 'pw-dialog-msg']) {
+        document.getElementById(id)?.replaceChildren();
+    }
+    txForm.category.replaceChildren();
+    document.querySelectorAll('.app input, dialog input, dialog textarea').forEach((input) => {
+        if (!['radio', 'checkbox', 'file', 'submit', 'button'].includes(input.type)) input.value = '';
+    });
+    suggestions = [];
+}
+
 // ---- Dialogs ----------------------------------------------------------------
 
 /** Close a dialog when its backdrop (outside the form) is clicked. */

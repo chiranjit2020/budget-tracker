@@ -23,6 +23,12 @@ function loadChartJs() {
     return loading;
 }
 
+/** Throw the chart (and the category names and amounts it holds) away, e.g. on lock. */
+export function destroyCategoryPie() {
+    chart?.destroy();
+    chart = null;
+}
+
 /** 'var(--chart-1)' -> the colour it means in the current theme (canvas can't read CSS variables). */
 function resolveColor(value) {
     const m = /^var\((--[\w-]+)\)$/.exec(value);

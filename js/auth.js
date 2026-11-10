@@ -9,7 +9,9 @@ import { esc } from './format.js';
 const screen = document.getElementById('auth');
 const appEl = document.querySelector('.app');
 
-export const MIN_PASSWORD = 8;
+import { MIN_PASSWORD, passwordProblem } from './passwords.js';
+
+export { MIN_PASSWORD };
 
 // ---- Auto-lock preference (not secret, so stored in plain localStorage) ----
 
@@ -127,7 +129,8 @@ function showRegister() {
         const name = form.elements.name.value.trim();
         const password = form.elements.password.value;
         if (!name) return setError(form, 'Enter your name.');
-        if (password.length < MIN_PASSWORD) return setError(form, `Use at least ${MIN_PASSWORD} characters for your password.`);
+        const problem = passwordProblem(password, name);
+        if (problem) return setError(form, problem);
         if (password !== form.elements.confirm.value) return setError(form, 'The two passwords don’t match.');
         setError(form, '');
         busy(form, 'Creating account…');
@@ -148,8 +151,29 @@ function showRegister() {
 
 // ---- Login ----------------------------------------------------------------------
 
+// Wrong-password waits survive a reload. Kept in plain localStorage: it's only a counter.
+const GUARD_KEY = 'budget-tracker.login-guard';
+const MAX_WAIT_SECONDS = 60 * 60; // never lock someone out for more than an hour
 let failures = 0;
 let lockedUntil = 0;
+try {
+    const g = JSON.parse(localStorage.getItem(GUARD_KEY) || '{}');
+    failures = Number.isSafeInteger(g.failures) && g.failures > 0 ? g.failures : 0;
+    lockedUntil = Math.min(Number(g.lockedUntil) || 0, Date.now() + MAX_WAIT_SECONDS * 1000);
+} catch { /* storage blocked */ }
+
+function saveGuard() {
+    try {
+        if (failures || lockedUntil > Date.now()) localStorage.setItem(GUARD_KEY, JSON.stringify({ failures, lockedUntil }));
+        else localStorage.removeItem(GUARD_KEY);
+    } catch { /* storage blocked */ }
+}
+
+function resetGuard() {
+    failures = 0;
+    lockedUntil = 0;
+    saveGuard();
+}
 
 function showLogin() {
     const name = vault.accountName();
@@ -176,7 +200,7 @@ function showLogin() {
         const data = await unlockWithBiometric();
         bioBtn.disabled = false;
         if (data) {
-            failures = 0;
+            resetGuard();
             enterApp(data);
         } else if (!auto) {
             setError(form, 'Couldn’t unlock with fingerprint or face. Try again, or use your password.');
@@ -205,15 +229,17 @@ function showLogin() {
             console.error(err);
         }
         if (data) {
-            failures = 0;
+            resetGuard();
             enterApp(data);
             return;
         }
         busy(form, '');
         failures++;
+        saveGuard();
         if (failures >= 5) {
-            const seconds = 30 * 2 ** (failures - 5); // 30s, 60s, 120s…
+            const seconds = Math.min(30 * 2 ** (failures - 5), MAX_WAIT_SECONDS); // 30s, 60s, 120s… up to an hour
             lockedUntil = Date.now() + seconds * 1000;
+            saveGuard();
             setError(form, `Wrong password. Too many attempts, so wait ${seconds} seconds.`);
         } else {
             setError(form, 'Wrong password. Try again.');
@@ -230,8 +256,7 @@ function showLogin() {
         });
         if (!ok) return;
         await vault.deleteAccount();
-        failures = 0;
-        lockedUntil = 0;
+        resetGuard();
         showRegister();
     });
 }

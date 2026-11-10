@@ -3,7 +3,8 @@
 import './theme.js';
 import { getState, subscribe, setSaveErrorHandler, runRecurring } from './store.js';
 import { currentMonthKey, shiftMonth, fmtMonth, nowLocal, money } from './format.js';
-import { openTxDialog, avatarHTML, toast, quickAdd } from './ui.js';
+import { openTxDialog, avatarHTML, toast, quickAdd, clearPrivateUI } from './ui.js';
+import { destroyCategoryPie } from './pie.js';
 import { registerServiceWorker, onInstallChange } from './pwa.js';
 import { isUnlocked } from './vault.js';
 import { initAuth } from './auth.js';
@@ -191,6 +192,8 @@ initAuth({
         view.replaceChildren();
         avatarEl.replaceChildren();
         subtitleEl.textContent = '';
+        clearPrivateUI(); // dialogs, popups, toast and form values
+        destroyCategoryPie(); // the chart keeps its own copy of the data
     },
 });
 registerServiceWorker();
