@@ -61,6 +61,10 @@ function ruleEditor(r, categories) {
                             </div>
                             <small class="muted">${r.end?.type === 'count' || r.done ? `${r.done || 'None'} added so far.` : ''}</small>
                         </div>
+                        <label class="check-field rec-ask">
+                            <input type="checkbox" name="askEach"${r.ask ? ' checked' : ''}>
+                            <span>Ask me the amount each time <small>For bills that change. When it's due, the dashboard asks instead of adding ${money(r.amount)}.</small></span>
+                        </label>
                         <p class="rec-edit-note">${r.finished ? 'It has finished: give it a later end to carry on.' : r.active ? `Changes apply from the next one, on ${fmtDate(r.next)}.` : 'Changes apply when you resume it.'} Entries already added stay as they are.</p>
                         <p class="field-error" role="alert" hidden></p>
                         <div class="btn-row">
@@ -137,7 +141,7 @@ function recurringPanel(rules, categories) {
                     <span class="rec-main">
                         <strong>${esc(r.note || r.category)}</strong>
                         <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}${r.method ? ` · ${METHOD_LABELS[r.method]}` : ''}</small>
-                        <small>${[r.finished ? '' : r.active ? `Next: ${fmtDate(r.next)}` : 'Paused', repeatProgress(r)].filter(Boolean).join(' · ')}</small>
+                        <small>${[r.finished ? '' : r.active ? `Next: ${fmtDate(r.next)}` : 'Paused', r.ask && !r.finished ? 'Asks for the amount' : '', repeatProgress(r)].filter(Boolean).join(' · ')}</small>
                     </span>
                     <span class="rec-actions">
                         <button type="button" class="icon-btn" data-rec-edit="${esc(r.id)}" aria-label="Change ${esc(r.note || r.category)}">${icon('edit')}</button>
@@ -373,7 +377,7 @@ export function render(root, ctx = {}) {
                 end = { type: 'date', date: form.elements.endDate.value };
             }
             editingRule = null; // close the editor (the save re-renders this page)
-            const rule = updateRecurring(form.dataset.ruleId, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value, end }, nowLocal().slice(0, 10));
+            const rule = updateRecurring(form.dataset.ruleId, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value, end, ask: form.elements.askEach.checked }, nowLocal().slice(0, 10));
             if (!rule) return;
             const name = rule.note || rule.category;
             if (rule.finished && !current.finished) toast(`${name} has now finished: ${repeatProgress(rule)}.`);

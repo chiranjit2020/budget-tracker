@@ -926,6 +926,24 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     .gh-remove { grid-column: 2; grid-row: 1 / span 3; }
 }
 
+/* Dashboard: bills to confirm ("ask me" repeats that are due) */
+.confirm-block { padding: 1.6rem 1.8rem; border: 1px solid var(--warn-line); border-radius: var(--radius); background: var(--warn-bg); }
+.confirm-intro { margin: -.6rem 0 1.2rem; font-size: 1.3rem; }
+.confirm-list { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.confirm-item { display: grid; grid-template-columns: minmax(0, 1fr) 13rem auto; align-items: center; gap: .8rem 1.2rem; padding: 1.2rem 1.4rem; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); }
+.ci-top strong { display: block; font-size: 1.5rem; font-weight: 600; color: var(--dark-blue); }
+.ci-top small { font-size: 1.25rem; color: var(--muted); }
+.ci-amount .amount-wrap input { width: 100%; padding: .8rem 1rem .8rem 2.8rem; border: 1px solid var(--input-border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 1.6rem; font-weight: 600; text-align: right; }
+.ci-amount .amount-wrap b { left: 1rem; font-size: 1.4rem; }
+.ci-actions { display: flex; align-items: center; gap: 1.2rem; }
+.confirm-item .field-error { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 560px) {
+    .confirm-item { grid-template-columns: minmax(0, 1fr) auto; }
+    .ci-top { grid-column: 1 / -1; }
+}
+.up-amt small { font-size: 1.15rem; font-weight: 500; color: var(--muted); }
+.ask-field, .rec-ask { margin-top: .8rem; grid-column: 1 / -1; }
+
 /* Dashboard: coming up (repeats due soon) */
 .up-switch { display: inline-flex; padding: .3rem; gap: .2rem; border-radius: 99px; background: var(--soft); }
 .up-switch button { padding: .4rem 1.1rem; border: 0; border-radius: 99px; background: none; color: var(--muted); font: inherit; font-size: 1.25rem; font-weight: 600; cursor: pointer; }

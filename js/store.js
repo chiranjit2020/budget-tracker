@@ -196,6 +196,7 @@ function cleanRule(r) {
         end: cleanEnd(r.end),
         done: Number.isSafeInteger(r.done) && r.done >= 0 ? r.done : 0, // entries this repeat has added
         finished: r.finished === true, // added its last entry (can't be resumed; give it a new end instead)
+        ask: r.ask === true, // bills that change: ask for the amount each time instead of adding it
     };
 }
 
@@ -335,14 +336,14 @@ export function setSaveErrorHandler(fn) {
  * Add a transaction. With `repeat` ('weekly' | 'monthly' | 'yearly') it also
  * creates a recurring rule that starts on this transaction's date.
  */
-export function addTx(input, { repeat = '', end = null, remember = false } = {}) {
+export function addTx(input, { repeat = '', end = null, ask = false, remember = false } = {}) {
     const tx = cleanTx({ ...input, id: uid() });
     if (!tx) return null;
     let rule = null;
     if (FREQUENCIES.includes(repeat)) {
         const start = tx.date.slice(0, 10);
         const draft = { ...tx, id: uid(), freq: repeat, start, time: tx.date.slice(11, 16) };
-        rule = cleanRule({ ...draft, next: nextOccurrence(draft, start), end, done: 1 }); // this entry is the first
+        rule = cleanRule({ ...draft, next: nextOccurrence(draft, start), end, ask, done: 1 }); // this entry is the first
         if (repeatDone(rule)) Object.assign(rule, { active: false, finished: true });
         tx.recurringId = rule.id;
     }
@@ -361,12 +362,12 @@ export function addTx(input, { repeat = '', end = null, remember = false } = {})
  * catching up on missed ones. Returns the transactions that were added.
  */
 export function runRecurring(today) {
-    if (!state.recurring.some((r) => r.active && (r.next <= today || repeatDone(r)))) return [];
+    if (!state.recurring.some((r) => r.active && ((r.next <= today && !r.ask) || repeatDone(r)))) return [];
     const added = [];
     commit((d) => {
         for (const r of d.recurring) {
             let guard = 0; // never loop forever on bad data
-            while (r.active && r.next <= today && !repeatDone(r) && guard++ < 400) {
+            while (r.active && !r.ask && r.next <= today && !repeatDone(r) && guard++ < 400) {
                 const tx = cleanTx({ ...r, id: uid(), date: `${r.next}T${r.time}`, recurringId: r.id });
                 d.transactions.push(tx);
                 added.push(tx);
@@ -388,10 +389,11 @@ export function runRecurring(today) {
  * The schedule (frequency, day, next date) and entries already added stay as they are.
  * Returns the updated rule, or null if the input isn't valid.
  */
-export function updateRecurring(id, { note, amount, category, method, end }, today = new Date().toISOString().slice(0, 10)) {
+export function updateRecurring(id, { note, amount, category, method, end, ask }, today = new Date().toISOString().slice(0, 10)) {
     const current = state.recurring.find((r) => r.id === id);
     if (!current) return null;
     const changes = { note, amount, category, method };
+    if (ask !== undefined) changes.ask = ask;
     if (end !== undefined) {
         changes.end = end;
         // Repeats made before ends existed didn't count their entries: count them now.
@@ -412,6 +414,53 @@ export function updateRecurring(id, { note, amount, category, method, end }, tod
         const i = d.recurring.findIndex((r) => r.id === id);
         if (i >= 0) d.recurring[i] = rule;
     }) ? rule : null;
+}
+
+// ---- Repeats that ask: confirm or skip what's due ------------------------------------
+
+/**
+ * Add the oldest waiting one of an "ask me" repeat with the amount the person entered. That amount
+ * becomes the suggestion for next time. Returns { tx, before } (before = the repeat as it was, for Undo).
+ */
+export function confirmRepeat(id, amount, today) {
+    const r = state.recurring.find((x) => x.id === id);
+    if (!r || !r.active || !r.ask || r.next > today || repeatDone(r) || !Number.isSafeInteger(amount) || amount <= 0) return null;
+    const before = structuredClone(r);
+    const tx = cleanTx({ ...r, amount, id: uid(), date: `${r.next}T${r.time}`, recurringId: r.id });
+    const ok = commit((d) => {
+        const rule = d.recurring.find((x) => x.id === id);
+        d.transactions.push(tx);
+        rule.amount = amount;
+        rule.done++;
+        rule.next = nextOccurrence(rule, rule.next);
+        if (repeatDone(rule)) Object.assign(rule, { active: false, finished: true });
+    });
+    return ok ? { tx, before } : null;
+}
+
+/**
+ * Skip the next one of a repeat (it isn't added, and doesn't count towards an end like "12 times").
+ * Returns the repeat as it was, for Undo.
+ */
+export function skipRepeat(id) {
+    const r = state.recurring.find((x) => x.id === id);
+    if (!r || !r.active || repeatDone(r)) return null;
+    const before = structuredClone(r);
+    const ok = commit((d) => {
+        const rule = d.recurring.find((x) => x.id === id);
+        rule.next = nextOccurrence(rule, rule.next);
+        if (repeatDone(rule)) Object.assign(rule, { active: false, finished: true }); // skipped past its last date
+    });
+    return ok ? before : null;
+}
+
+/** Undo for confirm/skip: put the repeat back as it was, and remove the entry a confirm added. */
+export function restoreRepeat(before, addedTxId = null) {
+    return commit((d) => {
+        const i = d.recurring.findIndex((x) => x.id === before.id);
+        if (i >= 0) d.recurring[i] = before;
+        if (addedTxId) d.transactions = d.transactions.filter((t) => t.id !== addedTxId);
+    });
 }
 
 export function setRecurringActive(id, active, today) {

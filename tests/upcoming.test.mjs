@@ -5,7 +5,7 @@ import path from 'node:path';
 
 globalThis.window = { addEventListener() {} }; // store.js/vault.js expect a browser
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { upcomingItems, upcomingTotals, nextAfter, whenText, addDays, repeatProgress } = await import(pathToFileURL(path.join(root, 'js/upcoming.js')).href);
+const { upcomingItems, upcomingTotals, nextAfter, whenText, addDays, repeatProgress, waitingToConfirm } = await import(pathToFileURL(path.join(root, 'js/upcoming.js')).href);
 const { planRepeat, repeatDone, normalize } = await import(pathToFileURL(path.join(root, 'js/store.js')).href);
 
 const R = (rupees) => rupees * 100;
@@ -98,6 +98,21 @@ const old = normalize({ transactions: [
 ], recurring: [{ id: 'net', type: 'expense', amount: 100, category: 'x', freq: 'monthly', start: '2026-09-14', next: '2026-11-14', active: true }] });
 assert.equal(old.recurring[0].done, 2);
 assert.equal(normalize({ transactions: [], recurring: [{ ...old.recurring[0], done: 5 }] }).recurring[0].done, 5); // a saved counter is kept
+
+// ---- Ask me the amount each time ----
+const elec = rule('elec', { note: 'Electricity', amount: R(1240), start: '2026-09-10', next: '2026-10-10', ask: true });
+// opened on 28 Nov: 10 Oct and 10 Nov are waiting; one prompt, oldest first
+assert.deepEqual(waitingToConfirm([elec, rules[0]], '2026-11-28'), [{ ruleId: 'elec', date: '2026-10-10', name: 'Electricity', category: 'Bills', method: '', type: 'expense', last: R(1240), waiting: 2 }]);
+assert.deepEqual(waitingToConfirm([{ ...elec, next: '2026-12-10' }], '2026-11-28'), []); // not due yet
+assert.deepEqual(waitingToConfirm([{ ...elec, active: false }], '2026-11-28'), []); // paused
+assert.deepEqual(waitingToConfirm([{ ...elec, ask: false }], '2026-11-28'), []); // added automatically instead
+// an "ask me" EMI with one payment left: only 1 waiting, not 2
+assert.equal(waitingToConfirm([{ ...elec, end: { type: 'count', count: 6 }, done: 5 }], '2026-11-28')[0].waiting, 1);
+// Coming up leaves out the waiting ones (they're in the confirm card), shows the next as a guess
+const up = upcomingItems([elec], '2026-11-28', 30);
+assert.deepEqual(up.map((i) => [i.date, i.ask]), [['2026-12-10', true]]);
+// …and EMI numbering still counts the waiting ones: done 3, two waiting -> the next listed is payment 6
+assert.equal(upcomingItems([{ ...elec, end: { type: 'count', count: 12 }, done: 3 }], '2026-11-28', 30)[0].nth, 6);
 
 console.log('All coming-up tests passed.');
 process.exit(0); // vault.js's BroadcastChannel would otherwise keep Node running

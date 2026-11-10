@@ -373,14 +373,15 @@ txForm.addEventListener('submit', (e) => {
             return;
         }
     }
-    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat, end, remember: true });
+    const ask = Boolean(repeat) && txForm.elements.askEach.checked;
+    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat, end, ask, remember: true });
     if (!saved) return; // the save-error handler already told the user
     txDialog.close();
-    // A repeat that started in the past catches up on the dates already due.
+    // A repeat that started in the past catches up on the dates already due ("ask me" ones wait on the dashboard).
     const caughtUp = repeat ? runRecurring(nowLocal().slice(0, 10)).length : 0;
     const alert = data.type === 'expense' ? budgetAlert(data.category, data.date, before) : null;
     let message = editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`;
-    if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${end ? ` until ${fmtDate(planRepeat({ freq: repeat, start: data.date.slice(0, 10) }, end).last)}` : ''}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
+    if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${end ? ` until ${fmtDate(planRepeat({ freq: repeat, start: data.date.slice(0, 10) }, end).last)}` : ''}${ask ? '; it will ask you the amount each time' : ''}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
     if (!editingId && txForm.favorite.checked) {
         const fav = addFavorite(data);
         if (fav === 'added') message += ' and saved as a quick-add favourite';

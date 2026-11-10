@@ -31,9 +31,14 @@ export function upcomingItems(recurring, today, days) {
         let date = r.next < today ? today : r.next;
         let guard = 0;
         let k = 0; // how many of this repeat are already listed
+        if (r.ask) date = r.next; // waiting ones (due already) are in "Bills to confirm", not here
         while (date <= end && guard++ < 60 && !pastEnd(r, date, k)) {
             const nth = r.end?.type === 'count' ? (r.done ?? 0) + k + 1 : 0;
             k++;
+            if (r.ask && date <= today) {
+                date = nextOccurrence(r, date);
+                continue;
+            }
             items.push({
                 ruleId: r.id,
                 date,
@@ -45,6 +50,7 @@ export function upcomingItems(recurring, today, days) {
                 method: r.method ?? '',
                 nth, // e.g. payment 5 …
                 total: nth ? r.end.count : 0, // … of 12
+                ask: r.ask === true, // the amount is a guess (last time's): it asks when due
             });
             date = nextOccurrence(r, date);
         }
@@ -92,6 +98,27 @@ export function repeatProgress(r) {
     const verb = r.type === 'income' ? 'received' : 'paid';
     if (r.end.type === 'count') return r.finished ? `Finished: all ${r.end.count} ${verb}` : `${r.done} of ${r.end.count} ${verb}`;
     return r.finished ? `Finished: end date was ${fmtDate(r.end.date)}` : `Until ${fmtDate(r.end.date)}`;
+}
+
+/**
+ * "Ask me" repeats that are due and waiting for an amount: the oldest per repeat, with how many
+ * are waiting in all (missed while the app wasn't opened). Oldest first.
+ * [{ ruleId, date, name, category, method, type, last, waiting }]
+ */
+export function waitingToConfirm(recurring, today) {
+    const out = [];
+    for (const r of recurring) {
+        if (!r.active || !r.ask || r.next > today) continue;
+        let waiting = 0;
+        let date = r.next;
+        let guard = 0;
+        while (date <= today && guard++ < 60 && !pastEnd(r, date, waiting)) {
+            waiting++;
+            date = nextOccurrence(r, date);
+        }
+        if (waiting) out.push({ ruleId: r.id, date: r.next, name: r.note || r.category, category: r.category, method: r.method ?? '', type: r.type, last: r.amount, waiting });
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
 }
 
 /** "Today", "Tomorrow", "in 3 days". */

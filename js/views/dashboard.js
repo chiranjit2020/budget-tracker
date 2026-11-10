@@ -1,12 +1,12 @@
-import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, fmtDate, shiftMonth, nowLocal, leftOver } from '../format.js';
-import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
+import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS, confirmRepeat, skipRepeat, restoreRepeat } from '../store.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, fmtDate, shiftMonth, nowLocal, leftOver, parseAmount } from '../format.js';
+import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS, toast } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
 import { debtsSection } from '../debts-ui.js';
 import { applyFolds } from '../folds.js';
 import { drawCategoryPie } from '../pie.js';
-import { upcomingItems, upcomingTotals, nextAfter, whenText } from '../upcoming.js';
+import { upcomingItems, upcomingTotals, nextAfter, whenText, waitingToConfirm } from '../upcoming.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -102,6 +102,70 @@ function quickAddRow(state) {
     </div>`;
 }
 
+// ---- Bills to confirm: "ask me" repeats that are due --------------------------------------
+
+const plainAmount = (paise) => (paise % 100 === 0 ? String(paise / 100) : (paise / 100).toFixed(2));
+
+function confirmSection(state) {
+    const items = waitingToConfirm(state.recurring, nowLocal().slice(0, 10));
+    if (!items.length) return '';
+    return `
+    <section class="block confirm-block" aria-labelledby="confirm-h">
+        <div class="section-head"><h2 id="confirm-h">Bills to confirm</h2></div>
+        <p class="muted confirm-intro">These change each time, so the app waits for you instead of guessing.</p>
+        <ul class="confirm-list">
+            ${items
+                .map((it) => `
+            <li>
+                <form class="confirm-item" data-confirm="${esc(it.ruleId)}" novalidate>
+                    <div class="ci-top">
+                        <strong>${esc(it.name)}</strong>
+                        <small>Due ${fmtDate(it.date)} · last time ${money(it.last)}${it.waiting > 1 ? ` · 1 of ${it.waiting} waiting` : ''}</small>
+                    </div>
+                    <label class="ci-amount"><span class="sr-only">How much was ${esc(it.name)} on ${fmtDate(it.date)}?</span>
+                        <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" inputmode="decimal" autocomplete="off" value="${plainAmount(it.last)}"></span>
+                    </label>
+                    <div class="ci-actions">
+                        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                        <button type="button" class="link" data-confirm-skip="${esc(it.ruleId)}">Skip this time</button>
+                    </div>
+                    <p class="field-error" role="alert" hidden></p>
+                </form>
+            </li>`)
+                .join('')}
+        </ul>
+    </section>`;
+}
+
+function onConfirmSubmit(e) {
+    const form = e.target.closest('[data-confirm]');
+    if (!form) return;
+    e.preventDefault();
+    const id = form.dataset.confirm;
+    const amount = parseAmount(form.elements.amount.value);
+    const error = form.querySelector('.field-error');
+    if (amount === null) {
+        error.textContent = 'Enter the amount, like 1240 or 1240.50.';
+        error.hidden = false;
+        form.elements.amount.focus();
+        return;
+    }
+    const rule = getState().recurring.find((r) => r.id === id);
+    const due = rule?.next;
+    const done = confirmRepeat(id, amount, nowLocal().slice(0, 10));
+    if (done) toast(`Added ${rule.note || rule.category} ${money(amount)} for ${fmtDate(due)}`, { label: 'Undo', run: () => restoreRepeat(done.before, done.tx.id) });
+}
+
+function onConfirmSkip(e) {
+    const btn = e.target.closest('[data-confirm-skip]');
+    if (!btn) return false;
+    const rule = getState().recurring.find((r) => r.id === btn.dataset.confirmSkip);
+    const due = rule?.next;
+    const before = skipRepeat(btn.dataset.confirmSkip);
+    if (before) toast(`Skipped ${rule.note || rule.category} for ${fmtDate(due)}`, { label: 'Undo', run: () => restoreRepeat(before) });
+    return true;
+}
+
 // ---- Coming up: what repeats will add soon --------------------------------------------
 
 let upcomingDays = 7; // 7 or 30, kept while the dashboard re-renders
@@ -125,11 +189,11 @@ function upcomingSection(state, key) {
             ${items
                 .map((it) => {
                     const day = new Date(`${it.date}T00:00`);
-                    const sub = [it.total ? `${it.type === 'income' ? '' : 'Payment '}${it.nth} of ${it.total}` : '', it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', whenText(it.daysAway)].filter(Boolean);
+                    const sub = [it.total ? `${it.type === 'income' ? '' : 'Payment '}${it.nth} of ${it.total}` : '', it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', it.ask ? 'asks you' : '', whenText(it.daysAway)].filter(Boolean);
                     return `<li class="up-item ${it.type}">
                 <span class="up-date" aria-hidden="true"><b>${day.getDate()}</b><small>${day.toLocaleDateString('en-IN', { month: 'short' })}</small></span>
                 <span class="up-main"><strong>${esc(it.name)}</strong><small>${esc(sub.join(' · '))}<span class="sr-only">, ${fmtDay(it.date)}</span></small></span>
-                <span class="up-amt ${it.type}">${it.type === 'income' ? '+' : '−'} ${money(it.amount)}</span>
+                <span class="up-amt ${it.type}">${it.ask ? '<small>about</small> ' : ''}${it.type === 'income' ? '+' : '−'} ${money(it.amount)}</span>
             </li>`;
                 })
                 .join('')}
@@ -274,6 +338,7 @@ export function render(root, ctx) {
 
     root.innerHTML = `
     ${backupBanner()}
+    ${confirmSection(state)}
     <div class="grid-2">
         <div class="col">
             <section class="block summary">
@@ -364,5 +429,6 @@ export function render(root, ctx) {
     applyFolds(root);
     drawCategoryPie(root.querySelector('#cat-pie'), slices);
     currentKey = key;
-    root.onclick = (e) => onUpcomingClick(e, root) || onCalendarClick(e, root);
+    root.onclick = (e) => onConfirmSkip(e) || onUpcomingClick(e, root) || onCalendarClick(e, root);
+    root.onsubmit = onConfirmSubmit;
 }
