@@ -1289,8 +1289,12 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     }
 
     .topbar { margin-bottom: 1.6rem; padding-bottom: 1.2rem; gap: 1rem; }
-    .topbar h1 { font-size: 2.2rem; }
+    .topbar h1 { font-size: 2rem; }
     .topbar p { font-size: 1.3rem; }
+    /* Card titles: a step above the body text, not a shout */
+    .section-head h2 { font-size: 1.6rem; }
+    .panel h2 { font-size: 1.6rem; }
+    .sheet-body h2 { font-size: 1.9rem; }
     .topbar-actions { gap: 1rem; }
 
     .summary .icon-btn-solid { display: none; } /* the header already has Add */
