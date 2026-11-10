@@ -8,7 +8,6 @@ All planned features are built. Pick the next one from *Later / maybe*.
 
 ## Later / maybe
 
-- **Receipt photos:** attach a photo to an entry (now possible, since data is in IndexedDB).
 - **iPhone launch images**, so the iPhone launch screen matches the splash.
 
 ## Checks to do on a real phone
@@ -17,11 +16,13 @@ All planned features are built. Pick the next one from *Later / maybe*.
 - Android: launch screen flows into the blue splash without a white flash.
 - iPhone: install via Share → Add to Home Screen, login, dark mode.
 - Fingerprint / face unlock: turn on in Settings → Security, lock, unlock with a scan (Android Chrome, iPhone Safari iOS 18+). Also check that changing the password turns it off.
+- Unlock chime: sounds pleasant and not too loud; turning it off in Settings → Appearance silences it.
 
 ## Not a good fit right now
 
 - Reading UPI/bank SMS automatically: web apps can't read SMS.
 - Sync between devices: needs a server, which conflicts with "data stays on my device".
+- Receipt photos: dropped (decided 10 Nov 2026).
 
 ## Done
 
