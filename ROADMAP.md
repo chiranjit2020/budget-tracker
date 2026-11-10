@@ -14,6 +14,7 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 - **Fingerprint / Face unlock** (WebAuthn): on top of the password, where the phone supports it.
 - **Edit a recurring transaction's amount** (today: stop it and add a new one).
+- **Receipt photos:** attach a photo to an entry (now possible, since data is in IndexedDB).
 - **iPhone launch images**, so the iPhone launch screen matches the splash.
 
 ## Checks to do on a real phone
@@ -26,8 +27,7 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 - Reading UPI/bank SMS automatically: web apps can't read SMS.
 - Sync between devices: needs a server, which conflicts with "data stays on my device".
-- Receipt photos: browser storage is too small (~5 MB) without moving to IndexedDB first.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions).
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB.

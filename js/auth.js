@@ -205,7 +205,7 @@ function showLogin() {
             danger: true,
         });
         if (!ok) return;
-        vault.deleteAccount();
+        await vault.deleteAccount();
         failures = 0;
         lockedUntil = 0;
         showRegister();
@@ -258,7 +258,7 @@ window.addEventListener('pageshow', (e) => {
 
 // ---- Start ------------------------------------------------------------------------
 
-export function initAuth(h) {
+export async function initAuth(h) {
     handlers = h;
     setExternalLockHandler(lock);
     if (!vault.cryptoAvailable()) {
@@ -268,6 +268,7 @@ export function initAuth(h) {
             Open it from its https:// address, or from http://localhost when developing.</p>`);
         return;
     }
+    await vault.init();
     if (vault.hasAccount()) showLogin();
     else showRegister();
 }

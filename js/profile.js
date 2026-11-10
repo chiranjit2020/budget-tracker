@@ -17,7 +17,7 @@ const nameInput = document.getElementById('name-input');
 const removeBtn = document.getElementById('photo-remove');
 document.getElementById('pop-theme').innerHTML = `<span class="pop-theme-label">Appearance</span>${themeSwitchHTML(icon, 'theme-choice-popup')}`;
 
-/** Crop to a square and shrink so the photo fits comfortably in localStorage. */
+/** Crop to a square and shrink so the photo keeps the encrypted data small. */
 async function resizePhoto(file, size = 256) {
     const bitmap = await createImageBitmap(file);
     const side = Math.min(bitmap.width, bitmap.height);

@@ -20,7 +20,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 
 ## Your data and password
 
-Everything is saved in your browser's `localStorage` on that device, **encrypted with your password**. There's no server and nothing is uploaded.
+Everything is saved in your browser's storage (IndexedDB) on that device, **encrypted with your password**. Data from older versions, which used `localStorage`, is moved over automatically the first time the app opens. There's no server and nothing is uploaded.
 
 - **Account:** the first time you open the app, you create an account (name + password, 8+ characters). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
 - **How it's protected:** the password is never stored. It's stretched into an AES-256 key with PBKDF2-SHA256 (600,000 rounds, random salt), and all data is encrypted with AES-256-GCM (Web Crypto API). A wrong password simply can't decrypt the data. After 5 wrong attempts the login makes you wait.

@@ -162,9 +162,9 @@ function commit(mutate) {
 
 // Keep several open tabs/windows in sync. If another tab changed the
 // password or reset the app, our key no longer works, so lock this tab.
-window.addEventListener('storage', async (e) => {
-    if (e.key !== vault.VAULT_STORAGE_KEY || !vault.isUnlocked()) return;
-    const latest = e.newValue ? await vault.readLatest() : null;
+vault.onExternalChange(async (exists) => {
+    if (!vault.isUnlocked()) return;
+    const latest = exists ? await vault.readLatest() : null;
     if (latest) {
         state = normalize(latest);
         emit();

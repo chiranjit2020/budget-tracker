@@ -7,15 +7,17 @@
 //   login is checked.
 // - While unlocked, the key lives only in memory (non-extractable), so
 //   reloading or closing the app locks it again.
+// - The encrypted vault is kept in IndexedDB (far more room than
+//   localStorage's ~5 MB, and the bytes are stored as-is, not as base64).
+//   Older versions kept it in localStorage; it is moved over on first start.
 
-const VAULT_KEY = 'budget-tracker.vault.v1';
+const VAULT_KEY = 'budget-tracker.vault.v1'; // localStorage key (used before IndexedDB, and as the fallback)
 const LEGACY_KEY = 'budget-tracker.v1'; // unencrypted data from before accounts existed
 const ITERATIONS = 600_000;
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-export const VAULT_STORAGE_KEY = VAULT_KEY;
 export const cryptoAvailable = () => Boolean(globalThis.crypto?.subtle);
 
 // ---- Base64 helpers (chunked so large data doesn't overflow the stack) ----
@@ -35,6 +37,9 @@ function fromBase64(text) {
     return bytes;
 }
 
+/** iv/data as bytes, whether stored as bytes (IndexedDB) or base64 text (localStorage, backup files). */
+const bytes = (v) => (typeof v === 'string' ? fromBase64(v) : new Uint8Array(v));
+
 // ---- Crypto -------------------------------------------------------------------
 
 async function deriveKey(password, salt, iterations) {
@@ -48,26 +53,162 @@ async function deriveKey(password, salt, iterations) {
     );
 }
 
-async function seal(key, data, header) {
+/** Encrypt `data`. The vault keeps iv/data as raw bytes; backup files need base64 text. */
+async function seal(key, data, header, { text = false } = {}) {
     const iv = crypto.getRandomValues(new Uint8Array(12)); // fresh for every save
-    const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(JSON.stringify(data)));
-    return { ...header, iv: toBase64(iv), data: toBase64(new Uint8Array(cipher)) };
+    const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(JSON.stringify(data))));
+    return text ? { ...header, iv: toBase64(iv), data: toBase64(cipher) } : { ...header, iv, data: cipher };
 }
 
 async function unseal(key, vault) {
-    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(vault.iv) }, key, fromBase64(vault.data));
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes(vault.iv) }, key, bytes(vault.data));
     return JSON.parse(decoder.decode(plain));
 }
 
-// ---- Stored vault ---------------------------------------------------------------
+// ---- Storage: IndexedDB, or localStorage where IndexedDB can't be opened -------
 
-function readVault() {
+const DB_NAME = 'budget-tracker';
+const STORE = 'vault';
+const RECORD = 'main';
+
+const asText = (v) => ({ ...v, iv: typeof v.iv === 'string' ? v.iv : toBase64(v.iv), data: typeof v.data === 'string' ? v.data : toBase64(v.data) });
+const asBytes = (v) => ({ ...v, iv: bytes(v.iv), data: bytes(v.data) });
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        if (!globalThis.indexedDB) return reject(new Error('IndexedDB is not available'));
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+        req.onsuccess = () => {
+            const db = req.result;
+            db.onversionchange = () => db.close(); // never block a future upgrade
+            resolve(db);
+        };
+        req.onerror = () => reject(req.error);
+        req.onblocked = () => reject(new Error('IndexedDB is blocked'));
+    });
+}
+
+function idbBackend(db) {
+    const run = (mode, op) =>
+        new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, mode);
+            const req = op(tx.objectStore(STORE));
+            let result;
+            req.onsuccess = () => (result = req.result);
+            tx.oncomplete = () => resolve(result); // only once the write is committed
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error ?? new Error('IndexedDB write aborted'));
+        });
+    return {
+        kind: 'indexeddb',
+        get: async () => (await run('readonly', (st) => st.get(RECORD))) ?? null,
+        put: (vault) => run('readwrite', (st) => st.put(asBytes(vault), RECORD)),
+        remove: () => run('readwrite', (st) => st.delete(RECORD)),
+    };
+}
+
+function readLocal() {
     try {
         const raw = localStorage.getItem(VAULT_KEY);
         return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
     }
+}
+
+const localBackend = {
+    kind: 'localstorage',
+    get: async () => readLocal(),
+    put: async (vault) => localStorage.setItem(VAULT_KEY, JSON.stringify(asText(vault))), // throws if storage is full
+    remove: async () => localStorage.removeItem(VAULT_KEY),
+};
+
+const sameBytes = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+/** Copy a localStorage vault into IndexedDB. The old copy is deleted only once the new one reads back identical. */
+async function migrate(store) {
+    const old = readLocal();
+    if (!old) return;
+    if (!(await store.get())) {
+        await store.put(old);
+        const copy = await store.get();
+        if (!copy || !sameBytes(bytes(copy.data), bytes(old.data)) || !sameBytes(bytes(copy.iv), bytes(old.iv))) {
+            await store.remove();
+            throw new Error('The moved vault did not read back the same');
+        }
+    }
+    localStorage.removeItem(VAULT_KEY);
+}
+
+let backend = null;
+let cached = null; // the stored vault (header + ciphertext), kept in step with storage
+
+/**
+ * Open storage and load the vault: call once before anything else. If IndexedDB
+ * can't be used, or moving the old data fails, it keeps working from localStorage.
+ */
+export async function init() {
+    if (backend) return backend.kind;
+    try {
+        const store = idbBackend(await openDB());
+        await migrate(store);
+        backend = store;
+    } catch (err) {
+        console.warn('Budget Tracker: keeping data in localStorage.', err);
+        backend = localBackend;
+    }
+    try {
+        cached = await backend.get();
+    } catch {
+        cached = null;
+    }
+    return backend.kind;
+}
+
+export const storageKind = () => backend?.kind ?? '';
+
+async function write(vault) {
+    await backend.put(vault);
+    cached = vault;
+    announce();
+}
+
+// ---- Other open tabs ---------------------------------------------------------------
+
+const channel = globalThis.BroadcastChannel ? new BroadcastChannel('budget-tracker.vault') : null;
+let onChange = () => {};
+
+function announce() {
+    channel?.postMessage('changed');
+}
+
+/** `fn(exists)` runs when another tab saved, changed the password or deleted the account. */
+export function onExternalChange(fn) {
+    onChange = fn;
+}
+
+async function reloadFromStorage() {
+    if (!backend) return;
+    try {
+        cached = await backend.get();
+    } catch {
+        return;
+    }
+    onChange(cached !== null);
+}
+
+channel?.addEventListener('message', reloadFromStorage);
+// Without BroadcastChannel, localStorage's own event still covers the fallback.
+window.addEventListener('storage', (e) => {
+    if (!channel && e.key === VAULT_KEY && backend === localBackend) reloadFromStorage();
+});
+
+// ---- Stored vault ---------------------------------------------------------------
+
+function readVault() {
+    if (!backend) throw new Error('vault.init() has not run yet');
+    return cached;
 }
 
 const firstName = (name) => String(name ?? '').trim().split(/\s+/)[0].slice(0, 30);
@@ -85,7 +226,7 @@ export async function createAccount(name, password, data) {
     const key = await deriveKey(password, salt, ITERATIONS);
     const header = { v: 1, name: firstName(name), kdf: { alg: 'PBKDF2-SHA256', iter: ITERATIONS, salt: toBase64(salt) } };
     const vault = await seal(key, data, header);
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault)); // may throw if storage is full
+    await write(vault); // may throw if storage is full
     session = { key, header };
 }
 
@@ -109,15 +250,14 @@ export async function save(data) {
     if (!session) throw new Error('Locked');
     session.header.name = firstName(data.profile?.name) || session.header.name;
     const vault = await seal(session.key, data, session.header);
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+    await write(vault);
 }
 
 /** Decrypt whatever another tab just saved (null if it can't be read with our key). */
 export async function readLatest() {
-    const vault = readVault();
-    if (!vault || !session) return null;
+    if (!cached || !session) return null;
     try {
-        return await unseal(session.key, vault);
+        return await unseal(session.key, cached);
     } catch {
         return null;
     }
@@ -150,7 +290,7 @@ export const isEncryptedBackup = (file) => file?.app === 'budget-tracker' && fil
 
 export async function exportEncrypted(data) {
     if (!session) throw new Error('Locked');
-    return seal(session.key, data, { app: 'budget-tracker', kind: BACKUP_KIND, v: 1, exportedAt: new Date().toISOString(), kdf: session.header.kdf });
+    return seal(session.key, data, { app: 'budget-tracker', kind: BACKUP_KIND, v: 1, exportedAt: new Date().toISOString(), kdf: session.header.kdf }, { text: true });
 }
 
 /** Decrypt a backup file with the password it was made with; null if the password is wrong. */
@@ -164,10 +304,13 @@ export async function decryptBackup(file, password) {
 }
 
 /** Forgot password: the only way out is wiping this device's data. */
-export function deleteAccount() {
+export async function deleteAccount() {
     session = null;
-    localStorage.removeItem(VAULT_KEY);
+    cached = null;
+    await backend.remove();
+    localStorage.removeItem(VAULT_KEY); // in case an old copy is still around
     removeLegacy();
+    announce();
 }
 
 // ---- Unencrypted data from before accounts existed --------------------------------
