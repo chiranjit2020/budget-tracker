@@ -840,6 +840,27 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .goal-actions:empty { display: none; }
 .goal-money-hint { margin: -.6rem 0 1.4rem; font-size: 1.3rem; }
 
+/* Lend & borrow */
+.debt-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.4rem; padding: 1.4rem 1.6rem; border-radius: var(--radius); background: var(--soft); }
+.debt-totals small { display: block; font-size: 1.3rem; color: var(--muted); }
+.debt-totals strong { font-size: 1.9rem; font-weight: 700; }
+.debt-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.debt { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; padding: 1.2rem 0; border-top: 1px solid var(--line); }
+.debt:first-child { border-top: 0; padding-top: .2rem; }
+.debt-main { min-width: 0; }
+.debt-title { display: block; padding: 0; border: 0; background: none; font-size: 1.5rem; font-weight: 600; color: var(--dark-blue); text-align: left; }
+.debt-title:hover { text-decoration: underline; }
+.debt-detail { display: block; margin-top: .2rem; font-size: 1.3rem; color: var(--muted); }
+.debt.due-overdue .debt-detail, .debt.due-today .debt-detail { color: var(--danger); font-weight: 600; }
+.debt.due-soon .debt-detail { color: var(--dark-blue); font-weight: 600; }
+.debt.settled { opacity: .7; }
+.debt-actions { display: flex; align-items: center; gap: 1.6rem; margin-top: .8rem; }
+.debt-actions .link { display: inline-flex; align-items: center; gap: .5rem; }
+.debt-actions .icon { width: 1.5rem; height: 1.5rem; }
+.debt-toggle { margin-top: 1rem; }
+.debt-clear { margin: 0 0 .4rem; font-size: 1.4rem; }
+.field-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 1.2rem; }
+
 /* Dashboard insights */
 .insights { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
 .insight { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; align-items: start; padding: 1.2rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }

@@ -3,6 +3,7 @@ import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, no
 import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
+import { debtsSection } from '../debts-ui.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -199,6 +200,8 @@ export function render(root, ctx) {
             ${budgetSection(state, key)}
 
             ${goalsSection(state)}
+
+            ${debtsSection(state)}
 
             <section class="block">
                 <div class="section-head">

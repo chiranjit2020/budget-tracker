@@ -32,6 +32,7 @@ function blank() {
         lastCategory: { expense: '', income: '' }, // pre-selected in the add form
         lastMethod: { expense: '', income: '' },
         goals: [], // savings goals (see cleanGoal)
+        debts: [], // money lent or borrowed (see cleanDebt)
         lastBackup: '',
     };
 }
@@ -77,6 +78,33 @@ function cleanGoal(g) {
         by: isDay(g.by) ? g.by : '', // optional target date
         created: isDay(g.created) ? g.created : new Date().toISOString().slice(0, 10),
         entries,
+    };
+}
+
+// ---- Lend & borrow ---------------------------------------------------------------
+// Money lent to or borrowed from someone. Kept apart from transactions: lending
+// isn't spending. Repayments are dated entries, so they can be partial.
+
+const MAX_DEBTS = 200;
+export const DEBT_KINDS = ['lent', 'borrowed'];
+
+function cleanDebt(x) {
+    if (!x || typeof x !== 'object' || !DEBT_KINDS.includes(x.kind)) return null;
+    const person = String(x.person ?? '').trim().slice(0, 40);
+    const amount = Math.round(Number(x.amount));
+    if (!person || !Number.isSafeInteger(amount) || amount <= 0 || !isDay(x.date)) return null;
+    const repayments = (Array.isArray(x.repayments) ? x.repayments : [])
+        .map((e) => ({ id: typeof e?.id === 'string' && e.id ? e.id : uid(), amount: Math.round(Number(e?.amount)), date: e?.date }))
+        .filter((e) => Number.isSafeInteger(e.amount) && e.amount > 0 && isDay(e.date));
+    return {
+        id: typeof x.id === 'string' && x.id ? x.id : uid(),
+        kind: x.kind,
+        person,
+        amount,
+        date: x.date,
+        due: isDay(x.due) ? x.due : '',
+        note: String(x.note ?? '').trim().slice(0, 100),
+        repayments,
     };
 }
 
@@ -166,6 +194,7 @@ export function normalize(data) {
         s.lastMethod[type] = cleanMethod(data.lastMethod?.[type]);
     }
     s.goals = Array.isArray(data.goals) ? data.goals.map(cleanGoal).filter(Boolean).slice(0, MAX_GOALS) : [];
+    s.debts = Array.isArray(data.debts) ? data.debts.map(cleanDebt).filter(Boolean).slice(0, MAX_DEBTS) : [];
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -401,6 +430,59 @@ export function restoreGoal({ goal, index }) {
     });
 }
 
+// ---- Lend & borrow: changes ----------------------------------------------------
+
+const repaid = (debt) => debt.repayments.reduce((n, e) => n + e.amount, 0);
+
+/** Record money lent or borrowed. Returns the record or null. */
+export function addDebt(input) {
+    if (state.debts.length >= MAX_DEBTS) return null;
+    const debt = cleanDebt({ ...input, id: uid(), repayments: [] });
+    if (!debt) return null;
+    return commit((d) => d.debts.push(debt)) ? debt : null;
+}
+
+/** Change a record's details; repayments stay. The amount can't drop below what's been repaid. */
+export function updateDebt(id, input) {
+    const current = state.debts.find((x) => x.id === id);
+    const debt = current && cleanDebt({ ...current, ...input, id, repayments: current.repayments });
+    if (!debt || debt.amount < repaid(current)) return null;
+    return commit((d) => {
+        const i = d.debts.findIndex((x) => x.id === id);
+        if (i >= 0) d.debts[i] = debt;
+    }) ? debt : null;
+}
+
+/** Record a (part) repayment; can't exceed what's still owed. Returns the entry or null. */
+export function repayDebt(id, amount, today) {
+    const debt = state.debts.find((x) => x.id === id);
+    if (!debt || !Number.isSafeInteger(amount) || amount <= 0 || !isDay(today)) return null;
+    if (amount > debt.amount - repaid(debt)) return null;
+    const entry = { id: uid(), amount, date: today };
+    return commit((d) => d.debts.find((x) => x.id === id).repayments.push(entry)) ? entry : null;
+}
+
+export function removeRepayment(debtId, entryId) {
+    return commit((d) => {
+        const debt = d.debts.find((x) => x.id === debtId);
+        if (debt) debt.repayments = debt.repayments.filter((e) => e.id !== entryId);
+    });
+}
+
+/** Delete a record; returns it (with its position) so it can be restored. */
+export function deleteDebt(id) {
+    const index = state.debts.findIndex((x) => x.id === id);
+    if (index < 0) return null;
+    const debt = state.debts[index];
+    return commit((d) => d.debts.splice(index, 1)) ? { debt, index } : null;
+}
+
+export function restoreDebt({ debt, index }) {
+    return commit((d) => {
+        if (!d.debts.some((x) => x.id === debt.id)) d.debts.splice(Math.min(index, d.debts.length), 0, debt);
+    });
+}
+
 /** Stop a repeat. Transactions it already added stay. */
 export function deleteRecurring(id) {
     return commit((d) => {
@@ -488,6 +570,18 @@ export function importBackup(data) {
             }
             const have = new Set(mine.entries.map((e) => e.id)); // same goal: add entries it doesn't have yet
             for (const e of goal.entries) if (!have.has(e.id)) mine.entries.push(e);
+        }
+        for (const debt of incoming.debts) {
+            const mine = d.debts.find((x) => x.id === debt.id);
+            if (!mine) {
+                if (d.debts.length < MAX_DEBTS) d.debts.push(debt);
+                continue;
+            }
+            // Same record: add repayments it doesn't have, never beyond the amount owed.
+            const have = new Set(mine.repayments.map((e) => e.id));
+            for (const e of debt.repayments) {
+                if (!have.has(e.id) && repaid(mine) + e.amount <= mine.amount) mine.repayments.push(e);
+            }
         }
         const ruleIds = new Set(d.recurring.map((r) => r.id));
         for (const r of incoming.recurring) if (!ruleIds.has(r.id)) d.recurring.push(r);

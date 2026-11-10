@@ -9,6 +9,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Insights:** short notes on the dashboard: where this month is heading (repeating bills like rent aren't multiplied), which categories rose or fell, and your average spend per day. A month in progress is compared with the same days of last month, so early-month figures are fair.
 - **Spending calendar:** the month as a heat-map on the dashboard; darker days are the ones you spent most on (ranked against each other, so one big bill doesn't wash out the rest). Tap a day to see its entries.
 - **Savings goals:** e.g. *Goa trip ₹30,000 by 10 Mar*. Add or withdraw money (with Undo) and see the progress and how much to save each month to get there. Goals are kept apart from expenses, so setting money aside doesn't count as spending.
+- **Lend & borrow:** record money you lent or borrowed (who, amount, optional due date and note). Settle in full or in parts (with Undo), see what people owe you and what you owe, and tap **Remind** to send a friendly message through WhatsApp/SMS (on desktop it's copied instead). Kept apart from expenses and income.
 - **Monthly budgets:** set a limit per expense category. The dashboard shows what's left (blue, amber at 80%, red when over) and how much you can spend per day for the rest of the month. Alerts appear when an expense crosses 80% or the limit, and the report shows budget vs actual.
 - **Recurring transactions:** mark any entry to repeat every week, month or year (rent, salary, SIPs, EMIs, subscriptions). Due entries are added automatically when you open the app, including any missed while it was closed, and are marked ↻. Pause, resume or stop them in Settings.
 - **Quick-add favourites:** tick "Save as a quick-add favourite" when adding (e.g. Tea ₹20, Metro ₹40). They appear as one-tap buttons on the dashboard (with Undo). Change a price or remove one in Settings (or via the dashboard's Edit link).
@@ -53,7 +54,7 @@ python -m http.server 8000
 
 (Opening `index.html` directly from disk won't work, because ES modules and service workers need `http://`.)
 
-To check the calculations: `node tests/insights.test.mjs`, `node tests/calendar.test.mjs` and `node tests/goals.test.mjs` (Node 18+).
+To check the calculations: `node tests/insights.test.mjs`, `node tests/calendar.test.mjs`, `node tests/goals.test.mjs` and `node tests/debts.test.mjs` (Node 18+).
 
 ## Deploy to GitHub Pages
 

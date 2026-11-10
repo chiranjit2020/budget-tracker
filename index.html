@@ -96,6 +96,7 @@
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></symbol>
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></symbol>
         <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
+        <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></symbol>
         <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
     </svg>
 
@@ -278,6 +279,73 @@
             </label>
             <p class="muted goal-money-hint" id="goal-money-hint"></p>
             <p class="field-error" id="goal-money-error" role="alert" hidden></p>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Lend & borrow: a record -->
+    <dialog id="debt-dialog" class="sheet" aria-labelledby="debt-title">
+        <form id="debt-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="debt-title">Lend or borrow</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
+            </div>
+            <fieldset class="segmented">
+                <legend class="sr-only">Lent or borrowed</legend>
+                <label><input type="radio" name="kind" value="lent" checked /><span>I lent</span></label>
+                <label><input type="radio" name="kind" value="borrowed" /><span>I borrowed</span></label>
+            </fieldset>
+            <label class="field">
+                <span id="debt-person-label">To whom?</span>
+                <input name="person" type="text" maxlength="40" list="debt-people" placeholder="Name" autocomplete="off" />
+                <datalist id="debt-people"></datalist>
+            </label>
+            <label class="field">
+                <span>Amount</span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" /></span>
+            </label>
+            <div class="field-pair">
+                <label class="field">
+                    <span>Date</span>
+                    <input name="date" type="date" />
+                </label>
+                <label class="field">
+                    <span>Due back <small>(optional)</small></span>
+                    <input name="due" type="date" />
+                </label>
+            </div>
+            <label class="field">
+                <span>Note <small>(optional)</small></span>
+                <input name="note" type="text" maxlength="100" placeholder="e.g. Movie tickets" autocomplete="off" />
+            </label>
+            <p class="field-error" id="debt-error" role="alert" hidden></p>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-danger-ghost" id="debt-delete" hidden>Delete</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Lend & borrow: settle up -->
+    <dialog id="settle-dialog" class="sheet" aria-labelledby="settle-title">
+        <form id="settle-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="settle-title">Settle up</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
+            </div>
+            <label class="field">
+                <span id="settle-label">Amount paid back</span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" aria-describedby="settle-hint" /></span>
+            </label>
+            <p class="muted goal-money-hint" id="settle-hint"></p>
+            <p class="field-error" id="settle-error" role="alert" hidden></p>
             <div class="sheet-actions">
                 <button type="button" class="btn btn-ghost" data-close>Cancel</button>
                 <button type="submit" class="btn btn-primary">Save</button>
