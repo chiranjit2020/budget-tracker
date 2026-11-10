@@ -25,7 +25,7 @@ All data (transactions, budgets, goals, money given & taken, profile) is stored 
 | 5 | No Content Security Policy; the app could be shown inside another site's frame (clickjacking) | Medium | A02 Security Misconfiguration | T1059.007 JavaScript · T1189 Drive-by Compromise | **Fixed:** strict CSP (`script-src 'self'`, no inline scripts, no eval, `object-src 'none'`, `base-uri 'none'`); the app hides itself when framed; the one inline script moved to `js/boot.js` |
 | 6 | The wait after 5 wrong passwords could be skipped by reloading the page | Medium | A07 Authentication Failures | T1110.001 Brute Force: Password Guessing | **Fixed:** the counter survives reloads (capped at 1 hour so nobody is locked out for days) |
 | 7 | Easy passwords such as `12345678` or `password` were accepted. Anyone who copies the encrypted data can guess offline, so password strength is the real protection | Medium | A07 Authentication Failures | T1110.002 Password Cracking | **Fixed:** common passwords, runs (12345678, abcdefgh, qwertyui), one repeated character and the person's own name are refused, with a plain-words reason |
-| 8 | Font requests told Google which page they came from | Low | A02 Security Misconfiguration (privacy) | T1592 Gather Victim Host Information | **Fixed:** `no-referrer` policy |
+| 8 | The app loaded its fonts from Google Fonts: a third party that saw every visit and could change the CSS | Low | A03 Software Supply Chain Failures · A02 (privacy) | T1195 Supply Chain Compromise · T1592 Gather Victim Host Information | **Fixed:** both fonts are now shipped with the app (`fonts/`, SIL Open Font License); the app makes **no requests to any other site**, and the CSP allows only its own origin. A `no-referrer` policy is set as well |
 
 ## Tested and found safe
 
@@ -40,7 +40,7 @@ All data (transactions, budgets, goals, money given & taken, profile) is stored 
 | Readable data in browser storage | A04 Cryptographic Failures | T1005 / T1555.003 Credentials from Web Browsers | Safe: only ciphertext plus non-secret settings (theme, auto-lock, folded cards, the wrong-password counter). The password is never stored |
 | Floating-point errors in money | A06 Insecure Design | — | Safe: amounts are whole paise; parsing and goal pace use exact integer maths |
 | Network interception | A04 Cryptographic Failures | T1557 Adversary-in-the-Middle | Safe: GitHub Pages serves HTTPS only and `github.io` is HSTS-preloaded; nothing secret is sent anyway |
-| Supply chain: Chart.js | A03 Software Supply Chain Failures | T1195.001 Compromise Software Dependencies | Safe: version 4.5.0 is shipped inside the app (no CDN) and was checked byte-for-byte against the official npm package |
+| Supply chain: Chart.js and fonts | A03 Software Supply Chain Failures | T1195.001 Compromise Software Dependencies | Safe: Chart.js 4.5.0 is shipped inside the app (no CDN) and was checked byte-for-byte against the official npm package; the fonts are shipped too, so nothing is loaded from other sites at all |
 | Fingerprint / face unlock | A07 Authentication Failures | T1556 Modify Authentication Process | Safe in tests: the data key is wrapped by a secret only the device's fingerprint hardware releases (WebAuthn PRF); a different device, a tampered copy or a changed password all fail |
 
 ### OWASP items that mostly don't apply
@@ -54,7 +54,6 @@ There is no server, so **A01** (server-side access control), **A05** (SQL/comman
 - **"Forgot password?" wipes the device's data without the password** (T1485 Data Destruction). This is by design, because without the password the data can't be recovered anyway. Regular backups (with the 30-day reminder) are the protection.
 - **The first name is shown on the login screen** before unlocking ("Welcome back, …"). It's stored unencrypted in the vault header. Low sensitivity; kept for friendliness.
 - **CSV exports and older unencrypted backups are plain text.** The app warns about this where they're made.
-- **Google Fonts is a third-party service.** The CSP limits it to fonts only, and `no-referrer` hides the page address. Possible improvement: host the two fonts inside the app.
 - **GitHub Pages can't send security headers** (CSP `frame-ancestors`, `X-Frame-Options`). The CSP is set with a `<meta>` tag, and framing is handled by `js/boot.js` instead.
 - **JavaScript can't wipe strings from memory.** Data is dropped on lock, but the browser decides when the memory is actually reused.
 

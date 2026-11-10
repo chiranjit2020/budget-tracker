@@ -3,8 +3,7 @@
 // falling back to the cached copy when offline or the network is slow.
 // Bump VERSION when files are added or removed from APP_SHELL.
 
-const VERSION = 'bt-v1.25.0';
-const FONT_CACHE = 'bt-fonts-v2'; // renamed so old font files get cleaned up
+const VERSION = 'bt-v1.26.0';
 const NETWORK_TIMEOUT_MS = 3000;
 
 const APP_SHELL = [
@@ -12,6 +11,14 @@ const APP_SHELL = [
     './index.html',
     './manifest.webmanifest',
     './css/style.css',
+    './css/fonts.css',
+    './fonts/barlow-digits-400.woff2',
+    './fonts/barlow-digits-500.woff2',
+    './fonts/barlow-digits-600.woff2',
+    './fonts/barlow-digits-700.woff2',
+    './fonts/barlow-digits-800.woff2',
+    './fonts/manrope-latin-ext.woff2',
+    './fonts/manrope-latin.woff2',
     './js/app.js',
     './js/store.js',
     './js/format.js',
@@ -64,7 +71,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches
             .keys()
-            .then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== FONT_CACHE).map((k) => caches.delete(k))))
+            .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
             .then(() => self.clients.claim()),
     );
 });
@@ -84,14 +91,6 @@ async function networkFirst(request) {
     return Promise.race([network.catch(() => cached), timeout]);
 }
 
-async function cacheFirst(request) {
-    const cache = await caches.open(FONT_CACHE);
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    const response = await fetch(request);
-    if (response.ok || response.type === 'opaque') cache.put(request, response.clone());
-    return response;
-}
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
@@ -100,7 +99,5 @@ self.addEventListener('fetch', (event) => {
 
     if (url.origin === self.location.origin) {
         event.respondWith(networkFirst(request));
-    } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-        event.respondWith(cacheFirst(request));
     }
 });

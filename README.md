@@ -20,7 +20,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Expenses / Income:** full lists filtered by month and category, with search.
 - **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.
 - **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
-- **Fonts:** Manrope for text, Barlow for digits (0–9) only.
+- **Fonts:** Manrope for text, Barlow for digits (0–9) only. Both ship with the app (`fonts/`, SIL Open Font License), so nothing is loaded from other sites.
 - **Light and dark mode:** Auto (follows your device), Light or Dark (a black & gold scheme), switchable from the profile popup or Settings → Appearance.
 - Works on phone, tablet and desktop. Installs to the home screen and runs offline.
 
@@ -47,7 +47,7 @@ Once installed, **long-press the app icon** (Android) or right-click it in the t
 
 ## Run locally
 
-No build step and nothing to install. The only third-party code is Chart.js (MIT), included as a single file in `js/vendor/`. Serve the folder with any static server:
+No build step and nothing to install. The only third-party files are Chart.js (MIT, in `js/vendor/`) and the two fonts (SIL OFL, in `fonts/`), all shipped with the app. Serve the folder with any static server:
 
 ```sh
 python -m http.server 8000
@@ -73,6 +73,8 @@ index.html              App shell, icon sprite, dialogs
 manifest.webmanifest    PWA manifest
 sw.js                   Service worker (offline support)
 css/style.css           All styles (responsive + print)
+css/fonts.css           @font-face rules for the bundled fonts
+fonts/                  Manrope + Barlow (digits only) WOFF2 files and their OFL licences
 js/app.js               Routing, header, global events
 js/store.js             App state, validation, backup/import, totals
 js/format.js            ₹ formatting, amount parsing, dates

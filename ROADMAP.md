@@ -20,8 +20,6 @@ All planned features are built. Pick the next one from *Later / maybe*.
 - iPhone: install via Share → Add to Home Screen, login, dark mode.
 - Fingerprint / face unlock: turn on in Settings → Security, lock, unlock with a scan (Android Chrome, iPhone Safari iOS 18+). Also check that changing the password turns it off.
 
-- **Self-host the fonts** (Manrope, Barlow digits) instead of Google Fonts: fewer third parties (see SECURITY.md).
-
 ## Not a good fit right now
 
 - Reading UPI/bank SMS automatically: web apps can't read SMS.
@@ -29,4 +27,4 @@ All planned features are built. Pick the next one from *Later / maybe*.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, given & taken tracker (plain wording), dashboard tidy-up (order, foldable cards, "More you can do"), Chart.js doughnut for categories, exact amount maths, fingerprint / face unlock, black & gold dark mode, security review (OWASP/MITRE) with fixes.
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, given & taken tracker (plain wording), dashboard tidy-up (order, foldable cards, "More you can do"), Chart.js doughnut for categories, exact amount maths, fingerprint / face unlock, black & gold dark mode, security review (OWASP/MITRE) with fixes, self-hosted fonts.
