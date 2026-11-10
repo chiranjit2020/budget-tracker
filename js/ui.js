@@ -1,6 +1,6 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions, lastMethod, METHOD_LABELS } from './store.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions, lastMethod, METHOD_LABELS, planRepeat } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
@@ -291,11 +291,32 @@ const repeatNote = document.getElementById('repeat-note');
 const repeatHint = document.getElementById('repeat-hint');
 const FREQ_WORD = { weekly: 'every week', monthly: 'every month', yearly: 'every year' };
 
-/** Under the Repeat menu: when the next one will be added. */
+const repeatEnd = document.getElementById('repeat-end');
+
+/** The "Stops" choice as { type, count } / { type, date } / null; '' fields mean not filled in yet. */
+function readEnd() {
+    const kind = txForm.elements.end.value;
+    if (kind === 'count') return { type: 'count', count: Number(txForm.elements.endCount.value) };
+    if (kind === 'date') return { type: 'date', date: txForm.elements.endDate.value };
+    return null;
+}
+
+/** Under the Repeat menu: when the next one will be added, and where it stops. */
 function updateRepeatHint() {
     const freq = txForm.repeat.value;
     const date = (txForm.date.value || nowLocal()).slice(0, 10);
-    repeatHint.textContent = freq ? `Next one is added automatically on ${fmtDate(nextOccurrence({ freq, start: date }, date))}.` : '';
+    repeatEnd.hidden = !freq;
+    txForm.elements.endCount.hidden = txForm.elements.end.value !== 'count';
+    txForm.elements.endDate.hidden = txForm.elements.end.value !== 'date';
+    if (!freq) {
+        repeatHint.textContent = '';
+        return;
+    }
+    let text = `Next one is added automatically on ${fmtDate(nextOccurrence({ freq, start: date }, date))}.`;
+    const end = readEnd();
+    const plan = end && (end.type === 'count' ? end.count >= 2 && end.count <= 600 && planRepeat({ freq, start: date }, end) : end.date && planRepeat({ freq, start: date }, end));
+    if (plan) text = `${plan.times} times in all, including this one: the last on ${fmtDate(plan.last)}.`;
+    repeatHint.textContent = text;
 }
 
 txForm.addEventListener('change', (e) => {
@@ -304,8 +325,10 @@ txForm.addEventListener('change', (e) => {
         setMethod(editingId ? methodValue : lastMethod(e.target.value), e.target.value);
         renderSuggestions();
     }
-    if (e.target.name === 'repeat' || e.target.name === 'date') updateRepeatHint();
+    if (['repeat', 'date', 'end', 'endDate'].includes(e.target.name)) updateRepeatHint();
 });
+
+txForm.elements.endCount.addEventListener('input', updateRepeatHint);
 
 txForm.amount.addEventListener('input', () => {
     showAmountError('');
@@ -336,14 +359,28 @@ txForm.addEventListener('submit', (e) => {
         if (old && old.type === 'expense' && old.category === data.category && old.date.slice(0, 7) === data.date.slice(0, 7)) before -= old.amount;
     }
     const repeat = editingId ? '' : txForm.repeat.value;
-    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat, remember: true });
+    const end = repeat ? readEnd() : null;
+    if (end?.type === 'count' && !(Number.isInteger(end.count) && end.count >= 2 && end.count <= 600)) {
+        repeatHint.textContent = 'Enter how many times in all, from 2 to 600 (e.g. 12 for a 1-year EMI).';
+        txForm.elements.endCount.focus();
+        return;
+    }
+    if (end?.type === 'date') {
+        const next = nextOccurrence({ freq: repeat, start: data.date.slice(0, 10) }, data.date.slice(0, 10));
+        if (!end.date || end.date < next) {
+            repeatHint.textContent = `Pick a last date on or after ${fmtDate(next)}, when the next one is added.`;
+            txForm.elements.endDate.focus();
+            return;
+        }
+    }
+    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat, end, remember: true });
     if (!saved) return; // the save-error handler already told the user
     txDialog.close();
     // A repeat that started in the past catches up on the dates already due.
     const caughtUp = repeat ? runRecurring(nowLocal().slice(0, 10)).length : 0;
     const alert = data.type === 'expense' ? budgetAlert(data.category, data.date, before) : null;
     let message = editingId ? 'Transaction updated' : `${data.type === 'income' ? 'Income' : 'Expense'} of ${money(amount)} added`;
-    if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
+    if (repeat) message += `, repeating ${FREQ_WORD[repeat]}${end ? ` until ${fmtDate(planRepeat({ freq: repeat, start: data.date.slice(0, 10) }, end).last)}` : ''}${caughtUp ? ` (+${caughtUp} earlier date${caughtUp === 1 ? '' : 's'} filled in)` : ''}`;
     if (!editingId && txForm.favorite.checked) {
         const fav = addFavorite(data);
         if (fav === 'added') message += ' and saved as a quick-add favourite';

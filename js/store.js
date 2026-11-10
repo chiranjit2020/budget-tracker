@@ -135,6 +135,47 @@ export function nextOccurrence(rule, from) {
     return isoDay(new Date(y + 1, sm - 1, Math.min(sd, daysIn(y + 1, sm - 1))));
 }
 
+export const MAX_REPEAT_TIMES = 600;
+
+/** When a repeat stops: { type: 'count', count } (times in all), { type: 'date', date } (last date), or null (never). */
+function cleanEnd(e) {
+    if (e?.type === 'count' && Number.isSafeInteger(e.count) && e.count >= 1 && e.count <= MAX_REPEAT_TIMES) return { type: 'count', count: e.count };
+    if (e?.type === 'date' && isDay(e.date)) return { type: 'date', date: e.date };
+    return null;
+}
+
+/** Has this repeat added its last entry? (`done` counts the entries it has added.) */
+export function repeatDone(r) {
+    if (!r.end) return false;
+    return r.end.type === 'count' ? r.done >= r.end.count : r.next > r.end.date;
+}
+
+/**
+ * What an end would mean for a repeat starting on `start`: how many times in all, and the last date.
+ * { times, last } or null when the end is before the start.
+ */
+export function planRepeat({ freq, start }, end) {
+    const rule = { freq, start };
+    let date = start;
+    let times = 1;
+    if (end?.type === 'count') {
+        while (times < end.count) {
+            date = nextOccurrence(rule, date);
+            times++;
+        }
+        return { times, last: date };
+    }
+    if (end?.type === 'date') {
+        if (end.date < start) return null;
+        for (let next = nextOccurrence(rule, date); next <= end.date && times < MAX_REPEAT_TIMES; next = nextOccurrence(rule, next)) {
+            date = next;
+            times++;
+        }
+        return { times, last: date };
+    }
+    return null;
+}
+
 function cleanRule(r) {
     if (!r || !TYPES.includes(r.type) || !FREQUENCIES.includes(r.freq)) return null;
     const amount = Math.round(Number(r.amount));
@@ -150,8 +191,11 @@ function cleanRule(r) {
         start: r.start,
         next: r.next,
         time: /^\d{2}:\d{2}$/.test(r.time) ? r.time : '09:00',
-        active: r.active !== false,
+        active: r.active !== false && r.finished !== true,
         method: cleanMethod(r.method),
+        end: cleanEnd(r.end),
+        done: Number.isSafeInteger(r.done) && r.done >= 0 ? r.done : 0, // entries this repeat has added
+        finished: r.finished === true, // added its last entry (can't be resumed; give it a new end instead)
     };
 }
 
@@ -188,6 +232,11 @@ export function normalize(data) {
     s.transactions = data.transactions.map(cleanTx).filter(Boolean).sort(byDateDesc);
     s.budgets = cleanBudgets(data.budgets);
     s.recurring = Array.isArray(data.recurring) ? data.recurring.map(cleanRule).filter(Boolean) : [];
+    // Repeats saved before they counted their entries: count the entries they've added so far.
+    data.recurring?.forEach?.((raw, i) => {
+        const rule = s.recurring.find((r) => r.id === raw?.id);
+        if (rule && !Number.isSafeInteger(raw?.done)) rule.done = s.transactions.filter((t) => t.recurringId === rule.id).length;
+    });
     s.favorites = Array.isArray(data.favorites) ? data.favorites.map(cleanFavorite).filter(Boolean).slice(0, MAX_FAVORITES) : [];
     for (const type of TYPES) {
         const c = data.lastCategory?.[type];
@@ -286,14 +335,15 @@ export function setSaveErrorHandler(fn) {
  * Add a transaction. With `repeat` ('weekly' | 'monthly' | 'yearly') it also
  * creates a recurring rule that starts on this transaction's date.
  */
-export function addTx(input, { repeat = '', remember = false } = {}) {
+export function addTx(input, { repeat = '', end = null, remember = false } = {}) {
     const tx = cleanTx({ ...input, id: uid() });
     if (!tx) return null;
     let rule = null;
     if (FREQUENCIES.includes(repeat)) {
         const start = tx.date.slice(0, 10);
         const draft = { ...tx, id: uid(), freq: repeat, start, time: tx.date.slice(11, 16) };
-        rule = cleanRule({ ...draft, next: nextOccurrence(draft, start) });
+        rule = cleanRule({ ...draft, next: nextOccurrence(draft, start), end, done: 1 }); // this entry is the first
+        if (repeatDone(rule)) Object.assign(rule, { active: false, finished: true });
         tx.recurringId = rule.id;
     }
     return commit((d) => {
@@ -311,16 +361,21 @@ export function addTx(input, { repeat = '', remember = false } = {}) {
  * catching up on missed ones. Returns the transactions that were added.
  */
 export function runRecurring(today) {
-    if (!state.recurring.some((r) => r.active && r.next <= today)) return [];
+    if (!state.recurring.some((r) => r.active && (r.next <= today || repeatDone(r)))) return [];
     const added = [];
     commit((d) => {
         for (const r of d.recurring) {
             let guard = 0; // never loop forever on bad data
-            while (r.active && r.next <= today && guard++ < 400) {
+            while (r.active && r.next <= today && !repeatDone(r) && guard++ < 400) {
                 const tx = cleanTx({ ...r, id: uid(), date: `${r.next}T${r.time}`, recurringId: r.id });
                 d.transactions.push(tx);
                 added.push(tx);
+                r.done++;
                 r.next = nextOccurrence(r, r.next);
+            }
+            if (r.active && repeatDone(r)) {
+                r.active = false; // that was the last one
+                r.finished = true;
             }
         }
     });
@@ -333,10 +388,26 @@ export function runRecurring(today) {
  * The schedule (frequency, day, next date) and entries already added stay as they are.
  * Returns the updated rule, or null if the input isn't valid.
  */
-export function updateRecurring(id, { note, amount, category, method }) {
+export function updateRecurring(id, { note, amount, category, method, end }, today = new Date().toISOString().slice(0, 10)) {
     const current = state.recurring.find((r) => r.id === id);
-    const rule = current && cleanRule({ ...current, note, amount, category, method });
+    if (!current) return null;
+    const changes = { note, amount, category, method };
+    if (end !== undefined) {
+        changes.end = end;
+        // Repeats made before ends existed didn't count their entries: count them now.
+        if (end?.type === 'count' && !current.end && current.done === 0) {
+            changes.done = state.transactions.filter((t) => t.recurringId === id).length;
+        }
+    }
+    const rule = cleanRule({ ...current, ...changes, finished: false, active: current.active || current.finished });
     if (!rule) return null;
+    if (repeatDone(rule)) {
+        Object.assign(rule, { active: false, finished: true });
+    } else if (current.finished) {
+        // a later end brings a finished repeat back: skip the dates that passed while it was finished
+        let guard = 0;
+        while (rule.next < today && guard++ < 400) rule.next = nextOccurrence(rule, rule.next);
+    }
     return commit((d) => {
         const i = d.recurring.findIndex((r) => r.id === id);
         if (i >= 0) d.recurring[i] = rule;
@@ -344,6 +415,7 @@ export function updateRecurring(id, { note, amount, category, method }) {
 }
 
 export function setRecurringActive(id, active, today) {
+    if (active && state.recurring.find((x) => x.id === id)?.finished) return false; // give it a new end instead
     return commit((d) => {
         const r = d.recurring.find((x) => x.id === id);
         if (!r) return;

@@ -9,6 +9,7 @@ import { biometricSupported, biometricEnabled, enableBiometric, disableBiometric
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 import { themeSwitchHTML } from '../theme.js';
 import { soundsOn, setSoundsOn, playUnlockChime } from '../sound.js';
+import { repeatProgress } from '../upcoming.js';
 
 export const title = 'Settings';
 
@@ -47,7 +48,20 @@ function ruleEditor(r, categories) {
                         <label class="field fav-amount"><span>Amount</span><span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" inputmode="decimal" autocomplete="off" value="${plainAmount(r.amount)}"></span></label>
                         <label class="field"><span>Category</span><select name="category">${categoryOptions(categories, r.type, r.category)}</select></label>
                         ${methodSelect(r.type, r.method)}
-                        <p class="rec-edit-note">${r.active ? `Changes apply from the next one, on ${fmtDate(r.next)}.` : 'Changes apply when you resume it.'} Entries already added stay as they are.</p>
+                        <div class="field rec-end">
+                            <label for="rec-end-${esc(r.id)}">Stops</label>
+                            <div class="repeat-end-row">
+                                <select name="end" id="rec-end-${esc(r.id)}">
+                                    <option value=""${r.end ? '' : ' selected'}>Never</option>
+                                    <option value="count"${r.end?.type === 'count' ? ' selected' : ''}>After a set number of times</option>
+                                    <option value="date"${r.end?.type === 'date' ? ' selected' : ''}>On a date</option>
+                                </select>
+                                <input name="endCount" type="number" min="1" max="600" step="1" inputmode="numeric" placeholder="e.g. 12" aria-label="How many times in all" value="${r.end?.type === 'count' ? r.end.count : ''}"${r.end?.type === 'count' ? '' : ' hidden'}>
+                                <input name="endDate" type="date" aria-label="Last date" value="${r.end?.type === 'date' ? r.end.date : ''}"${r.end?.type === 'date' ? '' : ' hidden'}>
+                            </div>
+                            <small class="muted">${r.end?.type === 'count' || r.done ? `${r.done || 'None'} added so far.` : ''}</small>
+                        </div>
+                        <p class="rec-edit-note">${r.finished ? 'It has finished: give it a later end to carry on.' : r.active ? `Changes apply from the next one, on ${fmtDate(r.next)}.` : 'Changes apply when you resume it.'} Entries already added stay as they are.</p>
                         <p class="field-error" role="alert" hidden></p>
                         <div class="btn-row">
                             <button type="submit" class="btn btn-primary btn-sm">Save</button>
@@ -118,17 +132,17 @@ function recurringPanel(rules, categories) {
                         r.id === editingRule
                             ? ruleEditor(r, categories)
                             : `
-                <li class="rec-item${r.active ? '' : ' is-paused'}">
+                <li class="rec-item${r.active ? '' : ' is-paused'}${r.finished ? ' is-finished' : ''}">
                     <span class="tx-icon ${r.type}">${icon('repeat')}</span>
                     <span class="rec-main">
                         <strong>${esc(r.note || r.category)}</strong>
                         <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}${r.method ? ` · ${METHOD_LABELS[r.method]}` : ''}</small>
-                        <small>${r.active ? `Next: ${fmtDate(r.next)}` : 'Paused'}</small>
+                        <small>${[r.finished ? '' : r.active ? `Next: ${fmtDate(r.next)}` : 'Paused', repeatProgress(r)].filter(Boolean).join(' · ')}</small>
                     </span>
                     <span class="rec-actions">
                         <button type="button" class="icon-btn" data-rec-edit="${esc(r.id)}" aria-label="Change ${esc(r.note || r.category)}">${icon('edit')}</button>
-                        <button type="button" class="btn btn-ghost btn-sm" data-rec-toggle="${esc(r.id)}">${r.active ? 'Pause' : 'Resume'}</button>
-                        <button type="button" class="icon-btn" data-rec-delete="${esc(r.id)}" aria-label="Stop repeating ${esc(r.note || r.category)}">${icon('trash')}</button>
+                        ${r.finished ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-rec-toggle="${esc(r.id)}">${r.active ? 'Pause' : 'Resume'}</button>`}
+                        <button type="button" class="icon-btn" data-rec-delete="${esc(r.id)}" aria-label="${r.finished ? 'Remove' : 'Stop repeating'} ${esc(r.note || r.category)}">${icon('trash')}</button>
                     </span>
                 </li>`,
                     )
@@ -298,6 +312,13 @@ export function render(root, ctx = {}) {
 
     root.onchange = async (e) => {
         const el = e.target;
+        if (el.name === 'end' && el.closest('.rec-edit')) {
+            const f = el.closest('.rec-edit');
+            f.elements.endCount.hidden = el.value !== 'count';
+            f.elements.endDate.hidden = el.value !== 'date';
+            (el.value === 'count' ? f.elements.endCount : el.value === 'date' ? f.elements.endDate : el).focus();
+            return;
+        }
         if (el.id === 'sound-toggle') {
             setSoundsOn(el.checked);
             if (el.checked) playUnlockChime({ force: true }); // let them hear it
@@ -324,9 +345,40 @@ export function render(root, ctx = {}) {
                 form.elements.amount.focus();
                 return;
             }
+            const current = getState().recurring.find((r) => r.id === form.dataset.ruleId);
+            const kind = form.elements.end.value;
+            let end = null;
+            if (kind === 'count') {
+                const count = Number(form.elements.endCount.value);
+                if (!Number.isInteger(count) || count < 1 || count > 600) {
+                    error.textContent = 'Enter how many times in all, from 1 to 600 (e.g. 12 for a 1-year EMI).';
+                    error.hidden = false;
+                    form.elements.endCount.focus();
+                    return;
+                }
+                if (count < current.done) {
+                    error.textContent = `It has already added ${current.done}, so pick ${current.done} or more.`;
+                    error.hidden = false;
+                    form.elements.endCount.focus();
+                    return;
+                }
+                end = { type: 'count', count };
+            } else if (kind === 'date') {
+                if (!form.elements.endDate.value) {
+                    error.textContent = 'Pick the last date, or choose Never.';
+                    error.hidden = false;
+                    form.elements.endDate.focus();
+                    return;
+                }
+                end = { type: 'date', date: form.elements.endDate.value };
+            }
             editingRule = null; // close the editor (the save re-renders this page)
-            const rule = updateRecurring(form.dataset.ruleId, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value });
-            if (rule) toast(`${rule.note || rule.category} will be ${money(rule.amount)} from ${fmtDate(rule.next)}`);
+            const rule = updateRecurring(form.dataset.ruleId, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value, end }, nowLocal().slice(0, 10));
+            if (!rule) return;
+            const name = rule.note || rule.category;
+            if (rule.finished && !current.finished) toast(`${name} has now finished: ${repeatProgress(rule)}.`);
+            else if (rule.finished) toast(`${name} is still finished. Pick a later end to carry on.`);
+            else toast(`${name}: ${money(rule.amount)} from ${fmtDate(rule.next)}${rule.end ? ` · ${repeatProgress(rule)}` : ''}`);
             return;
         }
         if (e.target.classList.contains('fav-edit')) {

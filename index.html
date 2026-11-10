@@ -233,6 +233,18 @@
                     <option value="monthly">Every month</option>
                     <option value="yearly">Every year</option>
                 </select>
+                <div class="repeat-end" id="repeat-end" hidden>
+                    <label for="tx-end">Stops</label>
+                    <div class="repeat-end-row">
+                        <select name="end" id="tx-end" aria-describedby="repeat-hint">
+                            <option value="">Never</option>
+                            <option value="count">After a set number of times</option>
+                            <option value="date">On a date</option>
+                        </select>
+                        <input name="endCount" id="tx-end-count" type="number" min="2" max="600" step="1" inputmode="numeric" placeholder="e.g. 12" aria-label="How many times in all, including this one" hidden />
+                        <input name="endDate" id="tx-end-date" type="date" aria-label="Last date" hidden />
+                    </div>
+                </div>
                 <small class="repeat-hint" id="repeat-hint"></small>
             </div>
             <p class="repeat-note" id="repeat-note" hidden></p>

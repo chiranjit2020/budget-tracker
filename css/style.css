@@ -855,6 +855,9 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
 .sound-field { margin-top: 1.6rem; }
+.repeat-end { display: grid; gap: .5rem; margin-top: 1rem; }
+.repeat-end > label { font-size: 1.4rem; font-weight: 500; }
+.repeat-end-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; } /* menu, then the number or date under it: options stay readable on phones */
 .rec-edit-note { grid-column: 1 / -1; margin: -.4rem 0 .8rem; font-size: 1.25rem; color: var(--muted); }
 
 /* Settings: fingerprint or face unlock */
@@ -1063,6 +1066,10 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .rec-actions .icon-btn { color: var(--muted); }
 .rec-actions .icon-btn:hover { color: var(--danger); background: var(--danger-tint); }
 .rec-item.is-paused .tx-icon, .rec-item.is-paused .rec-main { opacity: .55; }
+.rec-item.is-finished .rec-main small:last-child { color: var(--success); font-weight: 600; }
+.rec-end { grid-column: 1 / -1; }
+.rec-end > label { display: block; margin-bottom: .5rem; font-size: 1.4rem; font-weight: 500; }
+.rec-end small { display: block; margin-top: .4rem; }
 .btn-sm { padding: .5rem 1.2rem; font-size: 1.3rem; }
 
 /* ---- Backups ------------------------------------------------------------- */

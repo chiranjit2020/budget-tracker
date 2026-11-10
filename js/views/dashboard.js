@@ -125,7 +125,7 @@ function upcomingSection(state, key) {
             ${items
                 .map((it) => {
                     const day = new Date(`${it.date}T00:00`);
-                    const sub = [it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', whenText(it.daysAway)].filter(Boolean);
+                    const sub = [it.total ? `${it.type === 'income' ? '' : 'Payment '}${it.nth} of ${it.total}` : '', it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', whenText(it.daysAway)].filter(Boolean);
                     return `<li class="up-item ${it.type}">
                 <span class="up-date" aria-hidden="true"><b>${day.getDate()}</b><small>${day.toLocaleDateString('en-IN', { month: 'short' })}</small></span>
                 <span class="up-main"><strong>${esc(it.name)}</strong><small>${esc(sub.join(' · '))}<span class="sr-only">, ${fmtDay(it.date)}</span></small></span>
