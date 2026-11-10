@@ -1178,7 +1178,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .auth-card > p { font-size: 1.4rem; margin-bottom: 2.2rem; }
 .auth-card .auth-note { padding: 1rem 1.2rem; border-radius: var(--radius-sm); background: var(--soft); color: var(--dark-blue); font-size: 1.3rem; }
 .auth-fine { margin: 2rem 0 0 !important; font-size: 1.25rem !important; color: var(--muted); }
-.auth-forgot { margin-top: 1.8rem; font-size: 1.3rem; }
+.auth-forgot { display: block; margin: 1.8rem auto 0; font-size: 1.3rem; } /* centred under the Unlock buttons */
 .btn-block { width: 100%; padding-block: 1.2rem; margin-top: .4rem; }
 
 .pw-wrap { position: relative; display: block; }
