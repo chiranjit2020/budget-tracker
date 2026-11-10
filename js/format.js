@@ -29,8 +29,13 @@ export const moneyShort = (paise) => inrCompact.format(paise / 100);
 /** "1,234.5" -> 123450 paise, or null when not a positive amount. */
 export function parseAmount(text) {
     const cleaned = String(text).replace(/[₹,\s]/g, '');
-    if (!/^\d*\.?\d*$/.test(cleaned) || cleaned === '' || cleaned === '.') return null;
-    const paise = Math.round(Number(cleaned) * 100);
+    const m = /^(\d*)(?:\.(\d*))?$/.exec(cleaned);
+    if (!m || cleaned === '' || cleaned === '.') return null;
+    // Exact digit maths, no floating point: "1.005" * 100 would be 100.4999… in JS.
+    const rupees = m[1].replace(/^0+(?=\d)/, '') || '0';
+    if (rupees.length > 11) return null; // keeps everything well inside safe integers
+    const frac = m[2] ?? '';
+    const paise = Number(rupees) * 100 + Number(frac.slice(0, 2).padEnd(2, '0')) + (frac[2] >= '5' ? 1 : 0); // a 3rd decimal rounds half-up
     return paise > 0 && paise < 1e13 ? paise : null;
 }
 

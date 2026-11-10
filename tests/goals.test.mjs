@@ -26,6 +26,12 @@ assert.equal(goa.perMonth, R(4566));
 assert.equal(goa.state, 'open');
 assert.equal(goa.pace, 'Save ₹4,566 a month to reach it by 10 Mar 2027.');
 
+// Exact pace, no float rounding: ₹1,600 over 487 days (10 Nov 2026 -> 11 Mar 2028) is exactly ₹100 a month (487 days = 16 average months)
+assert.equal(goalProgress({ ...goal(28400, '2028-03-10'), target: R(30000) }, today).perMonth, R(101)); // 486 days: just over ₹100, rounds up
+assert.equal(goalProgress({ ...goal(28400, '2028-03-11'), target: R(30000) }, today).perMonth, R(100));
+// One paisa more must round up to the next rupee
+assert.equal(goalProgress({ ...goal(0, '2028-03-11'), target: R(1600) + 1 }, today).perMonth, R(101));
+
 // Less than a month left
 assert.equal(goalProgress(goal(12000, '2026-11-30'), today).pace, 'Save ₹18,000 in the next 20 days to reach it by 30 Nov 2026.');
 assert.equal(goalProgress(goal(12000, '2026-11-11'), today).pace, 'Save ₹18,000 in the next 1 day to reach it by 11 Nov 2026.');

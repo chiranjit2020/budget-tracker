@@ -2,7 +2,9 @@
 
 import { money, moneyWhole, fmtDate } from './format.js';
 
-const DAYS_PER_MONTH = 30.4375; // average over four years
+// An average month is 30.4375 days (over four years) = 487/16, so the pace can use exact integer maths.
+const MONTH_NUM = 487n;
+const MONTH_DEN = 16n;
 
 /** Whole days from `a` to `b` (both 'YYYY-MM-DD'); negative when b is earlier. */
 export function daysBetween(a, b) {
@@ -35,7 +37,10 @@ export function goalProgress(goal, today) {
     if (daysLeft === 0) return { ...out, state: 'due', pace: `Due today; ${money(remaining)} to go.` };
     if (daysLeft < 31) return { ...out, state: 'due', pace: `Save ${moneyWhole(remaining)} in the next ${daysLeft} day${daysLeft === 1 ? '' : 's'} to reach it by ${fmtDate(goal.by)}.` };
 
-    // Round up to whole rupees so following the advice actually reaches the target.
-    const perMonth = Math.ceil(remaining / (daysLeft / DAYS_PER_MONTH) / 100) * 100;
+    // remaining / (daysLeft / 30.4375), rounded UP to whole rupees so following it reaches the target.
+    // Done in exact integers (BigInt): a float like 4566.0000001 must not become ₹4,567.
+    const top = BigInt(remaining) * MONTH_NUM;
+    const bottom = BigInt(daysLeft) * MONTH_DEN * 100n;
+    const perMonth = Number((top + bottom - 1n) / bottom) * 100;
     return { ...out, perMonth, pace: `Save ${moneyWhole(perMonth)} a month to reach it by ${fmtDate(goal.by)}.` };
 }
