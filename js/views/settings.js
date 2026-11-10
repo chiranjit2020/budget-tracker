@@ -73,7 +73,7 @@ function recurringPanel(rules) {
     const list = [...rules].sort((a, b) => Number(b.active) - Number(a.active) || a.next.localeCompare(b.next));
     return `
         <section class="panel">
-            <h2>Recurring transactions</h2>
+            <h2>Repeats</h2>
             ${list.length
                 ? `<p class="muted">Added automatically when they're due. Stopping one keeps the entries already added.</p>
             <ul class="rec-list">

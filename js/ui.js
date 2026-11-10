@@ -182,7 +182,7 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     document.getElementById('favorite-field').hidden = Boolean(tx);
     const rule = tx?.recurringId && getState().recurring.find((r) => r.id === tx.recurringId);
     repeatNote.hidden = !rule;
-    if (rule) repeatNote.textContent = `This entry repeats ${FREQ_WORD[rule.freq]}. Changes here affect only this one. Manage repeats in Settings → Recurring.`;
+    if (rule) repeatNote.textContent = `This entry repeats ${FREQ_WORD[rule.freq]}. Changes here affect only this one. Manage repeats in Settings → Repeats.`;
     updateRepeatHint();
     amountSuggested = false;
     renderSuggestions();
