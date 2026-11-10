@@ -19,6 +19,7 @@
     --input-border: #cfd6e4;
     --soft: #f5f7fb;
     --surface: #fff;
+    --on-heat: var(--dark-blue); /* text on the darkest calendar shade */
     --page-bg: var(--light-blue);
     --card-warm: #faf7f5;
     --income: var(--blue);
@@ -94,6 +95,7 @@
         --input-border: #3a4570;
         --soft: #1a2140;
         --surface: #121831;
+        --on-heat: #121831;
         --page-bg: #0b1024;
         --card-warm: #1a2140;
         --expense-text: #ff8a65;
@@ -824,6 +826,45 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .insight-icon { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--soft); color: var(--blue); }
 .insight-icon .icon { width: 1.7rem; height: 1.7rem; }
 .insight.up .insight-icon { background: var(--danger-tint); color: var(--expense-text); }
+
+/* Dashboard: spending calendar (heat-map) */
+.cal-sub { margin: -.6rem 0 1.2rem; font-size: 1.3rem; }
+.cal { display: grid; gap: .4rem; }
+.cal-head, .cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .4rem; }
+.cal-head span { text-align: center; font-size: 1.15rem; font-weight: 600; color: var(--muted); }
+.cal-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+    padding: .4rem .5rem;
+    border: 1px solid transparent;
+    border-radius: .8rem;
+    background: var(--soft);
+    color: var(--dark-blue);
+    text-align: left;
+    overflow: hidden;
+}
+.cal-blank { background: none; }
+.cal-n { font-size: 1.25rem; font-weight: 600; line-height: 1; }
+.cal-amt { font-size: 1.05rem; font-weight: 600; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-cell.lv1, .cal-legend .lv1 { background: color-mix(in srgb, var(--expense) 18%, var(--surface)); }
+.cal-cell.lv2, .cal-legend .lv2 { background: color-mix(in srgb, var(--expense) 38%, var(--surface)); }
+.cal-cell.lv3, .cal-legend .lv3 { background: color-mix(in srgb, var(--expense) 62%, var(--surface)); }
+.cal-cell.lv4, .cal-legend .lv4 { background: var(--expense); }
+.cal-cell.lv4 { color: var(--on-heat); }
+.cal-legend .lv0 { background: var(--soft); }
+.cal-cell.is-future { opacity: .45; }
+.cal-cell.is-today { border-color: var(--blue); }
+.cal-cell[aria-pressed="true"] { outline: 2px solid var(--blue); outline-offset: 1px; }
+.cal-cell:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.cal-legend { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; margin-top: .8rem; font-size: 1.15rem; color: var(--muted); }
+.cal-legend i { width: 1.2rem; height: 1.2rem; border-radius: .3rem; }
+.cal-legend span:first-child { margin-right: .2rem; }
+.cal-legend span:last-child { margin-left: .2rem; }
+.cal-panel { margin-top: 1.6rem; }
+.cal-hint { font-size: 1.3rem; }
 
 /* Dashboard: spending per payment method */
 .method-bar { display: flex; height: 1.2rem; overflow: hidden; border-radius: 1rem; background: var(--soft); gap: 2px; }

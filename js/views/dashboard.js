@@ -1,6 +1,7 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, shiftMonth, nowLocal } from '../format.js';
-import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, nowLocal } from '../format.js';
+import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
+import { calendarMonth, calendarHTML } from '../calendar.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -69,6 +70,44 @@ function quickAddRow(state) {
                 .join('')}
         </div>
     </div>`;
+}
+
+// ---- Spending calendar ----------------------------------------------------------
+
+let calDay = ''; // the tapped day ('YYYY-MM-DD'); kept while the dashboard re-renders
+
+function dayPanel(transactions, day) {
+    if (!day) return '<p class="muted cal-hint">Tap a day to see what you spent.</p>';
+    const items = transactions.filter((t) => t.date.startsWith(day));
+    const t = totals(items);
+    const parts = [];
+    if (t.expense) parts.push(`<span class="expense">Spent ${money(t.expense)}</span>`);
+    if (t.income) parts.push(`<span class="income">Received ${money(t.income)}</span>`);
+    return `
+        <h3 class="day-label"><span>${fmtDay(day)}</span><span class="day-total">${parts.join(' ')}</span></h3>
+        ${items.length ? `<ul class="tx-list">${items.map(txItem).join('')}</ul>` : '<p class="muted">Nothing recorded on this day.</p>'}`;
+}
+
+function calendarSection(transactions, key) {
+    if (key > nowLocal().slice(0, 7)) return ''; // nothing to show for future months
+    if (!calDay.startsWith(key)) calDay = '';
+    const cal = calendarMonth(transactions, key, nowLocal().slice(0, 10));
+    return `
+    <section class="block" id="cal-block">
+        <div class="section-head"><h2>Spending calendar</h2></div>
+        ${cal.spendDays ? `<p class="muted cal-sub">Spent on ${cal.spendDays} of ${cal.cells.filter((c) => !c.future).length} days so far</p>` : ''}
+        ${calendarHTML(cal, calDay)}
+        <div class="cal-panel" id="cal-panel" aria-live="polite">${dayPanel(transactions, calDay)}</div>
+    </section>`;
+}
+
+/** Tapping a day shows its entries (tap again to close) without redrawing the page. */
+function onCalendarClick(e, root) {
+    const btn = e.target.closest('[data-cal-day]');
+    if (!btn) return;
+    calDay = calDay === btn.dataset.calDay ? '' : btn.dataset.calDay;
+    root.querySelectorAll('[data-cal-day]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.calDay === calDay)));
+    root.querySelector('#cal-panel').innerHTML = dayPanel(getState().transactions, calDay);
 }
 
 const TONE_ICON = { up: 'income', down: 'expense', info: 'chart' }; // arrow up / arrow down / chart
@@ -210,7 +249,11 @@ export function render(root, ctx) {
                     : `<p class="muted">No expenses in ${fmtMonth(key)}.</p>`}
             </section>
 
+            ${calendarSection(transactions, key)}
+
             ${methodSplit(monthTx.filter((x) => x.type === 'expense'), t.expense, key)}
         </div>
     </div>`;
+
+    root.onclick = (e) => onCalendarClick(e, root);
 }
