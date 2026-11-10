@@ -1,11 +1,13 @@
 # Bt. Budget Tracker
 
 A personal budget tracker for daily income and expenses in Indian rupees (₹).
-It's an installable Progressive Web App (PWA) that works offline. Your data stays on your own device.
+It's an installable Progressive Web App (PWA) that works offline. Your data stays on your own device, encrypted with your password.
+
+**Live app:** https://gitussr.github.io/budget-tracker/
 
 ## Features
 
-- **Dashboard:** this month's spending, income and what's left over, then your everyday cards (insights, recent entries, budgets, goals, money given & taken) and below them the deeper ones (spending calendar, categories, how you paid, 6-month trend). Tap any card's title to fold it; the app remembers which ones you folded on that device. Features you haven't used yet sit together in one small "More you can do" card.
+- **Dashboard:** this month's spending, income and what's left over, then your everyday cards (insights, recent entries, budgets, goals, money given & taken) and below them the deeper ones (spending calendar, a doughnut chart of spending by category with the month's total in the middle, how you paid, 6-month trend). Tap any card's title to fold it; the app remembers which ones you folded on that device. Features you haven't used yet sit together in one small "More you can do" card.
 - **Insights:** short notes on the dashboard: where this month is heading (repeating bills like rent aren't multiplied), which categories rose or fell, and your average spend per day. A month in progress is compared with the same days of last month, so early-month figures are fair.
 - **Spending calendar:** the month as a heat-map on the dashboard; darker days are the ones you spent most on (ranked against each other, so one big bill doesn't wash out the rest). Tap a day to see its entries.
 - **Savings goals:** e.g. *Goa trip ₹30,000 by 10 Mar*. Add or withdraw money (with Undo) and see the progress and how much to save each month to get there. Goals are kept apart from expenses, so setting money aside doesn't count as spending.
@@ -17,9 +19,9 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Payment method:** tag each entry as UPI, Cash, Card or Bank (tap it again to clear; older entries show *Not set*). The form remembers your last choice, the lists can filter by it, the dashboard shows *How you paid* this month, and the report and CSV include it.
 - **Smarter add form:** it remembers the last category you used for expenses and for income. While you type a note, notes you've used before appear as chips (e.g. *Tea · Food & Drink · ₹20*); tap one to fill in its usual category and amount (an amount you've already typed is kept).
 - **Monthly:** a year at a glance with an income vs expense chart and a table showing what was left over each month and how much of your income you saved.
-- **Expenses / Income:** full lists filtered by month and category, with search.
-- **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.
-- **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
+- **Expenses / Income:** full lists filtered by month, category and payment method, with search.
+- **Report:** a printable monthly statement (categories, budget vs actual, payment methods, every entry). Use *Print → Save as PDF* to keep a copy.
+- **Settings:** categories, quick-add favourites, **Security** (auto-lock, fingerprint or face unlock, change password, lock now), **Appearance** (light/dark, unlock chime), **Repeats**, backup (encrypted JSON), Excel export (CSV), restore, install, and delete-all. Your name and photo are in the profile popup.
 - **Unlock chime:** a soft three-note "ta-da" when you unlock (made with Web Audio, no sound files). Turn it off in Settings → Appearance.
 - **Fonts:** Manrope for text, Barlow for digits (0–9) only. Both ship with the app (`fonts/`, SIL Open Font License), so nothing is loaded from other sites.
 - **Light and dark mode:** Auto (follows your device), Light or Dark (a black & gold scheme), switchable from the profile popup or Settings → Appearance.
@@ -29,7 +31,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 
 Everything is saved in your browser's storage (IndexedDB) on that device, **encrypted with your password**. Data from older versions, which used `localStorage`, is moved over automatically the first time the app opens. There's no server and nothing is uploaded.
 
-- **Account:** the first time you open the app, you create an account (name + password, 8+ characters). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
+- **Account:** the first time you open the app, you create an account (name + password of 8+ characters that isn't easy to guess, so not `12345678`, `password` or your name). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
 - **How it's protected:** the password is never stored. It's stretched into an AES-256 key with PBKDF2-SHA256 (600,000 rounds, random salt), and all data is encrypted with AES-256-GCM (Web Crypto API). A wrong password simply can't decrypt the data. After 5 wrong attempts the login makes you wait.
 - **Fingerprint or face unlock (optional):** turn it on in **Settings → Security** (it asks for your password once). Your phone's fingerprint/face check then gives back a secret that unlocks a locked copy of your data key, using passkeys (WebAuthn with the PRF extension). The password is still never stored, and it keeps working as well. Changing the password or resetting the app turns this off. It only appears where the device and browser support it (e.g. Android Chrome, iPhone Safari on iOS 18+, Windows Hello).
 - **Security review:** see [SECURITY.md](SECURITY.md) for what was tested (OWASP Top 10 2025, MITRE ATT&CK), what was fixed, and the risks no web app can remove. Passwords that are too easy to guess (e.g. `12345678`, `password`, your own name) are refused, and the wait after wrong passwords survives a reload.
@@ -96,10 +98,14 @@ js/pie.js               "Expenses by category" doughnut chart (loads Chart.js wh
 js/biometric.js         Fingerprint / face unlock (WebAuthn PRF wraps the data key)
 js/passwords.js         Password rules (refuses common/guessable passwords)
 js/boot.js              Runs first: refuses to be framed, applies the theme (kept out of HTML for the CSP)
-SECURITY.md             Security review (OWASP Top 10 2025, MITRE ATT&CK), fixes and accepted risks
+js/sound.js             Unlock chime (Web Audio, no sound files)
 js/vendor/              Chart.js 4.5.0 (MIT), shipped with the app so it works offline
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 tests/*.test.mjs        Unit tests for the calculations: node tests/<name>.test.mjs
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark
+README.md               This file
+ROADMAP.md              Planned and finished features, and checks still to do on a real phone
+SECURITY.md             Security review (OWASP Top 10 2025, MITRE ATT&CK), fixes and accepted risks
+security-review.html    The same review as a standalone web page
 ```
