@@ -2,6 +2,7 @@ import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '
 import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, nowLocal } from '../format.js';
 import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
+import { goalsSection } from '../goals-ui.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -196,6 +197,8 @@ export function render(root, ctx) {
             ${insightsSection(state, key)}
 
             ${budgetSection(state, key)}
+
+            ${goalsSection(state)}
 
             <section class="block">
                 <div class="section-head">

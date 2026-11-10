@@ -31,6 +31,7 @@ function blank() {
         favorites: [], // one-tap "quick add" entries (see cleanFavorite)
         lastCategory: { expense: '', income: '' }, // pre-selected in the add form
         lastMethod: { expense: '', income: '' },
+        goals: [], // savings goals (see cleanGoal)
         lastBackup: '',
     };
 }
@@ -52,6 +53,31 @@ function cleanTx(t) {
     if (method) tx.method = method;
     if (typeof t.recurringId === 'string' && t.recurringId) tx.recurringId = t.recurringId;
     return tx;
+}
+
+// ---- Savings goals ------------------------------------------------------------
+// Money set aside for something. Kept apart from transactions: saving isn't spending.
+// Each add (+) or withdrawal (-) is a dated entry, so the saved total is their sum.
+
+const MAX_GOALS = 20;
+const isDay = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+function cleanGoal(g) {
+    if (!g || typeof g !== 'object') return null;
+    const name = String(g.name ?? '').trim().slice(0, 40);
+    const target = Math.round(Number(g.target));
+    if (!name || !Number.isSafeInteger(target) || target <= 0) return null;
+    const entries = (Array.isArray(g.entries) ? g.entries : [])
+        .map((e) => ({ id: typeof e?.id === 'string' && e.id ? e.id : uid(), amount: Math.round(Number(e?.amount)), date: e?.date }))
+        .filter((e) => Number.isSafeInteger(e.amount) && e.amount !== 0 && isDay(e.date));
+    return {
+        id: typeof g.id === 'string' && g.id ? g.id : uid(),
+        name,
+        target,
+        by: isDay(g.by) ? g.by : '', // optional target date
+        created: isDay(g.created) ? g.created : new Date().toISOString().slice(0, 10),
+        entries,
+    };
 }
 
 // ---- Recurring schedules ------------------------------------------------------
@@ -139,6 +165,7 @@ export function normalize(data) {
         if (typeof c === 'string') s.lastCategory[type] = c.trim().slice(0, 40);
         s.lastMethod[type] = cleanMethod(data.lastMethod?.[type]);
     }
+    s.goals = Array.isArray(data.goals) ? data.goals.map(cleanGoal).filter(Boolean).slice(0, MAX_GOALS) : [];
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -321,6 +348,59 @@ export function removeFavorite(id) {
     });
 }
 
+// ---- Savings goals: changes ---------------------------------------------------
+
+/** Create a goal; `saved` (paise, optional) is money already put aside, dated `today`. Returns the goal or null. */
+export function addGoal({ name, target, by = '', saved = 0 }, today) {
+    if (state.goals.length >= MAX_GOALS) return null;
+    const goal = cleanGoal({ name, target, by, created: today, entries: saved > 0 ? [{ amount: saved, date: today }] : [] });
+    if (!goal) return null;
+    return commit((d) => d.goals.push(goal)) ? goal : null;
+}
+
+/** Change a goal's name, target or date (its saved money stays). */
+export function updateGoal(id, { name, target, by }) {
+    const current = state.goals.find((g) => g.id === id);
+    const goal = current && cleanGoal({ ...current, name, target, by });
+    if (!goal) return null;
+    return commit((d) => {
+        const i = d.goals.findIndex((g) => g.id === id);
+        if (i >= 0) d.goals[i] = goal;
+    }) ? goal : null;
+}
+
+/** Add (positive) or withdraw (negative) money. Withdrawals can't take the total below zero. Returns the entry or null. */
+export function moveGoalMoney(id, amount, today) {
+    const goal = state.goals.find((g) => g.id === id);
+    if (!goal || !Number.isSafeInteger(amount) || amount === 0 || !isDay(today)) return null;
+    const saved = goal.entries.reduce((n, e) => n + e.amount, 0);
+    if (saved + amount < 0) return null;
+    const entry = { id: uid(), amount, date: today };
+    return commit((d) => d.goals.find((g) => g.id === id).entries.push(entry)) ? entry : null;
+}
+
+/** Undo one add/withdrawal. */
+export function removeGoalEntry(goalId, entryId) {
+    return commit((d) => {
+        const goal = d.goals.find((g) => g.id === goalId);
+        if (goal) goal.entries = goal.entries.filter((e) => e.id !== entryId);
+    });
+}
+
+/** Delete a goal; returns it (with its position) so it can be restored. */
+export function deleteGoal(id) {
+    const index = state.goals.findIndex((g) => g.id === id);
+    if (index < 0) return null;
+    const goal = state.goals[index];
+    return commit((d) => d.goals.splice(index, 1)) ? { goal, index } : null;
+}
+
+export function restoreGoal({ goal, index }) {
+    return commit((d) => {
+        if (!d.goals.some((g) => g.id === goal.id)) d.goals.splice(Math.min(index, d.goals.length), 0, goal);
+    });
+}
+
 /** Stop a repeat. Transactions it already added stay. */
 export function deleteRecurring(id) {
     return commit((d) => {
@@ -399,6 +479,15 @@ export function importBackup(data) {
         }
         for (const fav of incoming.favorites) {
             if (d.favorites.length < MAX_FAVORITES && !d.favorites.some((x) => sameFavorite(x, fav))) d.favorites.push(fav);
+        }
+        for (const goal of incoming.goals) {
+            const mine = d.goals.find((g) => g.id === goal.id);
+            if (!mine) {
+                if (d.goals.length < MAX_GOALS) d.goals.push(goal);
+                continue;
+            }
+            const have = new Set(mine.entries.map((e) => e.id)); // same goal: add entries it doesn't have yet
+            for (const e of goal.entries) if (!have.has(e.id)) mine.entries.push(e);
         }
         const ruleIds = new Set(d.recurring.map((r) => r.id));
         for (const r of incoming.recurring) if (!ruleIds.has(r.id)) d.recurring.push(r);

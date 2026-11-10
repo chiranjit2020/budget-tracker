@@ -225,6 +225,66 @@
         </form>
     </dialog>
 
+    <!-- Savings goal: create / edit -->
+    <dialog id="goal-dialog" class="sheet" aria-labelledby="goal-title">
+        <form id="goal-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="goal-title">New savings goal</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
+            </div>
+            <label class="field">
+                <span>What are you saving for?</span>
+                <input name="name" type="text" maxlength="40" placeholder="e.g. Goa trip, Emergency fund" autocomplete="off" required />
+            </label>
+            <label class="field">
+                <span>Target amount</span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="target" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0" /></span>
+            </label>
+            <label class="field">
+                <span>Target date <small>(optional)</small></span>
+                <input name="by" type="date" />
+            </label>
+            <label class="field" id="goal-saved-field">
+                <span>Already saved <small>(optional)</small></span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="saved" type="text" inputmode="decimal" autocomplete="off" placeholder="0" /></span>
+            </label>
+            <p class="field-error" id="goal-error" role="alert" hidden></p>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-danger-ghost" id="goal-delete" hidden>Delete</button>
+                <button type="submit" class="btn btn-primary">Save goal</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Savings goal: add or withdraw money -->
+    <dialog id="goal-money-dialog" class="sheet" aria-labelledby="goal-money-title">
+        <form id="goal-money-form" class="sheet-body" novalidate>
+            <div class="sheet-head">
+                <h2 id="goal-money-title">Goa trip</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close">
+                    <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+                </button>
+            </div>
+            <fieldset class="segmented">
+                <legend class="sr-only">Add or withdraw</legend>
+                <label><input type="radio" name="dir" value="add" checked /><span>Add money</span></label>
+                <label><input type="radio" name="dir" value="withdraw" /><span>Withdraw</span></label>
+            </fieldset>
+            <label class="field">
+                <span>Amount</span>
+                <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="goal-money-hint" /></span>
+            </label>
+            <p class="muted goal-money-hint" id="goal-money-hint"></p>
+            <p class="field-error" id="goal-money-error" role="alert" hidden></p>
+            <div class="sheet-actions">
+                <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- Monthly budgets -->
     <dialog id="budget-dialog" class="sheet" aria-labelledby="budget-title">
         <form id="budget-form" class="sheet-body" novalidate>

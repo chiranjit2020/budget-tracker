@@ -4,13 +4,13 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 ## Next up (in order)
 
-1. **Savings goals:** e.g. "Goa trip ₹30,000", with progress and a target date.
-2. **Lend & borrow tracker:** "Rahul owes me ₹500", with settle-up and reminders.
+1. **Lend & borrow tracker:** "Rahul owes me ₹500", with settle-up and reminders.
 
 ## Later / maybe
 
 - **Fingerprint / Face unlock** (WebAuthn): on top of the password, where the phone supports it.
 - **Edit a recurring transaction's amount** (today: stop it and add a new one).
+- **Goal history:** list each add/withdrawal under a goal (the data is already kept).
 - **Receipt photos:** attach a photo to an entry (now possible, since data is in IndexedDB).
 - **iPhone launch images**, so the iPhone launch screen matches the splash.
 
@@ -27,4 +27,4 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar.
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits.

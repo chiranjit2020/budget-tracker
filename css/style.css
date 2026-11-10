@@ -49,6 +49,7 @@
 
     /* "Heads up" amber */
     --warn: #E8A33D;
+    --success: #177a42;  /* goal reached; 5.4:1 on white */
     --warn-text: #9a5b00;
     --warn-bg: #fff8ea;
     --warn-line: #f1d39b;
@@ -119,6 +120,7 @@
         --toast-bg: #2b3566;
 
         --warn: #f2b155;
+        --success: #4cc38a;
         --warn-text: #f5c27a;
         --warn-bg: rgb(242 177 85 / .1);
         --warn-line: rgb(242 177 85 / .35);
@@ -817,6 +819,26 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 }
 .method-options input:checked + span { border-color: var(--blue); background: var(--soft); color: var(--blue); }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* Savings goals */
+.goal-list { display: grid; gap: 1.2rem; margin: 0; padding: 0; list-style: none; }
+.goal { --level: var(--blue); padding: 1.4rem 1.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.goal.reached { --level: var(--success); }
+.goal.overdue { --level: var(--warn); }
+.goal.overdue .goal-pct { color: var(--dark-blue); } /* amber is too faint as text */
+.goal-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .8rem; }
+.goal-name { display: inline-flex; align-items: center; gap: .6rem; min-width: 0; padding: 0; border: 0; background: none; font-size: 1.6rem; font-weight: 700; color: var(--dark-blue); text-align: left; }
+.goal-name .icon { width: 1.4rem; height: 1.4rem; color: var(--muted); flex-shrink: 0; }
+.goal-name:hover .icon { color: var(--blue); }
+.goal-pct { font-weight: 700; color: var(--level); }
+.goal .bar { height: 1rem; background: var(--bar-track); }
+.goal-amt { margin: .8rem 0 0; font-size: 1.4rem; color: var(--muted); }
+.goal-amt strong { color: var(--dark-blue); font-weight: 700; }
+.goal-pace { margin: .2rem 0 0; font-size: 1.3rem; color: var(--muted); }
+.goal.reached .goal-pace { color: var(--level); font-weight: 600; }
+.goal-actions { display: flex; align-items: center; gap: 1.6rem; margin-top: 1.2rem; }
+.goal-actions:empty { display: none; }
+.goal-money-hint { margin: -.6rem 0 1.4rem; font-size: 1.3rem; }
 
 /* Dashboard insights */
 .insights { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
