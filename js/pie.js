@@ -33,7 +33,7 @@ function themeColors(slices) {
     const css = getComputedStyle(document.documentElement);
     return {
         fills: slices.map((s) => resolveColor(s.color)),
-        border: css.getPropertyValue('--surface').trim() || '#fff',
+        border: css.getPropertyValue('--chart-gap').trim() || css.getPropertyValue('--surface').trim() || '#fff',
         text: css.getPropertyValue('--dark-blue').trim(),
     };
 }

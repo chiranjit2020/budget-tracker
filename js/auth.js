@@ -53,7 +53,7 @@ const passwordField = (name, label, autocomplete, extra = '') => `
 
 function showScreen(html) {
     appEl.hidden = true;
-    screen.innerHTML = `<div class="auth-card"><img src="images/logo.svg" class="auth-logo" alt="Budget Tracker" width="48" height="60">${html}</div>`;
+    screen.innerHTML = `<div class="auth-card"><svg class="auth-logo brand-logo" viewBox="0 0 396.81 497.38" width="48" height="60" role="img" aria-label="Budget Tracker"><use href="#brand-logo" /></svg>${html}</div>`;
     screen.hidden = false;
     screen.querySelectorAll('.pw-toggle').forEach((btn) => {
         btn.addEventListener('click', () => {

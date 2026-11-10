@@ -5,7 +5,7 @@
 
 const KEY = 'budget-tracker.theme';
 const CHOICES = ['system', 'light', 'dark'];
-const STATUS_BAR = { light: '#3546AB', dark: '#0b1024' };
+const STATUS_BAR = { light: '#3546AB', dark: '#000000' };
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
 export const THEME_OPTIONS = [

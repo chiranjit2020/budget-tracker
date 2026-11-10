@@ -67,7 +67,7 @@ export function render(root, ctx) {
 
     <article class="report">
         <header class="report-head">
-            <img src="images/logo.svg" alt="" width="40" height="50">
+            <svg class="brand-logo" viewBox="0 0 396.81 497.38" width="40" height="50" aria-hidden="true"><use href="#brand-logo" /></svg>
             <div>
                 <h2>Monthly statement · ${fmtMonth(key)}</h2>
                 <p class="muted">${profile.name ? `${esc(profile.name)} · ` : ''}Generated ${fmtDate(nowLocal())}</p>

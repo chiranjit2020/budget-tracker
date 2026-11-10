@@ -8,6 +8,8 @@
     --light-blue: #E5EAF1;
     --blue: #3546AB;
     --dark-blue: #0C145A;
+    --logo: #3546AB;
+    --chart-gap: var(--surface); /* gaps between doughnut slices: the colour behind the chart */
     --orange: #F0582E;
 
     --text: #1b1f3b;
@@ -79,63 +81,96 @@
 /* ---- Dark theme (screen only, so printed reports stay light) --------- */
 
 @media screen {
+    /* Dark mode: black & gold (gold #E8BD70 -> #EDD185) */
     :root[data-theme="dark"] {
         color-scheme: dark;
 
-        --blue: #9aa8ff;          /* accent for text, icons and bars */
-        --dark-blue: #eef0fa;     /* strong text */
-        --orange: #ff7a52;
+        --gold: #E8BD70;
+        --gold-light: #EDD185;
+        --gold-gradient: linear-gradient(135deg, #E8BD70 0%, #EDD185 100%);
 
-        --text: #e3e6f3;
-        --muted: #9aa3c2;
-        --muted-2: #6c769a;
-        --subtle-text: #c3c9de;
-        --line: #283152;
-        --sidebar-line: #283152;
-        --input-border: #3a4570;
-        --soft: #1a2140;
-        --surface: #121831;
-        --on-heat: #121831;
-        --page-bg: #0b1024;
-        --card-warm: #1a2140;
-        --expense-text: #ff8a65;
+        --blue: var(--gold);      /* accent for text, icons, links, active tab, income */
+        --dark-blue: #ffffff;     /* strong text */
+        --orange: #ff6f61;        /* spending: coral, so it never looks like gold */
+        --logo: var(--gold);
+        --chart-gap: var(--page-bg); /* the dashboard sits on black here */
+
+        --text: #ededed;
+        --muted: #9b9b9b;
+        --muted-2: #6f6f6f;
+        --subtle-text: #cfcfcf;
+        --line: #2a2a2a;
+        --sidebar-line: #262626;
+        --input-border: #3a3a3a;
+        --soft: #222222;
+        --surface: #161616;
+        --on-heat: #161616;
+        --page-bg: #000000;
+        --card-warm: #1c1c1c;
+        --expense-text: #ff8a7d;
         --danger: #ff7b7b;
         --danger-fill: #d64545;
         --danger-hover: #e35a5a;
-        --danger-line: #5c2b36;
+        --danger-line: #5c2b2b;
         --danger-tint: rgb(255 107 107 / .12);
 
-        --primary: #4f5fd6;
-        --primary-hover: #6170e6;
+        --primary: var(--gold);
+        --primary-hover: var(--gold-light);
+        --on-primary: #000000;    /* black text on gold, as in the scheme */
 
-        --tint-expense: rgb(255 122 82 / .16);
-        --tint-income: rgb(154 168 255 / .16);
-        --bar-track: #252d4d;
-        --focus-ring: rgb(154 168 255 / .28);
-        --backdrop: rgb(0 0 0 / .65);
-        --pop-shadow: 0 12px 32px rgb(0 0 0 / .5);
-        --nav-glass: rgb(18 24 49 / .96);
-        --toast-bg: #2b3566;
+        --tint-expense: rgb(255 111 97 / .15);
+        --tint-income: rgb(232 189 112 / .15);
+        --bar-track: #2a2a2a;
+        --focus-ring: rgb(232 189 112 / .3);
+        --backdrop: rgb(0 0 0 / .72);
+        --pop-shadow: 0 12px 32px rgb(0 0 0 / .6);
+        --nav-glass: rgb(10 10 10 / .96);
+        --toast-bg: #262626;
 
-        --warn: #f2b155;
+        --warn: #f0a33a;
         --success: #4cc38a;
         --warn-text: #f5c27a;
-        --warn-bg: rgb(242 177 85 / .1);
-        --warn-line: rgb(242 177 85 / .35);
-        --warn-tint: rgb(242 177 85 / .2);
+        --warn-bg: rgb(240 163 58 / .1);
+        --warn-line: rgb(240 163 58 / .35);
+        --warn-tint: rgb(240 163 58 / .2);
         --warn-body: #f3dcb4;
 
-        --chart-2: #7b8cff;
-        --chart-3: #c7cff8;
-        --chart-8: #9aa6c8;
+        /* Charts: coral, gold, then colours that stay apart from both */
+        --chart-1: #ff6f61;
+        --chart-2: #E8BD70;
+        --chart-3: #e6e6e6;
+        --chart-4: #5fb3a3;
+        --chart-5: #8c9eff;
+        --chart-6: #c58af0;
+        --chart-7: #ff8fb1;
+        --chart-8: #8a8a8a;
 
-        --shadow: 0 24px 38px 3px rgba(0, 0, 0, .45), 0 9px 46px 8px rgba(0, 0, 0, .35), 0 11px 15px -7px rgba(0, 0, 0, .5);
+        --shadow: 0 24px 38px 3px rgba(0, 0, 0, .55), 0 9px 46px 8px rgba(0, 0, 0, .45), 0 11px 15px -7px rgba(0, 0, 0, .6);
     }
 
-    /* The blue logo would vanish on navy: show it in white instead */
-    :root[data-theme="dark"] .sidebar .brand img,
-    :root[data-theme="dark"] .auth-logo,
-    :root[data-theme="dark"] .report-head img { filter: brightness(0) invert(1); }
+    /* Gold buttons use the gradient from the scheme */
+    :root[data-theme="dark"] .btn-primary,
+    :root[data-theme="dark"] .icon-btn-solid { background-image: var(--gold-gradient); }
+    :root[data-theme="dark"] .btn-primary:hover:not(:disabled),
+    :root[data-theme="dark"] .icon-btn-solid:hover { background-image: none; }
+
+    /* "This month": the gold hero card, black text on the gold gradient */
+    :root[data-theme="dark"] .amount-block { background: var(--gold-gradient); color: #000; }
+    :root[data-theme="dark"] .amount-block small { color: rgb(0 0 0 / .72); } /* 6.9:1 on gold */
+    :root[data-theme="dark"] .amount-block strong { color: #000; }
+    :root[data-theme="dark"] .amount-block strong.expense { color: #000; }
+    :root[data-theme="dark"] .amount-block strong.income { color: #000; }
+    :root[data-theme="dark"] .amount-block div:last-child strong.expense { color: #8f1d12; } /* "Spent extra" stays a warning */
+
+    /* Black page behind charcoal cards (the content pane is the card colour in light mode) */
+    :root[data-theme="dark"] .pane { background: var(--page-bg); }
+    :root[data-theme="dark"] .avatar { background: var(--soft); } /* the light-mode page colour would vanish on black */
+    /* Headings in white like the scheme; gold is kept for accents */
+    :root[data-theme="dark"] .topbar h1,
+    :root[data-theme="dark"] .section-head h2,
+    :root[data-theme="dark"] .panel h2,
+    :root[data-theme="dark"] .sheet-body h2,
+    :root[data-theme="dark"] .auth-card h1 { color: var(--dark-blue); }
 }
 
 /* ---- Base ---------------------------------------------------------- */
@@ -216,7 +251,8 @@ button.link { padding: 0; border: 0; background: none; color: var(--blue); curso
 }
 
 .sidebar .brand { display: block; width: 4.8rem; margin: 0 auto 3rem; }
-.sidebar .brand img { width: 100%; height: auto; }
+.brand-logo { display: block; color: var(--logo); }
+.sidebar .brand .brand-logo { width: 100%; height: auto; }
 
 .nav li { border-bottom: 1px solid var(--sidebar-line); }
 .nav li:last-child { border-bottom: 0; }
@@ -546,7 +582,7 @@ button.link { padding: 0; border: 0; background: none; color: var(--blue); curso
 .report-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
 .report-actions .month-switch { margin-bottom: 0; }
 .report-head { display: flex; align-items: center; gap: 1.6rem; margin-bottom: 2.4rem; }
-.report-head img { width: 4rem; height: auto; }
+.report-head .brand-logo { width: 4rem; height: auto; }
 .report-head h2 { font-size: 2.2rem; color: var(--blue); }
 .report h3 { font-size: 1.7rem; color: var(--blue); margin: 2.4rem 0 1rem; }
 .tx-table th:nth-child(-n+3), .tx-table td:nth-child(-n+3) { text-align: left; }
@@ -1138,6 +1174,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 
 @media (max-width: 760px) {
     body { background: var(--surface); }
+    :root[data-theme="dark"] body { background: var(--page-bg); }
 
     .app {
         display: block;
