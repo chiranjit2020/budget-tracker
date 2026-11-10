@@ -25,7 +25,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Settings:** categories, quick-add favourites, **Security** (auto-lock, fingerprint or face unlock, change password, lock now), **Appearance** (light/dark, unlock chime), **Repeats**, backup (encrypted JSON), Excel export (CSV), restore, install, and delete-all. Your name and photo are in the profile popup.
 - **Unlock chime:** a soft three-note "ta-da" when you unlock (made with Web Audio, no sound files). Turn it off in Settings → Appearance.
 - **Fonts:** Manrope for text, Barlow for digits (0–9) only. Both ship with the app (`fonts/`, SIL Open Font License), so nothing is loaded from other sites.
-- **Light and dark mode:** Auto (follows your device), Light or Dark (a black & gold scheme), switchable from the profile popup or Settings → Appearance.
+- **Light and dark mode:** Light by default; or Auto (follows your device) or Dark (a black & gold scheme), switchable from the profile popup or Settings → Appearance.
 - Works on phone, tablet and desktop. Installs to the home screen and runs offline.
 
 ## Your data and password

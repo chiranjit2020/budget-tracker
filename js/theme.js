@@ -1,4 +1,4 @@
-// Light / dark mode. The choice ('system', 'light' or 'dark') is stored in
+// Light / dark mode (Light by default). The choice ('system', 'light' or 'dark') is stored in
 // plain localStorage (it isn't private) so it applies before login too.
 // index.html sets the theme inline before the page paints; this module
 // keeps it updated afterwards.
@@ -17,9 +17,9 @@ export const THEME_OPTIONS = [
 export function getThemeChoice() {
     try {
         const v = localStorage.getItem(KEY);
-        return CHOICES.includes(v) ? v : 'system';
+        return CHOICES.includes(v) ? v : 'light';
     } catch {
-        return 'system';
+        return 'light';
     }
 }
 

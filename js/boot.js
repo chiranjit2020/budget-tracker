@@ -8,8 +8,8 @@
         document.documentElement.setAttribute('hidden', '');
         return;
     }
-    var c = 'system';
-    try { c = localStorage.getItem('budget-tracker.theme') || 'system'; } catch (e) {}
-    var dark = c === 'dark' || (c !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var c = 'light';
+    try { c = localStorage.getItem('budget-tracker.theme') || 'light'; } catch (e) {}
+    var dark = c === 'dark' || (c === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
 })();

@@ -5,7 +5,7 @@
 // reloads into the new version while it's on the lock screen (see pwa.js).
 // Bump VERSION on every release, and when files are added to or removed from APP_SHELL.
 
-const VERSION = 'bt-v1.36.3';
+const VERSION = 'bt-v1.36.4';
 
 const APP_SHELL = [
     './',
