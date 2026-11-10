@@ -59,7 +59,7 @@ const passwordField = (name, label, autocomplete, extra = '') => `
 
 function showScreen(html) {
     appEl.hidden = true;
-    screen.innerHTML = `<div class="auth-card"><svg class="auth-logo brand-logo" viewBox="0 0 396.81 497.38" width="48" height="60" role="img" aria-label="Budget Tracker"><use href="#brand-logo" /></svg>${html}<p class="auth-credit">Developed by Chiranjit Karmakar · <a href="https://chiranjitkarmakar.com" target="_blank" rel="noopener">chiranjitkarmakar.com</a></p></div>`;
+    screen.innerHTML = `<div class="auth-card"><svg class="auth-logo brand-logo" viewBox="0 0 396.81 497.38" width="48" height="60" role="img" aria-label="Budget Tracker"><use href="#brand-logo" /></svg>${html}<p class="auth-credit">Developed by <a href="https://chiranjitkarmakar.com" target="_blank" rel="noopener">Chiranjit Karmakar</a></p></div>`;
     screen.hidden = false;
     screen.querySelectorAll('.pw-toggle').forEach((btn) => {
         btn.addEventListener('click', () => {
