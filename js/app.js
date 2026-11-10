@@ -196,7 +196,7 @@ initAuth({
         destroyCategoryPie(); // the chart keeps its own copy of the data
     },
 });
-registerServiceWorker();
+registerServiceWorker(() => !isUnlocked() && ![...document.querySelectorAll('input[type="password"]')].some((i) => i.value));
 hideSplash();
 
 /** Fade out the opening splash once the first screen is ready (fonts loaded, ~1.2s minimum). */

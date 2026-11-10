@@ -36,8 +36,21 @@ window.addEventListener('appinstalled', () => {
     notify();
 });
 
-export function registerServiceWorker() {
+/**
+ * The app opens from its saved copy, so a new version arrives in the background.
+ * When it takes over, reload into it, but only while `canReload()` says nothing
+ * would be lost (on the lock screen with nothing typed). Otherwise it's used
+ * from the next time the app opens.
+ */
+export function registerServiceWorker(canReload = () => false) {
     if (!('serviceWorker' in navigator)) return;
+    const hadVersion = Boolean(navigator.serviceWorker.controller); // false on the very first visit
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadVersion || reloaded || !canReload()) return;
+        reloaded = true;
+        location.reload();
+    });
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('Offline support unavailable:', err));
     });

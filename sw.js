@@ -1,10 +1,11 @@
-// Service worker: makes Budget Tracker load and work offline.
-// Strategy: network first (so updates show up right away when online),
-// falling back to the cached copy when offline or the network is slow.
-// Bump VERSION when files are added or removed from APP_SHELL.
+// Service worker: makes Budget Tracker open fast and work offline.
+// Strategy: open from this version's saved copy straight away (no waiting on a
+// slow network), and fetch anything not saved yet. Updates arrive as a new
+// sw.js: it saves the new files in the background, takes over, and the page
+// reloads into the new version while it's on the lock screen (see pwa.js).
+// Bump VERSION on every release, and when files are added to or removed from APP_SHELL.
 
-const VERSION = 'bt-v1.36.1';
-const NETWORK_TIMEOUT_MS = 3000;
+const VERSION = 'bt-v1.36.2';
 
 const APP_SHELL = [
     './',
@@ -78,21 +79,16 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-async function networkFirst(request) {
+async function fromCache(request) {
     const cache = await caches.open(VERSION);
-    const network = fetch(request).then((response) => {
-        if (response.ok) cache.put(request, response.clone());
-        return response;
-    });
     const cached =
         (await cache.match(request, { ignoreSearch: true })) ||
         (request.mode === 'navigate' ? await cache.match('./index.html') : undefined);
-
-    if (!cached) return network;
-    const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NETWORK_TIMEOUT_MS));
-    return Promise.race([network.catch(() => cached), timeout]);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok) cache.put(request, response.clone());
+    return response;
 }
-
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
@@ -100,6 +96,6 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     if (url.origin === self.location.origin) {
-        event.respondWith(networkFirst(request));
+        event.respondWith(fromCache(request));
     }
 });
