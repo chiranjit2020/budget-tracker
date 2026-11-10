@@ -816,6 +816,15 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:checked + span { border-color: var(--blue); background: var(--soft); color: var(--blue); }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
+/* Dashboard insights */
+.insights { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.insight { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; align-items: start; padding: 1.2rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.insight strong { display: block; font-size: 1.5rem; font-weight: 600; color: var(--dark-blue); }
+.insight small { display: block; margin-top: .2rem; font-size: 1.3rem; color: var(--muted); }
+.insight-icon { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--soft); color: var(--blue); }
+.insight-icon .icon { width: 1.7rem; height: 1.7rem; }
+.insight.up .insight-icon { background: var(--danger-tint); color: var(--expense-text); }
+
 /* Dashboard: spending per payment method */
 .method-bar { display: flex; height: 1.2rem; overflow: hidden; border-radius: 1rem; background: var(--soft); gap: 2px; }
 .method-bar i { display: block; min-width: 3px; }

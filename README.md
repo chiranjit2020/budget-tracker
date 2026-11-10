@@ -6,6 +6,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 ## Features
 
 - **Dashboard:** this month's expense, income and net, recent transactions, a 6-month trend and the top expense categories.
+- **Insights:** short notes on the dashboard: where this month is heading (repeating bills like rent aren't multiplied), which categories rose or fell, and your average spend per day. A month in progress is compared with the same days of last month, so early-month figures are fair.
 - **Monthly budgets:** set a limit per expense category. The dashboard shows what's left (blue, amber at 80%, red when over) and how much you can spend per day for the rest of the month. Alerts appear when an expense crosses 80% or the limit, and the report shows budget vs actual.
 - **Recurring transactions:** mark any entry to repeat every week, month or year (rent, salary, SIPs, EMIs, subscriptions). Due entries are added automatically when you open the app, including any missed while it was closed, and are marked ↻. Pause, resume or stop them in Settings.
 - **Quick-add favourites:** tick "Save as a quick-add favourite" when adding (e.g. Tea ₹20, Metro ₹40). They appear as one-tap buttons on the dashboard (with Undo). Change a price or remove one in Settings (or via the dashboard's Edit link).
@@ -48,6 +49,8 @@ python -m http.server 8000
 ```
 
 (Opening `index.html` directly from disk won't work, because ES modules and service workers need `http://`.)
+
+To check the insight calculations: `node tests/insights.test.mjs` (Node 18+).
 
 ## Deploy to GitHub Pages
 

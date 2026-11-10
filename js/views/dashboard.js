@@ -1,8 +1,9 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, shiftMonth, nowLocal } from '../format.js';
 import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
+import { computeInsights } from '../insights.js';
 
 export const title = 'Overview';
 
@@ -70,6 +71,29 @@ function quickAddRow(state) {
     </div>`;
 }
 
+const TONE_ICON = { up: 'income', down: 'expense', info: 'chart' }; // arrow up / arrow down / chart
+const TONE_WORD = { up: 'Spending up: ', down: 'Spending down: ', info: '' };
+
+/** Short observations about the month: where it's heading, what changed, the daily average. */
+function insightsSection(state, key) {
+    const items = computeInsights(state, key, nowLocal().slice(0, 10));
+    if (!items.length) return '';
+    return `
+    <section class="block">
+        <div class="section-head"><h2>Insights</h2></div>
+        <ul class="insights">
+            ${items
+                .map(
+                    (i) => `<li class="insight ${i.tone}">
+                        <span class="insight-icon">${icon(TONE_ICON[i.tone])}</span>
+                        <span><strong><span class="sr-only">${TONE_WORD[i.tone]}</span>${esc(i.title)}</strong><small>${esc(i.detail)}</small></span>
+                    </li>`,
+                )
+                .join('')}
+        </ul>
+    </section>`;
+}
+
 /** A stacked bar of this month's spending per payment method, once any entry has one. */
 function methodSplit(expenses, total, key) {
     const rows = byMethod(expenses);
@@ -129,6 +153,8 @@ export function render(root, ctx) {
                 </div>
                 ${quickAddRow(state)}
             </section>
+
+            ${insightsSection(state, key)}
 
             ${budgetSection(state, key)}
 
