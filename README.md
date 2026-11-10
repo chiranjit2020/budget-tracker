@@ -18,6 +18,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Expenses / Income:** full lists filtered by month and category, with search.
 - **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.
 - **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
+- **Fonts:** Manrope for text, Barlow for digits (0–9) only.
 - **Light and dark mode:** Auto (follows your device), Light or Dark, switchable from the profile popup or Settings → Appearance.
 - Works on phone, tablet and desktop. Installs to the home screen and runs offline.
 

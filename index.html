@@ -17,6 +17,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" />
+    <!-- Barlow for digits only: text= makes Google send just the glyphs 0-9, so letters and symbols fall back to Manrope -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&text=0123456789&display=swap" />
     <!-- Apply light/dark mode before the page paints -->
     <script>
         (function () {
@@ -33,7 +35,7 @@
             position: fixed; inset: 0; z-index: 1000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: radial-gradient(120% 85% at 50% 38%, #4757c9 0%, #3546AB 48%, #1c2678 100%);
-            color: #fff; font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            color: #fff; font-family: 'Barlow', 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             transition: opacity .45s ease, visibility .45s ease;
             /* failsafe: never stay stuck if the app fails to start */
             animation: splash-failsafe .45s ease 8s forwards;

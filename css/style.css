@@ -1,7 +1,7 @@
 /* Budget Tracker: one stylesheet, mobile-friendly, printable. */
 
 :root {
-    --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font: 'Barlow', 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     --lh: 1.6;
 
     /* Brand palette (from the original design) */
