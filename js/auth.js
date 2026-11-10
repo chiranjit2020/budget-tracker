@@ -197,23 +197,24 @@ function showLogin() {
 
     // Fingerprint / face: offered when it's turned on and this device supports it.
     const bioBtn = document.getElementById('bio-unlock');
-    const tryBiometric = async (auto) => {
+    const tryBiometric = async () => {
         bioBtn.disabled = true;
         const data = await unlockWithBiometric();
         bioBtn.disabled = false;
         if (data) {
             resetGuard();
             enterApp(data);
-        } else if (!auto) {
+        } else {
             setError(form, 'Couldn’t unlock with fingerprint or face. Try again, or use your password.');
         }
     };
-    bioBtn.addEventListener('click', () => tryBiometric(false));
+    bioBtn.addEventListener('click', tryBiometric);
     if (biometricEnabled()) {
         biometricSupported().then((ok) => {
             if (!ok || !bioBtn.isConnected) return;
             bioBtn.hidden = false;
-            tryBiometric(true); // ask straight away; if it's closed, the button and password stay
+            // No automatic prompt: face unlock passes instantly, so the app would
+            // open again before the lock screen was even seen. One tap instead.
         });
     }
 
