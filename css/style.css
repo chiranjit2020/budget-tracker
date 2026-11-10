@@ -855,6 +855,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
 .sound-field { margin-top: 1.6rem; }
+.rec-edit-note { grid-column: 1 / -1; margin: -.4rem 0 .8rem; font-size: 1.25rem; color: var(--muted); }
 
 /* Settings: fingerprint or face unlock */
 .bio-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; margin: .4rem 0 1.6rem; padding: 1.2rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius); }
@@ -1092,7 +1093,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .fav-item.is-editing { display: block; padding: 1.4rem; margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--soft); }
 .fav-edit { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0 1.2rem; }
 .fav-edit .field { margin-bottom: 1rem; }
-.fav-edit .field:nth-of-type(3), .fav-edit .field-error, .fav-edit .btn-row { grid-column: 1 / -1; }
+.fav-edit .field-error, .fav-edit .btn-row { grid-column: 1 / -1; } /* name | amount, then category | paid with */
 .fav-edit .amount-wrap b { left: 1.1rem; font-size: 1.5rem; }
 .fav-edit .amount-wrap input { padding-left: 2.8rem; }
 .fav-edit .field-error { margin: 0 0 1rem; }

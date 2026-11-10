@@ -327,6 +327,21 @@ export function runRecurring(today) {
 }
 
 /** Pause or resume. Resuming skips dates missed while paused instead of back-filling them. */
+/**
+ * Change what a repeat adds from now on: name, amount, category, payment method.
+ * The schedule (frequency, day, next date) and entries already added stay as they are.
+ * Returns the updated rule, or null if the input isn't valid.
+ */
+export function updateRecurring(id, { note, amount, category, method }) {
+    const current = state.recurring.find((r) => r.id === id);
+    const rule = current && cleanRule({ ...current, note, amount, category, method });
+    if (!rule) return null;
+    return commit((d) => {
+        const i = d.recurring.findIndex((r) => r.id === id);
+        if (i >= 0) d.recurring[i] = rule;
+    }) ? rule : null;
+}
+
 export function setRecurringActive(id, active, today) {
     return commit((d) => {
         const r = d.recurring.find((x) => x.id === id);

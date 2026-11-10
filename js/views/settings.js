@@ -1,4 +1,4 @@
-import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, removeFavorite, updateFavorite, MAX_FAVORITES } from '../store.js';
+import { getState, addCategory, removeCategory, clearAll, changePassword, setRecurringActive, deleteRecurring, updateRecurring, removeFavorite, updateFavorite, MAX_FAVORITES, METHODS, METHOD_LABELS } from '../store.js';
 import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
 import { passwordProblem } from '../passwords.js';
@@ -25,6 +25,37 @@ function scheduleText(r) {
 }
 
 let editingFav = null; // id of the favourite being edited inline
+let editingRule = null; // id of the repeat being edited inline
+
+/** "Paid with" / "Received in" choice for the inline editors ('' = not set). */
+function methodSelect(type, current) {
+    return `<label class="field"><span>${type === 'income' ? 'Received in' : 'Paid with'}</span><select name="method">
+        ${['', ...METHODS].map((m) => `<option value="${m}"${m === (current ?? '') ? ' selected' : ''}>${METHOD_LABELS[m]}</option>`).join('')}
+    </select></label>`;
+}
+
+/** Category list for an editor, keeping a category that was removed from Settings. */
+const categoryOptions = (categories, type, current) =>
+    (categories[type].includes(current) ? categories[type] : [...categories[type], current])
+        .map((c) => `<option${c === current ? ' selected' : ''}>${esc(c)}</option>`).join('');
+
+function ruleEditor(r, categories) {
+    return `
+                <li class="fav-item is-editing">
+                    <form class="fav-edit rec-edit" data-rule-id="${esc(r.id)}" novalidate>
+                        <label class="field"><span>Name</span><input name="note" maxlength="200" value="${esc(r.note)}" placeholder="${esc(r.category)}" autocomplete="off"></label>
+                        <label class="field fav-amount"><span>Amount</span><span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" inputmode="decimal" autocomplete="off" value="${plainAmount(r.amount)}"></span></label>
+                        <label class="field"><span>Category</span><select name="category">${categoryOptions(categories, r.type, r.category)}</select></label>
+                        ${methodSelect(r.type, r.method)}
+                        <p class="rec-edit-note">${r.active ? `Changes apply from the next one, on ${fmtDate(r.next)}.` : 'Changes apply when you resume it.'} Entries already added stay as they are.</p>
+                        <p class="field-error" role="alert" hidden></p>
+                        <div class="btn-row">
+                            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                            <button type="button" class="btn btn-ghost btn-sm" data-rec-cancel>Cancel</button>
+                        </div>
+                    </form>
+                </li>`;
+}
 
 const plainAmount = (paise) => (paise % 100 === 0 ? String(paise / 100) : (paise / 100).toFixed(2));
 
@@ -36,6 +67,7 @@ function favoriteEditor(f, categories) {
                         <label class="field"><span>Name</span><input name="note" maxlength="200" value="${esc(f.note)}" placeholder="${esc(f.category)}" autocomplete="off"></label>
                         <label class="field fav-amount"><span>Amount</span><span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" inputmode="decimal" autocomplete="off" value="${plainAmount(f.amount)}"></span></label>
                         <label class="field"><span>Category</span><select name="category">${cats.map((c) => `<option${c === f.category ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+                        ${methodSelect(f.type, f.method)}
                         <p class="field-error" role="alert" hidden></p>
                         <div class="btn-row">
                             <button type="submit" class="btn btn-primary btn-sm">Save</button>
@@ -59,7 +91,7 @@ function favoritesPanel(favorites, categories) {
                             : `
                 <li class="fav-item">
                     <span class="tx-icon ${f.type}">${icon('star')}</span>
-                    <span class="rec-main"><strong>${esc(f.note || f.category)}</strong><small><span class="${f.type}">${f.type === 'income' ? '+' : '−'} ${money(f.amount)}</span> · ${esc(f.category)}</small></span>
+                    <span class="rec-main"><strong>${esc(f.note || f.category)}</strong><small><span class="${f.type}">${f.type === 'income' ? '+' : '−'} ${money(f.amount)}</span> · ${esc(f.category)}${f.method ? ` · ${METHOD_LABELS[f.method]}` : ''}</small></span>
                     <span class="rec-actions">
                         <button type="button" class="icon-btn" data-fav-edit="${esc(f.id)}" aria-label="Edit ${esc(f.note || f.category)}">${icon('edit')}</button>
                         <button type="button" class="icon-btn icon-btn-danger" data-fav-remove="${esc(f.id)}" aria-label="Remove ${esc(f.note || f.category)} from quick add">${icon('trash')}</button>
@@ -73,7 +105,7 @@ function favoritesPanel(favorites, categories) {
 }
 
 
-function recurringPanel(rules) {
+function recurringPanel(rules, categories) {
     const list = [...rules].sort((a, b) => Number(b.active) - Number(a.active) || a.next.localeCompare(b.next));
     return `
         <section class="panel">
@@ -82,16 +114,19 @@ function recurringPanel(rules) {
                 ? `<p class="muted">Added automatically when they're due. Stopping one keeps the entries already added.</p>
             <ul class="rec-list">
                 ${list
-                    .map(
-                        (r) => `
+                    .map((r) =>
+                        r.id === editingRule
+                            ? ruleEditor(r, categories)
+                            : `
                 <li class="rec-item${r.active ? '' : ' is-paused'}">
                     <span class="tx-icon ${r.type}">${icon('repeat')}</span>
                     <span class="rec-main">
                         <strong>${esc(r.note || r.category)}</strong>
-                        <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}</small>
+                        <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}${r.method ? ` · ${METHOD_LABELS[r.method]}` : ''}</small>
                         <small>${r.active ? `Next: ${fmtDate(r.next)}` : 'Paused'}</small>
                     </span>
                     <span class="rec-actions">
+                        <button type="button" class="icon-btn" data-rec-edit="${esc(r.id)}" aria-label="Change ${esc(r.note || r.category)}">${icon('edit')}</button>
                         <button type="button" class="btn btn-ghost btn-sm" data-rec-toggle="${esc(r.id)}">${r.active ? 'Pause' : 'Resume'}</button>
                         <button type="button" class="icon-btn" data-rec-delete="${esc(r.id)}" aria-label="Stop repeating ${esc(r.note || r.category)}">${icon('trash')}</button>
                     </span>
@@ -116,7 +151,10 @@ function installSection() {
 }
 
 export function render(root, ctx = {}) {
-    if (ctx.entered) editingFav = null;
+    if (ctx.entered) {
+        editingFav = null;
+        editingRule = null;
+    }
     const { profile, categories, transactions, lastBackup, recurring, favorites } = getState();
     const backupText = lastBackup
         ? `Last backup: ${fmtDate(toLocalString(new Date(lastBackup)))} at ${fmtTime(toLocalString(new Date(lastBackup)))}`
@@ -198,7 +236,7 @@ export function render(root, ctx = {}) {
       </div>
 
       <div class="settings-col">
-        ${recurringPanel(recurring)}
+        ${recurringPanel(recurring, categories)}
 
         <section class="panel">
             <h2>Backup &amp; restore</h2>
@@ -275,6 +313,22 @@ export function render(root, ctx = {}) {
     };
 
     root.onsubmit = async (e) => {
+        if (e.target.classList.contains('rec-edit')) {
+            e.preventDefault();
+            const form = e.target;
+            const error = form.querySelector('.field-error');
+            const amount = parseAmount(form.elements.amount.value);
+            if (amount === null) {
+                error.textContent = 'Enter an amount greater than ₹0, like 15000 or 499.50.';
+                error.hidden = false;
+                form.elements.amount.focus();
+                return;
+            }
+            editingRule = null; // close the editor (the save re-renders this page)
+            const rule = updateRecurring(form.dataset.ruleId, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value });
+            if (rule) toast(`${rule.note || rule.category} will be ${money(rule.amount)} from ${fmtDate(rule.next)}`);
+            return;
+        }
         if (e.target.classList.contains('fav-edit')) {
             e.preventDefault();
             const form = e.target;
@@ -288,7 +342,7 @@ export function render(root, ctx = {}) {
             }
             const id = form.dataset.favId;
             editingFav = null; // close the editor (the save re-renders this page)
-            const result = updateFavorite(id, { note: form.elements.note.value, amount, category: form.elements.category.value });
+            const result = updateFavorite(id, { note: form.elements.note.value, amount, category: form.elements.category.value, method: form.elements.method.value });
             if (result === 'updated') toast(`Quick add updated: ${form.elements.note.value.trim() || form.elements.category.value} ${money(amount)}`);
             else if (result === 'exists') {
                 editingFav = id;
@@ -367,6 +421,13 @@ export function render(root, ctx = {}) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.dataset.recEdit) {
+            editingRule = el.dataset.recEdit;
+            render(root);
+            root.querySelector('.rec-edit input[name="amount"]')?.focus();
+        } else if (el.hasAttribute('data-rec-cancel')) {
+            editingRule = null;
+            render(root);
         } else if (el.dataset.favEdit) {
             editingFav = el.dataset.favEdit;
             render(root);
