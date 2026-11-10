@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Budget Tracker Security Review</title>
+<link rel="stylesheet" href="css/fonts.css">
+<style>
+/* Layout: one reading column; summary first, then coverage grid, findings as cards, reference tables last. Uses the app's own identity (blue light / black & gold dark). */
+:root {
+    --bg: #eef1f7;
+    --surface: #ffffff;
+    --soft: #f5f7fb;
+    --line: #e1e6ef;
+    --text: #1b1f3b;
+    --strong: #0c145a;
+    --muted: #5b6689;
+    --accent: #3546ab;
+    --accent-ink: #ffffff;
+    --high: #b3261e;
+    --high-tint: #fde9e7;
+    --med: #9a5b00;
+    --med-tint: #fff1d6;
+    --low: #2f5d9a;
+    --low-tint: #e6eefb;
+    --ok: #177a42;
+    --ok-tint: #e3f4ea;
+    --na: #6b7280;
+    --na-tint: #eef0f3;
+    --code-bg: #0c145a;
+    --code-fg: #e8ecff;
+    --font: 'Barlow', 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #000000; --surface: #161616; --soft: #1f1f1f; --line: #2a2a2a; --text: #ededed; --strong: #ffffff; --muted: #9b9b9b;
+        --accent: #e8bd70; --accent-ink: #000000;
+        --high: #ff8a7d; --high-tint: rgb(255 111 97 / .14); --med: #f5c27a; --med-tint: rgb(240 163 58 / .14);
+        --low: #9fc0ff; --low-tint: rgb(140 170 255 / .13); --ok: #4cc38a; --ok-tint: rgb(76 195 138 / .13); --na: #9b9b9b; --na-tint: #222222;
+        --code-bg: #0d0d0d; --code-fg: #edd185; color-scheme: dark;
+    }
+}
+:root[data-theme="dark"] {
+    --bg: #000000; --surface: #161616; --soft: #1f1f1f; --line: #2a2a2a; --text: #ededed; --strong: #ffffff; --muted: #9b9b9b;
+    --accent: #e8bd70; --accent-ink: #000000;
+    --high: #ff8a7d; --high-tint: rgb(255 111 97 / .14); --med: #f5c27a; --med-tint: rgb(240 163 58 / .14);
+    --low: #9fc0ff; --low-tint: rgb(140 170 255 / .13); --ok: #4cc38a; --ok-tint: rgb(76 195 138 / .13); --na: #9b9b9b; --na-tint: #222222;
+    --code-bg: #0d0d0d; --code-fg: #edd185; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 15.5px/1.6 var(--font);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 920px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 40px; }
+h1, h2, h3 { color: var(--strong); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -.01em; }
+h2 { font-size: 22px; font-weight: 800; }
+h3 { font-size: 16.5px; font-weight: 700; }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: .88em; background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0 .3em; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+section { display: grid; gap: 16px; min-width: 0; }
+.section-intro { color: var(--muted); max-width: 68ch; }
+
+/* Header */
+header { display: grid; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 34px; height: 42px; color: var(--accent); flex-shrink: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 22px; color: var(--muted); font-size: 14px; }
+.meta b { color: var(--text); font-weight: 600; }
+.lede { font-size: 17px; max-width: 70ch; }
+
+/* Summary */
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 4px; align-content: start; }
+.stat strong { font-size: 34px; font-weight: 700; line-height: 1; color: var(--strong); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13.5px; color: var(--muted); }
+.stat .sev-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.stat.hero { background: var(--accent); border-color: var(--accent); }
+.stat.hero strong, .stat.hero span { color: var(--accent-ink); }
+
+/* Chips */
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.sev-high { background: var(--high-tint); color: var(--high); }
+.sev-medium { background: var(--med-tint); color: var(--med); }
+.sev-low { background: var(--low-tint); color: var(--low); }
+.st-fixed, .st-safe { background: var(--ok-tint); color: var(--ok); }
+.st-na { background: var(--na-tint); color: var(--na); }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--line); color: var(--muted); background: var(--soft); white-space: nowrap; }
+
+/* OWASP coverage grid */
+.owasp { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+.cat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.cat .code { font-size: 13px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.cat .name { font-weight: 700; color: var(--strong); font-size: 14.5px; line-height: 1.3; }
+.cat .note { font-size: 13px; color: var(--muted); }
+
+/* Findings */
+.findings { display: grid; gap: 12px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px 18px 24px; display: grid; gap: 12px; position: relative; overflow: hidden; }
+.finding::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--sevc); }
+.finding.high { --sevc: var(--high); }
+.finding.medium { --sevc: var(--med); }
+.finding.low { --sevc: var(--low); }
+.f-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.f-num { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.f-head h3 { flex: 1 1 260px; min-width: 0; }
+.f-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.f-body > div { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 14.5px; min-width: 0; }
+.f-body .label { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.f-body .fix .label { color: var(--ok); }
+.f-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-top: 1px solid var(--line); }
+thead th { border-top: 0; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); background: var(--soft); }
+tbody th { font-weight: 700; color: var(--strong); }
+
+/* Lists */
+.risks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.risks li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.risks b { color: var(--strong); }
+
+/* Code */
+.code-block { position: relative; background: var(--code-bg); color: var(--code-fg); border-radius: 12px; padding: 16px 18px; overflow-x: auto; }
+.code-block pre { margin: 0; font: 13.5px/1.7 var(--mono); }
+.copy { position: absolute; top: 10px; right: 10px; border: 1px solid rgb(255 255 255 / .25); background: transparent; color: var(--code-fg); border-radius: 8px; padding: 4px 10px; font: 600 12.5px var(--font); cursor: pointer; }
+.copy:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 6px; }
+
+@media (max-width: 720px) {
+    .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .f-body { grid-template-columns: minmax(0, 1fr); }
+    .page { padding-block: 24px 48px; gap: 32px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .finding, .cat { transition: border-color .2s ease; }
+    .finding:hover, .cat:hover { border-color: var(--accent); }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+    <header>
+        <div class="brand">
+            <svg viewBox="0 0 396.81 497.38" aria-hidden="true"><g fill="currentColor" transform="translate(-112.43 -138.97)"><path d="M477.38,332.3c-13.3,21.61-32.35,36.11-57.1,45.37c0-5.26,0.09-9.45-0.03-13.65 c-0.19-7.23-4.17-11.24-11.45-11.29c-15.57-0.09-31.13-0.03-45.75-0.03c-5.62-13.43-10.99-26.24-16.55-39.54h9.89 c17.26-0.01,34.53,0.04,51.79-0.05c8.04-0.04,10.77-2.93,10.8-11.13c0.06-9.08,0.04-18.16,0.03-27.23 c-0.01-7.28-2.96-10.78-10.15-11.87c-1.86-0.28-3.79-0.13-5.67-0.13c-75.58,0-151.17-0.01-226.75,0.03 c-2.69,0.01-5.41,0.35-8.07,0.79c-5.65,0.89-8.25,4.24-8.18,10.02c0.15,13.08-0.06,26.17,0.22,39.24c0.14,6.45,3.1,9.01,9.47,9.04 c12.41,0.06,24.88-0.54,37.25,0.16c17.05,0.98,34.33,1.05,50.6,7.47c11.68,4.62,21.56,11.44,28.63,23.2H182.48 c-4.21,0-8.42-0.2-12.63,0.05c-5.67,0.34-9.55,2.76-9.55,9.26c0,9.7-0.49,19.42-0.15,29.11c0.33,9.44,3.1,11.79,12.48,11.83 c14.31,0.06,28.63,0.01,42.95,0.01c22.74,0,45.47,0,68.21,0.01h6.93c-4.79,14.14-12.84,24.38-24.85,31.35 c-14.33,8.32-29.88,12.74-46.41,13.36c-16.15,0.61-32.32,0.91-48.49,1.28c-7.73,0.18-10.44,2.23-10.61,9.91 c-0.3,12.65-0.18,25.31,0.11,37.96c0.05,2.52,1.03,5.59,2.67,7.42c10.89,12.21,22.25,23.99,33.12,36.23 c14.2,15.96,28.08,32.21,42.08,48.36c11.12,12.82,22.2,25.69,33.29,38.54c1.15,1.33,2.18,2.77,3.9,4.97H117.14 c-0.2-2.09-0.61-4.29-0.61-6.5c-0.04-158.53-0.03-317.08-0.1-475.61c0-4.64,0.52-7.28,6.38-7.27c75.8,0.23,151.59-0.27,227.37,0.44 c31.02,0.29,60.82,7.66,87.78,23.89c32.19,19.38,50.4,47.94,54.97,85.41C496.38,281.03,492.48,307.78,477.38,332.3z"/><path d="M409.09,623.69c-13.67,3.76-27.97,5.23-41.98,7.73c-4.95,0.89-8.69-0.63-12.05-4.71 c-20.67-25.1-41.37-50.21-62.46-74.96c-13.22-15.5-27.16-30.37-40.76-45.55c-1.06-1.18-2-2.47-3.47-4.31 c58.77-10.13,102.08-36.44,114.36-98.92h40.6c14.19,0.01,16.45-2.15,16.99-16.1c0.01-0.62,0.2-1.23,0.44-2.53 c13.67,4.13,26.22,9.93,37.44,18.62c26.85,20.8,42.1,48.2,46,81.9C512.05,552.58,475.03,605.54,409.09,623.69z"/></g></svg>
+            <span class="eyebrow">Security review · Budget Tracker</span>
+        </div>
+        <h1>Budget Tracker Security Review</h1>
+        <p class="lede">A personal budget app that keeps every rupee of data encrypted on the person's own phone. We attacked the running app, fixed what broke, and attacked it again. Every finding is now fixed.</p>
+        <div class="meta">
+            <span><b>Date</b> 10 November 2026</span>
+            <span><b>Scope</b> the whole app as published on GitHub Pages (client-side PWA, no server)</span>
+            <span><b>Frameworks</b> OWASP Top 10 (2025) and MITRE ATT&amp;CK</span>
+            <span><b>Method</b> code review, live attacks in Chrome, fixes, re-tests</span>
+        </div>
+    </header>
+
+    <section aria-labelledby="sum-h">
+        <h2 id="sum-h" class="eyebrow" style="font-size:12px">At a glance</h2>
+        <div class="summary">
+            <div class="stat hero"><strong>0</strong><span>open findings</span></div>
+            <div class="stat"><strong>8</strong><span>findings fixed</span>
+                <div class="sev-line"><span class="chip sev-high">1 High</span><span class="chip sev-medium">5 Medium</span><span class="chip sev-low">2 Low</span></div>
+            </div>
+            <div class="stat"><strong>11</strong><span>attack types that held up</span></div>
+            <div class="stat"><strong>7</strong><span>accepted risks no web app can remove</span></div>
+        </div>
+    </section>
+
+    <section aria-labelledby="model-h">
+        <h2 id="model-h">What we protect, and from whom</h2>
+        <p class="section-intro">Transactions, budgets, goals, money given &amp; taken and the profile live only on the device, encrypted with AES-256-GCM using a key stretched from the password (PBKDF2-SHA256, 600,000 rounds). There is no server and no cloud account.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th scope="col">Attacker</th><th scope="col">Example</th><th scope="col">Covered</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Someone with the phone or laptop</th><td>A thief, or a family member, while the app is locked or after it locks</td><td><span class="chip st-fixed">Yes</span></td></tr>
+                    <tr><th scope="row">Malicious content inside the app</th><td>A note or name crafted to run code (XSS), or a poisoned backup file</td><td><span class="chip st-fixed">Yes</span></td></tr>
+                    <tr><th scope="row">Malicious third-party code</th><td>A tampered library or font service (supply chain)</td><td><span class="chip st-fixed">Yes</span></td></tr>
+                    <tr><th scope="row">Network attacker</th><td>Someone on public Wi-Fi</td><td><span class="chip st-fixed">Yes</span></td></tr>
+                    <tr><th scope="row">Malware or a browser extension on the device</th><td>Reads the screen or keystrokes while the app is unlocked</td><td><span class="chip st-na">Out of reach</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section aria-labelledby="owasp-h">
+        <h2 id="owasp-h">OWASP Top 10 (2025) coverage</h2>
+        <p class="section-intro">How each category applies to an app with no server, and what was done about it.</p>
+        <div class="owasp">
+            <div class="cat"><span class="code">A01</span><span class="name">Broken Access Control</span><span class="chip st-safe">Tested, safe</span><span class="note">No server. Odd routes fall back safely; the key leaves memory on lock.</span></div>
+            <div class="cat"><span class="code">A02</span><span class="name">Security Misconfiguration</span><span class="chip st-fixed">Fixed</span><span class="note">Strict Content Security Policy, framing refused, no-referrer.</span></div>
+            <div class="cat"><span class="code">A03</span><span class="name">Software Supply Chain Failures</span><span class="chip st-fixed">Fixed</span><span class="note">Fonts and Chart.js ship with the app; no requests to other sites.</span></div>
+            <div class="cat"><span class="code">A04</span><span class="name">Cryptographic Failures</span><span class="chip st-fixed">Fixed</span><span class="note">Data left in closed forms after lock is now wiped. Storage holds only ciphertext.</span></div>
+            <div class="cat"><span class="code">A05</span><span class="name">Injection</span><span class="chip st-safe">Tested, safe</span><span class="note">0 XSS executions; CSV formula cells neutralised.</span></div>
+            <div class="cat"><span class="code">A06</span><span class="name">Insecure Design</span><span class="chip st-fixed">Fixed</span><span class="note">Lock now clears dialogs, chart, caches and toasts.</span></div>
+            <div class="cat"><span class="code">A07</span><span class="name">Authentication Failures</span><span class="chip st-fixed">Fixed</span><span class="note">Guessable passwords refused; the wrong-password wait survives reloads.</span></div>
+            <div class="cat"><span class="code">A08</span><span class="name">Software or Data Integrity Failures</span><span class="chip st-safe">Tested, safe</span><span class="note">Tampering and prototype pollution rejected; backups validated.</span></div>
+            <div class="cat"><span class="code">A09</span><span class="name">Security Logging &amp; Alerting Failures</span><span class="chip st-na">Little to act on</span><span class="note">No server to log to; the app shows the person what's happening and sends nothing.</span></div>
+            <div class="cat"><span class="code">A10</span><span class="name">Mishandling of Exceptional Conditions</span><span class="chip st-fixed">Fixed</span><span class="note">Booby-trapped backups are refused before any work starts.</span></div>
+        </div>
+    </section>
+
+    <section aria-labelledby="find-h">
+        <h2 id="find-h">Findings and fixes</h2>
+        <p class="section-intro">Ordered by severity. Each one was reproduced against the running app before the fix and re-attacked after it.</p>
+        <div class="findings">
+            <article class="finding high">
+                <div class="f-head"><span class="f-num">4</span><h3>A booby-trapped backup could freeze all encryption</h3><span class="chip sev-high">High</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>A backup file could ask for 2 billion key-stretching rounds. It froze all encryption in the browser, even logging in, until the browser was restarted. Imported files had no size limit.</div>
+                    <div class="fix"><span class="label">Fix</span>Only 100,000 to 5,000,000 rounds and sane salt/IV sizes are accepted, checked before any work starts (refused in 7 ms). Files over 25 MB are refused.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A10</span><span class="tag">OWASP A08</span><span class="tag">T1499 Endpoint Denial of Service</span><span class="tag">T1204.002 Malicious File</span></div>
+            </article>
+            <article class="finding medium">
+                <div class="f-head"><span class="f-num">1</span><h3>Private data stayed in closed forms after locking</h3><span class="chip sev-medium">Medium</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>Amounts, notes, goal and person names and budget figures stayed in hidden form fields, readable by an extension or developer tools.</div>
+                    <div class="fix"><span class="label">Fix</span>On lock, every dialog and popup is closed, forms are reset and generated lists are emptied.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A04</span><span class="tag">OWASP A06</span><span class="tag">T1005 Data from Local System</span><span class="tag">T1185 Browser Session Hijacking</span></div>
+            </article>
+            <article class="finding medium">
+                <div class="f-head"><span class="f-num">2</span><h3>The chart and a cache kept data in memory after locking</h3><span class="chip sev-medium">Medium</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>The doughnut chart and the note-suggestion cache held category names, notes and amounts after the app locked.</div>
+                    <div class="fix"><span class="label">Fix</span>The chart is destroyed and the cache cleared on lock.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A06</span><span class="tag">T1005 Data from Local System</span></div>
+            </article>
+            <article class="finding medium">
+                <div class="f-head"><span class="f-num">5</span><h3>No Content Security Policy, and the app could be framed</h3><span class="chip sev-medium">Medium</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>Nothing in the browser would stop injected code if an XSS bug ever slipped in, and another site could show the app inside a frame (clickjacking).</div>
+                    <div class="fix"><span class="label">Fix</span>A strict policy: <code>script-src 'self'</code>, no inline scripts, no eval, <code>object-src 'none'</code>. The app hides itself when framed.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A02</span><span class="tag">T1059.007 JavaScript</span><span class="tag">T1189 Drive-by Compromise</span></div>
+            </article>
+            <article class="finding medium">
+                <div class="f-head"><span class="f-num">6</span><h3>Reloading skipped the wrong-password wait</h3><span class="chip sev-medium">Medium</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>The wait after 5 wrong passwords lived only in memory, so a page reload reset it.</div>
+                    <div class="fix"><span class="label">Fix</span>The counter survives reloads, capped at 1 hour so nobody is locked out for days.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A07</span><span class="tag">T1110.001 Password Guessing</span></div>
+            </article>
+            <article class="finding medium">
+                <div class="f-head"><span class="f-num">7</span><h3>Easy passwords were accepted</h3><span class="chip sev-medium">Medium</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span><code>12345678</code> and <code>password</code> passed the 8-character rule. Anyone who copies the encrypted data can guess offline, so password strength is the real protection.</div>
+                    <div class="fix"><span class="label">Fix</span>Common passwords, runs (12345678, abcdefgh, qwertyui), one repeated character and the person's own name are refused, with a plain-words reason.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A07</span><span class="tag">T1110.002 Password Cracking</span></div>
+            </article>
+            <article class="finding low">
+                <div class="f-head"><span class="f-num">3</span><h3>A toast stayed visible on the lock screen</h3><span class="chip sev-low">Low</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>Messages such as "Added Rent ₹15,000" could still be read after locking.</div>
+                    <div class="fix"><span class="label">Fix</span>Cleared on lock.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A06</span><span class="tag">T1005 Data from Local System</span></div>
+            </article>
+            <article class="finding low">
+                <div class="f-head"><span class="f-num">8</span><h3>Fonts were loaded from Google</h3><span class="chip sev-low">Low</span><span class="chip st-fixed">Fixed</span></div>
+                <div class="f-body">
+                    <div><span class="label">What happened</span>A third party saw every visit and could change the font stylesheet.</div>
+                    <div class="fix"><span class="label">Fix</span>Both fonts ship with the app (SIL Open Font License). The app now makes no requests to any other site, and a no-referrer policy is set.</div>
+                </div>
+                <div class="f-tags"><span class="tag">OWASP A03</span><span class="tag">OWASP A02</span><span class="tag">T1195 Supply Chain Compromise</span><span class="tag">T1592 Gather Victim Host Information</span></div>
+            </article>
+        </div>
+    </section>
+
+    <section aria-labelledby="safe-h">
+        <h2 id="safe-h">Tested and found safe</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th scope="col">Attack</th><th scope="col">Mapping</th><th scope="col">Result</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Stored XSS, 6 payload styles in every field</th><td><span class="tag">A05</span> <span class="tag">T1059.007</span></td><td><span class="chip st-safe">Safe</span> 0 executions across 8 pages and every dialog; the CSP also blocks injected handlers and scripts</td></tr>
+                    <tr><th scope="row">CSV formula injection</th><td><span class="tag">A05</span> <span class="tag">T1204.002</span></td><td><span class="chip st-safe">Safe</span> Cells starting with = + − @ are prefixed with <code>'</code></td></tr>
+                    <tr><th scope="row">Prototype pollution through a backup</th><td><span class="tag">A08</span> <span class="tag">T1565.001</span></td><td><span class="chip st-safe">Safe</span> Every object is rebuilt field by field</td></tr>
+                    <tr><th scope="row">Tampering with stored data</th><td><span class="tag">A08</span> <span class="tag">T1565.001</span></td><td><span class="chip st-safe">Safe</span> AES-GCM rejects any change</td></tr>
+                    <tr><th scope="row">Odd routes (<code>#/__proto__</code>)</th><td><span class="tag">A01</span></td><td><span class="chip st-safe">Safe</span> Fall back to the dashboard</td></tr>
+                    <tr><th scope="row">Malicious profile photo</th><td><span class="tag">A05</span> <span class="tag">T1027</span></td><td><span class="chip st-safe">Safe</span> Redrawn on a canvas and saved as JPEG</td></tr>
+                    <tr><th scope="row">Readable data in browser storage</th><td><span class="tag">A04</span> <span class="tag">T1555.003</span></td><td><span class="chip st-safe">Safe</span> Only ciphertext; the password is never stored</td></tr>
+                    <tr><th scope="row">Floating-point money errors</th><td><span class="tag">A06</span></td><td><span class="chip st-safe">Safe</span> Whole paise and exact integer maths (0.1 + 0.2 = 0.30)</td></tr>
+                    <tr><th scope="row">Network interception</th><td><span class="tag">A04</span> <span class="tag">T1557</span></td><td><span class="chip st-safe">Safe</span> HTTPS only, HSTS-preloaded domain</td></tr>
+                    <tr><th scope="row">Supply chain: Chart.js and fonts</th><td><span class="tag">A03</span> <span class="tag">T1195.001</span></td><td><span class="chip st-safe">Safe</span> Chart.js 4.5.0 checked byte-for-byte against npm; everything ships with the app</td></tr>
+                    <tr><th scope="row">Fingerprint / face unlock</th><td><span class="tag">A07</span> <span class="tag">T1556</span></td><td><span class="chip st-safe">Safe</span> A different device, a tampered copy or a changed password all fail</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section aria-labelledby="risk-h">
+        <h2 id="risk-h">Accepted risks</h2>
+        <p class="section-intro">Things no web app can fully remove, or that are deliberate.</p>
+        <ul class="risks">
+            <li><b>Malware or a malicious browser extension</b> can read the screen while the app is unlocked, or capture the password <span class="tag">T1176</span> <span class="tag">T1056.001</span>. Install few, trusted extensions and keep the phone updated.</li>
+            <li><b>Offline guessing of a stolen copy</b> <span class="tag">T1110.002</span>. 600,000 rounds and the password rules slow it down; a long passphrase is what really protects it.</li>
+            <li><b>"Forgot password?" wipes the data without the password</b> <span class="tag">T1485</span>. Without the password the data can't be recovered anyway; backups and the 30-day reminder are the protection.</li>
+            <li><b>The first name shows on the login screen</b> before unlocking. Low sensitivity, kept for friendliness.</li>
+            <li><b>CSV exports and older unencrypted backups are plain text.</b> The app warns where they're made.</li>
+            <li><b>GitHub Pages can't send security headers.</b> The CSP is set with a meta tag and framing is handled in a script instead.</li>
+            <li><b>JavaScript can't wipe strings from memory.</b> Data is dropped on lock; the browser decides when the memory is reused.</li>
+        </ul>
+    </section>
+
+    <section aria-labelledby="rerun-h">
+        <h2 id="rerun-h">Re-running the checks</h2>
+        <p class="section-intro">Unit tests run with Node 18 or later, from the project folder. The browser attack sweep was run by hand in Chrome against a throwaway account; repeat it after any change that turns text into HTML.</p>
+        <div class="code-block">
+            <button class="copy" id="copy-btn" type="button">Copy</button>
+            <pre id="cmds">node tests/security.test.mjs     # password rules, backup validation, prototype pollution
+node tests/biometric.test.mjs    # fingerprint unlock with a simulated sensor
+node tests/format.test.mjs       # exact money parsing</pre>
+        </div>
+    </section>
+
+    <footer>
+        <p>Fixes shipped in commits <code>82df2ad</code> (security fixes) and <code>a044f8e</code> (self-hosted fonts). The full report is <code>SECURITY.md</code> in the repository.</p>
+        <p>To report a problem, open a GitHub issue without sensitive details, or contact the repository owner privately.</p>
+    </footer>
+</div>
+
+<script>
+document.getElementById('copy-btn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const text = document.getElementById('cmds').textContent;
+    try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+    } catch {
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById('cmds'));
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.textContent = 'Selected';
+    }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
+});
+</script>
+</body>
+</html>
