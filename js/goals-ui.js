@@ -1,13 +1,44 @@
 // Savings goals on the dashboard: the card, plus the "goal" and "add / withdraw money" dialogs.
 
-import { getState, addGoal, updateGoal, deleteGoal, restoreGoal, moveGoalMoney, removeGoalEntry } from './store.js';
-import { money, moneyWhole, esc, parseAmount, toDecimal, nowLocal } from './format.js';
-import { goalProgress, goalSaved } from './goals.js';
+import { getState, addGoal, updateGoal, deleteGoal, restoreGoal, moveGoalMoney, removeGoalEntry, restoreGoalEntry } from './store.js';
+import { money, moneyWhole, esc, parseAmount, toDecimal, nowLocal, fmtDate } from './format.js';
+import { goalProgress, goalSaved, goalHistory, canRemoveEntry } from './goals.js';
+import { applyFolds } from './folds.js';
 import { icon, toast } from './ui.js';
 
 const today = () => nowLocal().slice(0, 10);
 
 // ---- Dashboard card ---------------------------------------------------------------
+
+const openHistory = new Set(); // goals whose history is showing (kept while the dashboard re-renders)
+
+/** Every add and withdrawal, newest first, with how much was saved after each. */
+function historyList(g) {
+    const rows = goalHistory(g);
+    return `
+                    <ol class="goal-history" aria-label="History of ${esc(g.name)}">
+                        ${rows
+                            .map((r) => {
+                                const what = `${r.kind === 'add' ? 'Added' : 'Withdrew'} ${money(Math.abs(r.amount))}`;
+                                return `<li class="gh-row ${r.kind}">
+                            <span class="gh-date">${fmtDate(r.date)}</span>
+                            <span class="gh-what">${what}</span>
+                            <span class="gh-bal">${money(r.balance)} saved</span>
+                            <button type="button" class="icon-btn gh-remove" data-goal-entry="${esc(g.id)}" data-entry="${esc(r.id)}" aria-label="Remove: ${what} on ${fmtDate(r.date)}">${icon('trash')}</button>
+                        </li>`;
+                            })
+                            .join('')}
+                    </ol>`;
+}
+
+/** Redraw just the goals card (e.g. after opening a history), keeping its fold button. */
+function redrawGoals() {
+    const card = document.querySelector('section[data-card="goals"]');
+    if (!card) return;
+    const parent = card.parentElement;
+    card.outerHTML = goalsSection(getState());
+    applyFolds(parent);
+}
 
 export function goalsSection(state) {
     const head = `<div class="section-head"><h2>Savings goals</h2>${state.goals.length ? '<button type="button" class="link" data-goal-new>+ New goal</button>' : ''}</div>`;
@@ -41,7 +72,9 @@ export function goalsSection(state) {
                     <div class="goal-actions">
                         ${p.state === 'reached' ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-goal-money="${esc(g.id)}" data-dir="add">${icon('plus')}<span>Add money</span></button>`}
                         ${p.saved > 0 ? `<button type="button" class="link" data-goal-money="${esc(g.id)}" data-dir="withdraw">Withdraw</button>` : ''}
+                        ${g.entries.length ? `<button type="button" class="link goal-history-toggle" data-goal-history="${esc(g.id)}" aria-expanded="${openHistory.has(g.id)}">${openHistory.has(g.id) ? 'Hide' : 'Show'} history (${g.entries.length})</button>` : ''}
                     </div>
+                    ${openHistory.has(g.id) && g.entries.length ? historyList(g) : ''}
                 </li>`;
                 })
                 .join('')}
@@ -194,5 +227,29 @@ document.addEventListener('click', (e) => {
     const edit = e.target.closest('[data-goal-edit]');
     if (edit) return openGoalDialog(edit.dataset.goalEdit);
     const move = e.target.closest('[data-goal-money]');
-    if (move) openMoneyDialog(move.dataset.goalMoney, move.dataset.dir);
+    if (move) return openMoneyDialog(move.dataset.goalMoney, move.dataset.dir);
+    const history = e.target.closest('[data-goal-history]');
+    if (history) {
+        const id = history.dataset.goalHistory;
+        if (openHistory.has(id)) openHistory.delete(id);
+        else openHistory.add(id);
+        redrawGoals();
+        document.querySelector(`[data-goal-history="${CSS.escape(id)}"]`)?.focus();
+        return;
+    }
+    const remove = e.target.closest('[data-goal-entry]');
+    if (remove) {
+        const goalId = remove.dataset.goalEntry;
+        const goal = getState().goals.find((g) => g.id === goalId);
+        if (!goal) return;
+        if (!canRemoveEntry(goal, remove.dataset.entry)) {
+            toast('Can’t remove this one: a later withdrawal used this money. Remove that withdrawal first.');
+            return;
+        }
+        const removed = removeGoalEntry(goalId, remove.dataset.entry);
+        if (removed) {
+            const amt = money(Math.abs(removed.entry.amount));
+            toast(`Removed: ${removed.entry.amount > 0 ? 'added' : 'withdrew'} ${amt} on ${fmtDate(removed.entry.date)}`, { label: 'Undo', run: () => restoreGoalEntry(goalId, removed) });
+        }
+    }
 });

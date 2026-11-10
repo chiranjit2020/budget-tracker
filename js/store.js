@@ -2,6 +2,7 @@
 // through the vault (see vault.js); nothing is written in plain text.
 
 import * as vault from './vault.js';
+import { canRemoveEntry } from './goals.js';
 
 export const DEFAULT_CATEGORIES = {
     expense: ['Food & Drink', 'Groceries', 'Household', 'Rent', 'Bills & Utilities', 'Transport', 'Shopping', 'Health', 'Education', 'Entertainment', 'Travel', 'Other'],
@@ -426,10 +427,26 @@ export function moveGoalMoney(id, amount, today) {
 }
 
 /** Undo one add/withdrawal. */
+/**
+ * Remove one add/withdrawal (Undo, or a mistake in the history). Refused if it would leave the
+ * goal below zero at any point. Returns { entry, index } so it can be put back, or null.
+ */
 export function removeGoalEntry(goalId, entryId) {
+    const goal = state.goals.find((g) => g.id === goalId);
+    const index = goal ? goal.entries.findIndex((e) => e.id === entryId) : -1;
+    if (index < 0 || !canRemoveEntry(goal, entryId)) return null;
+    const entry = goal.entries[index];
     return commit((d) => {
-        const goal = d.goals.find((g) => g.id === goalId);
-        if (goal) goal.entries = goal.entries.filter((e) => e.id !== entryId);
+        const g = d.goals.find((x) => x.id === goalId);
+        if (g) g.entries = g.entries.filter((e) => e.id !== entryId);
+    }) ? { entry, index } : null;
+}
+
+/** Put a removed entry back where it was. */
+export function restoreGoalEntry(goalId, { entry, index }) {
+    return commit((d) => {
+        const g = d.goals.find((x) => x.id === goalId);
+        if (g && !g.entries.some((e) => e.id === entry.id)) g.entries.splice(Math.min(index, g.entries.length), 0, entry);
     });
 }
 

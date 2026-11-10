@@ -6,7 +6,7 @@ import path from 'node:path';
 globalThis.window = { addEventListener() {} }; // store.js/vault.js expect a browser
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const load = (f) => import(pathToFileURL(path.join(root, f)).href);
-const { goalProgress, daysBetween } = await load('js/goals.js');
+const { goalProgress, daysBetween, goalHistory, canRemoveEntry } = await load('js/goals.js');
 const { normalize } = await load('js/store.js');
 
 const R = (rupees) => rupees * 100;
@@ -53,6 +53,31 @@ assert.equal(over.remaining, 0);
 // Withdrawals count against the total
 const mixed = { ...goal(0), entries: [{ id: 'a', amount: R(10000), date: '2026-10-01' }, { id: 'b', amount: -R(2500), date: '2026-10-05' }] };
 assert.equal(goalProgress(mixed, today).saved, R(7500));
+
+// History: date order (same day = the order they were made), newest first, running total after each
+const hist = { ...goal(0), entries: [
+    { id: 'a', amount: R(10000), date: '2026-10-01' },
+    { id: 'b', amount: R(5000), date: '2026-10-05' },
+    { id: 'c', amount: -R(3000), date: '2026-10-05' },
+    { id: 'd', amount: R(2000), date: '2026-10-08' },
+] };
+assert.deepEqual(goalHistory(hist).map((r) => [r.id, r.kind, r.balance / 100]), [['d', 'add', 14000], ['c', 'withdraw', 12000], ['b', 'add', 15000], ['a', 'add', 10000]]);
+// Entries stored out of order (e.g. merged from a backup) still list by date and end on the same total.
+// Entries have a date but no time, so same-day ones follow the order they were saved (here c before b).
+const shuffled = { ...hist, entries: [hist.entries[3], hist.entries[0], hist.entries[2], hist.entries[1]] };
+assert.deepEqual(goalHistory(shuffled).map((r) => [r.id, r.balance / 100]), [['d', 14000], ['b', 12000], ['c', 7000], ['a', 10000]]);
+// Removing: fine unless the goal would dip below zero at some point
+assert.equal(canRemoveEntry(hist, 'd'), true); // 10,000 -> 15,000 -> 12,000
+assert.equal(canRemoveEntry(hist, 'c'), true); // a withdrawal can always go
+assert.equal(canRemoveEntry(hist, 'a'), true); // 5,000 -> 2,000 -> 4,000: never below zero
+const tight = { ...goal(0), entries: [
+    { id: 'x', amount: R(1000), date: '2026-10-01' },
+    { id: 'y', amount: R(5000), date: '2026-10-02' },
+    { id: 'z', amount: -R(3000), date: '2026-10-05' },
+] };
+assert.equal(canRemoveEntry(tight, 'y'), false); // 1,000 - 3,000 = -2,000: refused
+assert.equal(canRemoveEntry(tight, 'x'), true); // 5,000 - 3,000 = 2,000
+assert.deepEqual(goalHistory(goal(0)), []);
 
 // Cleaning on load (store.normalize): bad goals and entries are dropped, good ones kept
 const s = normalize({

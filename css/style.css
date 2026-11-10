@@ -889,7 +889,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 
 /* Savings goals */
 .goal-list { display: grid; gap: 1.2rem; margin: 0; padding: 0; list-style: none; }
-.goal { --level: var(--blue); padding: 1.4rem 1.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.goal { container: goal / inline-size; --level: var(--blue); padding: 1.4rem 1.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .goal.reached { --level: var(--success); }
 .goal.overdue { --level: var(--warn); }
 .goal.overdue .goal-pct { color: var(--dark-blue); } /* amber is too faint as text */
@@ -906,6 +906,22 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .goal-actions { display: flex; align-items: center; gap: 1.6rem; margin-top: 1.2rem; }
 .goal-actions:empty { display: none; }
 .goal-money-hint { margin: -.6rem 0 1.4rem; font-size: 1.3rem; }
+.goal-history-toggle { margin-left: auto; }
+.goal-history { display: grid; margin: 1.2rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.gh-row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) auto auto; align-items: center; gap: .4rem 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); font-size: 1.35rem; }
+.gh-row:last-child { border-bottom: 0; }
+.gh-date { color: var(--muted); white-space: nowrap; }
+.gh-what { font-weight: 600; color: var(--dark-blue); }
+.gh-row.withdraw .gh-what { color: var(--expense-text); }
+.gh-bal { color: var(--muted); white-space: nowrap; text-align: right; }
+.gh-remove { width: 3.2rem; height: 3.2rem; color: var(--muted); }
+.gh-remove .icon { width: 1.5rem; height: 1.5rem; }
+.gh-remove:hover { color: var(--danger); background: var(--danger-tint); }
+@container goal (max-width: 440px) {
+    .gh-row { grid-template-columns: minmax(0, 1fr) auto; gap: .1rem 1rem; }
+    .gh-date, .gh-what, .gh-bal { grid-column: 1; text-align: left; }
+    .gh-remove { grid-column: 2; grid-row: 1 / span 3; }
+}
 
 /* Lend & borrow */
 .debt-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.4rem; padding: 1.4rem 1.6rem; border-radius: var(--radius); background: var(--soft); }

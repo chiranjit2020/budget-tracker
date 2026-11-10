@@ -44,3 +44,26 @@ export function goalProgress(goal, today) {
     const perMonth = Number((top + bottom - 1n) / bottom) * 100;
     return { ...out, perMonth, pace: `Save ${moneyWhole(perMonth)} a month to reach it by ${fmtDate(goal.by)}.` };
 }
+
+/**
+ * Every add and withdrawal, newest first, each with the amount saved right after it.
+ * Order: by date, and entries on the same day in the order they were made.
+ * [{ id, date, amount (paise, negative = withdrawal), kind: 'add' | 'withdraw', balance }]
+ */
+export function goalHistory(goal) {
+    let balance = 0;
+    return goal.entries
+        .map((e, i) => ({ ...e, i }))
+        .sort((a, b) => a.date.localeCompare(b.date) || a.i - b.i)
+        .map((e) => {
+            balance += e.amount;
+            return { id: e.id, date: e.date, amount: e.amount, kind: e.amount > 0 ? 'add' : 'withdraw', balance };
+        })
+        .reverse();
+}
+
+/** Removing this entry must never leave the goal below ₹0 at any point (a later withdrawal may need it). */
+export function canRemoveEntry(goal, entryId) {
+    const rest = { ...goal, entries: goal.entries.filter((e) => e.id !== entryId) };
+    return goalHistory(rest).every((row) => row.balance >= 0);
+}
