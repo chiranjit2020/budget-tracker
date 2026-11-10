@@ -1,6 +1,6 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite } from './store.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
@@ -168,7 +168,7 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     showAmountError('');
     const kind = tx?.type ?? type;
     txForm.type.value = kind;
-    fillCategories(kind, tx?.category);
+    fillCategories(kind, tx ? tx.category : lastCategory(kind));
     txForm.amount.value = tx ? toDecimal(tx.amount) : '';
     txForm.date.value = tx?.date ?? nowLocal();
     txForm.note.value = tx?.note ?? '';
@@ -182,8 +182,51 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     repeatNote.hidden = !rule;
     if (rule) repeatNote.textContent = `This entry repeats ${FREQ_WORD[rule.freq]}. Changes here affect only this one. Manage repeats in Settings → Recurring.`;
     updateRepeatHint();
+    amountSuggested = false;
+    renderSuggestions();
     txDialog.showModal();
 }
+
+// ---- Note suggestions: earlier notes with their usual category and amount ----
+
+const noteSuggest = document.getElementById('note-suggest');
+const noteHint = document.getElementById('note-hint');
+let suggestions = [];
+let amountSuggested = false; // the amount came from a suggestion, so another pick may replace it
+
+function renderSuggestions() {
+    const text = txForm.note.value;
+    // Only when adding, and not once the note is exactly the one suggestion left.
+    suggestions = editingId ? [] : noteSuggestions(txForm.type.value, text);
+    if (suggestions.length === 1 && suggestions[0].key === text.trim().toLowerCase() && suggestions[0].category === txForm.category.value) suggestions = [];
+    noteSuggest.hidden = !suggestions.length;
+    noteSuggest.innerHTML = suggestions
+        .map((s, i) => `<button type="button" class="note-chip" data-suggest="${i}"><strong>${esc(s.note)}</strong><small>${esc(s.category)} · ${money(s.amount)}</small></button>`)
+        .join('');
+    noteHint.textContent = suggestions.length ? `${suggestions.length} suggestion${suggestions.length === 1 ? '' : 's'} below` : '';
+}
+
+function applySuggestion(s) {
+    txForm.note.value = s.note;
+    fillCategories(txForm.type.value, s.category);
+    if (!txForm.amount.value.trim() || amountSuggested) {
+        txForm.amount.value = toDecimal(s.amount);
+        amountSuggested = true;
+        showAmountError('');
+    }
+    // Done choosing: hide the chips until the note is typed in again.
+    suggestions = [];
+    noteSuggest.hidden = true;
+    noteSuggest.replaceChildren();
+    txForm.note.focus();
+    noteHint.textContent = `Filled in ${s.category}, ${money(parseAmount(txForm.amount.value) ?? s.amount)}`;
+}
+
+noteSuggest.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-suggest]');
+    if (btn) applySuggestion(suggestions[Number(btn.dataset.suggest)]);
+});
+txForm.note.addEventListener('input', renderSuggestions);
 
 const repeatField = document.getElementById('repeat-field');
 const repeatNote = document.getElementById('repeat-note');
@@ -198,11 +241,17 @@ function updateRepeatHint() {
 }
 
 txForm.addEventListener('change', (e) => {
-    if (e.target.name === 'type') fillCategories(e.target.value);
+    if (e.target.name === 'type') {
+        fillCategories(e.target.value, lastCategory(e.target.value));
+        renderSuggestions();
+    }
     if (e.target.name === 'repeat' || e.target.name === 'date') updateRepeatHint();
 });
 
-txForm.amount.addEventListener('input', () => showAmountError(''));
+txForm.amount.addEventListener('input', () => {
+    showAmountError('');
+    amountSuggested = false;
+});
 
 txForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -227,7 +276,7 @@ txForm.addEventListener('submit', (e) => {
         if (old && old.type === 'expense' && old.category === data.category && old.date.slice(0, 7) === data.date.slice(0, 7)) before -= old.amount;
     }
     const repeat = editingId ? '' : txForm.repeat.value;
-    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat });
+    const saved = editingId ? updateTx(editingId, data) : addTx(data, { repeat, remember: true });
     if (!saved) return; // the save-error handler already told the user
     txDialog.close();
     // A repeat that started in the past catches up on the dates already due.

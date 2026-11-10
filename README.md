@@ -10,6 +10,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Recurring transactions:** mark any entry to repeat every week, month or year (rent, salary, SIPs, EMIs, subscriptions). Due entries are added automatically when you open the app, including any missed while it was closed, and are marked ↻. Pause, resume or stop them in Settings.
 - **Quick-add favourites:** tick "Save as a quick-add favourite" when adding (e.g. Tea ₹20, Metro ₹40). They appear as one-tap buttons on the dashboard (with Undo). Change a price or remove one in Settings (or via the dashboard's Edit link).
 - **Add, edit or delete** any transaction (Spent / Received, amount, category, date & time, note). Deleting can be undone.
+- **Smarter add form:** it remembers the last category you used for expenses and for income. While you type a note, notes you've used before appear as chips (e.g. *Tea · Food & Drink · ₹20*); tap one to fill in its usual category and amount (an amount you've already typed is kept).
 - **Monthly:** a year at a glance with an income vs expense chart and a table of totals and savings rate.
 - **Expenses / Income:** full lists filtered by month and category, with search.
 - **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.

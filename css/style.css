@@ -794,6 +794,28 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 
 .repeat-hint { display: block; margin-top: .5rem; font-size: 1.25rem; color: var(--blue); }
 .repeat-hint:empty { display: none; }
+
+/* Notes used before, shown while typing a note */
+.note-suggest { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+.note-suggest[hidden] { display: none; }
+.note-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .6rem;
+    max-width: 100%;
+    min-height: 3.6rem;
+    padding: .6rem 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 2rem;
+    background: var(--soft);
+    color: var(--dark-blue);
+    font-size: 1.35rem;
+    text-align: left;
+    transition: border-color var(--trans), background-color var(--trans);
+}
+.note-chip strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.note-chip small { color: var(--muted); font-size: 1.2rem; white-space: nowrap; }
+.note-chip:hover { border-color: var(--blue); }
 .repeat-note { margin: -.4rem 0 1.4rem; padding: .9rem 1.2rem; border-radius: var(--radius-sm); background: var(--soft); font-size: 1.3rem; color: var(--dark-blue); }
 .tx-repeat { display: inline-flex; vertical-align: -2px; margin-right: .4rem; color: var(--blue); }
 .tx-repeat .icon { width: 1.3rem; height: 1.3rem; }

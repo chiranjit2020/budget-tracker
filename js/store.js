@@ -24,6 +24,7 @@ function blank() {
         budgets: {}, // { [expense category]: monthly limit in paise }
         recurring: [], // repeating transactions (see cleanRule)
         favorites: [], // one-tap "quick add" entries (see cleanFavorite)
+        lastCategory: { expense: '', income: '' }, // pre-selected in the add form
         lastBackup: '',
     };
 }
@@ -124,6 +125,10 @@ export function normalize(data) {
     s.budgets = cleanBudgets(data.budgets);
     s.recurring = Array.isArray(data.recurring) ? data.recurring.map(cleanRule).filter(Boolean) : [];
     s.favorites = Array.isArray(data.favorites) ? data.favorites.map(cleanFavorite).filter(Boolean).slice(0, MAX_FAVORITES) : [];
+    for (const type of TYPES) {
+        const c = data.lastCategory?.[type];
+        if (typeof c === 'string') s.lastCategory[type] = c.trim().slice(0, 40);
+    }
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
 }
@@ -212,7 +217,7 @@ export function setSaveErrorHandler(fn) {
  * Add a transaction. With `repeat` ('weekly' | 'monthly' | 'yearly') it also
  * creates a recurring rule that starts on this transaction's date.
  */
-export function addTx(input, { repeat = '' } = {}) {
+export function addTx(input, { repeat = '', remember = false } = {}) {
     const tx = cleanTx({ ...input, id: uid() });
     if (!tx) return null;
     let rule = null;
@@ -225,6 +230,7 @@ export function addTx(input, { repeat = '' } = {}) {
     return commit((d) => {
         d.transactions.push(tx);
         if (rule) d.recurring.push(rule);
+        if (remember) d.lastCategory[tx.type] = tx.category;
     }) ? tx : null;
 }
 
@@ -411,6 +417,62 @@ export function clearAll() {
 }
 
 // ---- Queries (pure helpers) --------------------------------------------
+
+/** The category to pre-select when adding: the last one used for this type, if it still exists. */
+export function lastCategory(type) {
+    const c = state.lastCategory[type];
+    return c && state.categories[type].includes(c) ? c : '';
+}
+
+// Notes used before, per type, rebuilt only when the transactions change.
+let noteIndexFor = null;
+let noteIndex = null;
+
+/** The value seen most often in a Map of counts; ties go to the one seen first (the most recent). */
+const mostCommon = (counts) => [...counts].reduce((best, cur) => (cur[1] > best[1] ? cur : best))[0];
+
+function buildNoteIndex() {
+    if (noteIndexFor === state.transactions) return noteIndex;
+    const groups = { expense: new Map(), income: new Map() };
+    for (const t of state.transactions) { // newest first
+        if (!t.note) continue;
+        const key = t.note.toLowerCase();
+        let g = groups[t.type].get(key);
+        if (!g) groups[t.type].set(key, (g = { note: t.note, key, count: 0, categories: new Map(), amounts: new Map() }));
+        g.count++;
+        g.categories.set(t.category, (g.categories.get(t.category) ?? 0) + 1);
+        g.amounts.set(t.amount, (g.amounts.get(t.amount) ?? 0) + 1);
+    }
+    noteIndex = {};
+    for (const type of TYPES) {
+        noteIndex[type] = [...groups[type].values()].map((g) => ({
+            note: g.note,
+            key: g.key,
+            count: g.count,
+            category: mostCommon(g.categories),
+            amount: mostCommon(g.amounts),
+        }));
+    }
+    noteIndexFor = state.transactions;
+    return noteIndex;
+}
+
+/**
+ * Notes used before that match what's being typed, each with its usual
+ * category and amount. Notes starting with the text come first, then ones
+ * with a word starting with it; within each, the most used first.
+ */
+export function noteSuggestions(type, text, limit = 4) {
+    const q = text.trim().toLowerCase();
+    if (!q) return [];
+    const rank = (s) => (s.key.startsWith(q) ? 0 : s.key.split(/[\s,./-]+/).some((w) => w.startsWith(q)) ? 1 : 2);
+    return buildNoteIndex()[type]
+        .map((s) => ({ s, r: rank(s) }))
+        .filter((x) => x.r < 2)
+        .sort((a, b) => a.r - b.r || b.s.count - a.s.count) // stable sort keeps newest first on ties
+        .slice(0, limit)
+        .map((x) => x.s);
+}
 
 export const inMonth = (list, monthKey) => list.filter((t) => t.date.startsWith(monthKey));
 

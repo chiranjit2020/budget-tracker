@@ -178,6 +178,12 @@
                 <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-describedby="amount-error" autofocus /></span>
             </label>
             <p class="field-error" id="amount-error" role="alert" hidden></p>
+            <div class="field note-field">
+                <label for="tx-note">Note <small>(optional)</small></label>
+                <input name="note" id="tx-note" type="text" maxlength="200" placeholder="e.g. Tea, Metro, Lunch with team" autocomplete="off" aria-describedby="note-hint" />
+                <div class="note-suggest" id="note-suggest" role="group" aria-label="Notes you've used before" hidden></div>
+                <small class="sr-only" id="note-hint" aria-live="polite"></small>
+            </div>
             <label class="field">
                 <span>Category</span>
                 <select name="category"></select>
@@ -197,10 +203,6 @@
                 <small class="repeat-hint" id="repeat-hint"></small>
             </div>
             <p class="repeat-note" id="repeat-note" hidden></p>
-            <label class="field">
-                <span>Note <small>(optional)</small></span>
-                <input name="note" type="text" maxlength="200" placeholder="e.g. Lunch with team" autocomplete="off" />
-            </label>
             <label class="check-field" id="favorite-field">
                 <input type="checkbox" name="favorite" />
                 <span>Save as a quick-add favourite <small>(one tap on the dashboard next time)</small></span>
