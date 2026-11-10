@@ -5,7 +5,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 
 ## Features
 
-- **Dashboard:** this month's expense, income and net, recent transactions, a 6-month trend and the top expense categories.
+- **Dashboard:** this month's spending, income and what's left over, then your everyday cards (insights, recent entries, budgets, goals, money given & taken) and below them the deeper ones (spending calendar, categories, how you paid, 6-month trend). Tap any card's title to fold it; the app remembers which ones you folded on that device. Features you haven't used yet sit together in one small "More you can do" card.
 - **Insights:** short notes on the dashboard: where this month is heading (repeating bills like rent aren't multiplied), which categories rose or fell, and your average spend per day. A month in progress is compared with the same days of last month, so early-month figures are fair.
 - **Spending calendar:** the month as a heat-map on the dashboard; darker days are the ones you spent most on (ranked against each other, so one big bill doesn't wash out the rest). Tap a day to see its entries.
 - **Savings goals:** e.g. *Goa trip ₹30,000 by 10 Mar*. Add or withdraw money (with Undo) and see the progress and how much to save each month to get there. Goals are kept apart from expenses, so setting money aside doesn't count as spending.

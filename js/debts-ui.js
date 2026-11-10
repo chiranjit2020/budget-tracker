@@ -4,6 +4,7 @@ import { getState, addDebt, updateDebt, deleteDebt, restoreDebt, repayDebt, remo
 import { money, esc, parseAmount, toDecimal, nowLocal } from './format.js';
 import { debtStatus, debtTotals, knownPeople, reminderMessage, amt } from './debts.js';
 import { icon, toast } from './ui.js';
+import { applyFolds } from './folds.js';
 
 const today = () => nowLocal().slice(0, 10);
 const DUE_ORDER = { overdue: 0, today: 1, soon: 2, later: 3, none: 4 };
@@ -47,7 +48,7 @@ export function debtsSection(state) {
     const settled = withStatus.filter((x) => x.s.settled).sort((a, b) => b.d.date.localeCompare(a.d.date));
     const t = debtTotals(state.debts, day);
     return `
-    <section class="block" id="debts-block">
+    <section class="block" id="debts-block" data-card="debts">
         ${head}
         <div class="debt-totals">
             <div><small>You will get</small><strong class="income">${money(t.owedToYou)}</strong></div>
@@ -231,7 +232,11 @@ document.addEventListener('click', (e) => {
     if (toggle) {
         showSettled = !showSettled;
         const block = document.getElementById('debts-block');
-        if (block) block.outerHTML = debtsSection(getState());
+        if (block) {
+            const parent = block.parentElement;
+            block.outerHTML = debtsSection(getState());
+            applyFolds(parent);
+        }
         document.querySelector('[data-debt-toggle]')?.focus();
     }
 });

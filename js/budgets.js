@@ -75,7 +75,7 @@ export function budgetSection(state, monthKey) {
     }
 
     return `
-    <section class="block">
+    <section class="block" data-card="budgets">
         <div class="section-head">
             <h2>Budgets</h2>
             <button type="button" class="link" data-budgets>Edit budgets</button>

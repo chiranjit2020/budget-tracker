@@ -820,6 +820,26 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:checked + span { border-color: var(--blue); background: var(--soft); color: var(--blue); }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
+/* Foldable dashboard cards */
+.fold-btn { display: inline-flex; align-items: center; gap: .6rem; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.fold-btn .icon { width: 1.6rem; height: 1.6rem; color: var(--muted); transform: rotate(90deg); transition: transform var(--trans); flex-shrink: 0; }
+.fold-btn[aria-expanded="false"] .icon { transform: none; }
+.fold-btn:hover .icon { color: var(--blue); }
+.fold-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: .4rem; }
+.block.is-folded > :not(.section-head) { display: none; }
+.block.is-folded { margin-bottom: 1.6rem; }
+.block.is-folded > .section-head { margin-bottom: 0; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+
+/* "More you can do": features not used yet */
+.more-list { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+.more-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; width: 100%; padding: 1.2rem 1.4rem; border: 1px dashed var(--input-border); border-radius: var(--radius); background: none; color: var(--dark-blue); text-align: left; transition: border-color var(--trans), background-color var(--trans); }
+.more-item:hover { border-color: var(--blue); background: var(--soft); }
+.more-item strong { display: block; font-size: 1.45rem; font-weight: 600; }
+.more-item small { display: block; font-size: 1.25rem; color: var(--muted); }
+.more-item > .icon { width: 1.6rem; height: 1.6rem; color: var(--muted); }
+.more-plus { display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--soft); color: var(--blue); }
+.more-plus .icon { width: 1.6rem; height: 1.6rem; }
+
 /* Savings goals */
 .goal-list { display: grid; gap: 1.2rem; margin: 0; padding: 0; list-style: none; }
 .goal { --level: var(--blue); padding: 1.4rem 1.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
@@ -890,6 +910,9 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     overflow: hidden;
 }
 .cal-blank { background: none; }
+@media (min-width: 900px) {
+    .cal-cell { aspect-ratio: 5 / 3; } /* wide columns: keep the month from getting very tall */
+}
 .cal-n { font-size: 1.25rem; font-weight: 600; line-height: 1; }
 .cal-amt { font-size: 1.05rem; font-weight: 600; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-cell.lv1, .cal-legend .lv1 { background: color-mix(in srgb, var(--expense) 18%, var(--surface)); }

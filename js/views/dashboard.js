@@ -4,6 +4,7 @@ import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '.
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
 import { debtsSection } from '../debts-ui.js';
+import { applyFolds } from '../folds.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -52,6 +53,31 @@ function backupBanner() {
     </div>`;
 }
 
+/**
+ * Features not used yet, as one small card instead of a full empty card each.
+ * Each line disappears once that feature is in use; the card goes when all are.
+ */
+function moreCard(state) {
+    const items = [];
+    if (!Object.keys(state.budgets).length) items.push(['data-budgets', 'Set monthly budgets', 'See how much is left for food, shopping and more']);
+    if (!state.goals.length) items.push(['data-goal-new', 'Save up for something', 'Like a trip or an emergency fund']);
+    if (!state.debts.length) items.push(['data-debt-new', 'Note money given or taken', 'So you don’t forget who has to return what']);
+    if (!items.length) return '';
+    return `
+    <section class="block" data-card="more">
+        <div class="section-head"><h2>More you can do</h2></div>
+        <ul class="more-list">
+            ${items
+                .map(([attr, title, hint]) => `<li><button type="button" class="more-item" ${attr}>
+                    <span class="more-plus" aria-hidden="true">${icon('plus')}</span>
+                    <span><strong>${title}</strong><small>${hint}</small></span>
+                    ${icon('chevron-right')}
+                </button></li>`)
+                .join('')}
+        </ul>
+    </section>`;
+}
+
 /** One-tap buttons for saved favourites (amounts without paise when they're whole rupees). */
 function quickAddRow(state) {
     if (!state.favorites.length) {
@@ -95,7 +121,7 @@ function calendarSection(transactions, key) {
     if (!calDay.startsWith(key)) calDay = '';
     const cal = calendarMonth(transactions, key, nowLocal().slice(0, 10));
     return `
-    <section class="block" id="cal-block">
+    <section class="block" id="cal-block" data-card="calendar">
         <div class="section-head"><h2>Spending calendar</h2></div>
         ${cal.spendDays ? `<p class="muted cal-sub">Spent on ${cal.spendDays} of ${cal.cells.filter((c) => !c.future).length} days so far</p>` : ''}
         ${calendarHTML(cal, calDay)}
@@ -120,7 +146,7 @@ function insightsSection(state, key) {
     const items = computeInsights(state, key, nowLocal().slice(0, 10));
     if (!items.length) return '';
     return `
-    <section class="block">
+    <section class="block" data-card="insights">
         <div class="section-head"><h2>Insights</h2></div>
         <ul class="insights">
             ${items
@@ -143,7 +169,7 @@ function methodSplit(expenses, total, key) {
     const pct = (r) => (r.amount / total) * 100;
     const pctText = (r) => `${pct(r) < 1 ? '<1' : Math.round(pct(r))}%`;
     return `
-    <section class="block">
+    <section class="block" data-card="methods">
         <div class="section-head"><h2>How you paid</h2></div>
         <div class="method-bar" role="img" aria-label="Spending in ${fmtMonth(key)} by payment method: ${rows.map((r) => `${METHOD_LABELS[r.method]} ${pctText(r).replace('<1', 'under 1')}`).join(', ')}">
             ${rows.map((r) => `<i style="width:${pct(r).toFixed(2)}%;background:${colour[r.method]}"></i>`).join('')}
@@ -197,13 +223,7 @@ export function render(root, ctx) {
 
             ${insightsSection(state, key)}
 
-            ${budgetSection(state, key)}
-
-            ${goalsSection(state)}
-
-            ${debtsSection(state)}
-
-            <section class="block">
+            <section class="block" data-card="history">
                 <div class="section-head">
                     <h2>Transaction history</h2>
                     ${monthTx.length ? `<a href="#/transactions" class="link">View all (${monthTx.length})</a>` : ''}
@@ -214,28 +234,20 @@ export function render(root, ctx) {
                         ? `No transactions in ${fmtMonth(key)}.`
                         : 'No transactions yet. Add your first expense or income to get started.', '')}
             </section>
+
+            ${Object.keys(state.budgets).length ? budgetSection(state, key) : ''}
+
+            ${state.goals.length ? goalsSection(state) : ''}
+
+            ${state.debts.length ? debtsSection(state) : ''}
+
+            ${moreCard(state)}
         </div>
 
         <div class="col">
-            <section class="block">
-                <div class="section-head"><h2>Monthly transaction</h2></div>
-                <div class="trend-cards">
-                    <a href="#/expenses" class="trend-card expense">
-                        <small>Expense</small>
-                        ${miniBars(series, 'expense')}
-                        <strong>${money(t.expense)}</strong>
-                        <span class="trend-change">${change(t.expense, prev.expense, prev.key)}</span>
-                    </a>
-                    <a href="#/income" class="trend-card income">
-                        <small>Income</small>
-                        ${miniBars(series, 'income')}
-                        <strong>${money(t.income)}</strong>
-                        <span class="trend-change">${change(t.income, prev.income, prev.key)}</span>
-                    </a>
-                </div>
-            </section>
+            ${calendarSection(transactions, key)}
 
-            <section class="block">
+            <section class="block" data-card="categories">
                 <div class="section-head"><h2>Expenses by category</h2></div>
                 ${topCats.length
                     ? `<ul class="cat-list">
@@ -255,11 +267,28 @@ export function render(root, ctx) {
                     : `<p class="muted">No expenses in ${fmtMonth(key)}.</p>`}
             </section>
 
-            ${calendarSection(transactions, key)}
-
             ${methodSplit(monthTx.filter((x) => x.type === 'expense'), t.expense, key)}
+
+            <section class="block" data-card="trend">
+                <div class="section-head"><h2>Monthly transaction</h2></div>
+                <div class="trend-cards">
+                    <a href="#/expenses" class="trend-card expense">
+                        <small>Expense</small>
+                        ${miniBars(series, 'expense')}
+                        <strong>${money(t.expense)}</strong>
+                        <span class="trend-change">${change(t.expense, prev.expense, prev.key)}</span>
+                    </a>
+                    <a href="#/income" class="trend-card income">
+                        <small>Income</small>
+                        ${miniBars(series, 'income')}
+                        <strong>${money(t.income)}</strong>
+                        <span class="trend-change">${change(t.income, prev.income, prev.key)}</span>
+                    </a>
+                </div>
+            </section>
         </div>
     </div>`;
 
+    applyFolds(root);
     root.onclick = (e) => onCalendarClick(e, root);
 }

@@ -23,7 +23,7 @@ export function goalsSection(state) {
     }
     const day = today();
     return `
-    <section class="block">
+    <section class="block" data-card="goals">
         ${head}
         <ul class="goal-list">
             ${state.goals
