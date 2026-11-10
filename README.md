@@ -45,7 +45,7 @@ Once installed, **long-press the app icon** (Android) or right-click it in the t
 
 ## Run locally
 
-No build step and no dependencies. Serve the folder with any static server:
+No build step and nothing to install. The only third-party code is Chart.js (MIT), included as a single file in `js/vendor/`. Serve the folder with any static server:
 
 ```sh
 python -m http.server 8000
@@ -82,7 +82,15 @@ js/profile.js           Profile popup (avatar, name, photo, lock)
 js/budgets.js           Monthly category budgets (dashboard, form, alerts)
 js/backup.js            Encrypted backup export/import, CSV export, backup reminder
 js/theme.js             Light/dark mode (Auto, Light, Dark)
+js/insights.js          Dashboard insights (pure calculations)
+js/calendar.js          Spending calendar heat-map
+js/goals.js, goals-ui.js  Savings goals (maths / card + dialogs)
+js/debts.js, debts-ui.js  Money given & taken (wording + maths / card + dialogs)
+js/folds.js             Foldable dashboard cards (remembered per device)
+js/pie.js               "Expenses by category" pie chart (loads Chart.js when needed)
+js/vendor/              Chart.js 4.5.0 (MIT), shipped with the app so it works offline
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
+tests/*.test.mjs        Unit tests for the calculations: node tests/<name>.test.mjs
 icons/                  App icons (PNG + SVG)
 images/logo.svg         Brand mark
 ```

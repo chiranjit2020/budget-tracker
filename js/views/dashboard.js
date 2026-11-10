@@ -5,6 +5,7 @@ import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
 import { debtsSection } from '../debts-ui.js';
 import { applyFolds } from '../folds.js';
+import { drawCategoryPie } from '../pie.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -200,6 +201,16 @@ export function render(root, ctx) {
     const cats = byCategory(monthTx.filter((x) => x.type === 'expense'));
     const topCats = cats.slice(0, TOP_CATEGORIES);
     const moreCats = cats.length - topCats.length;
+    // Pie slices: the biggest categories, plus everything else together as "Other".
+    const slices = topCats.map((c, i) => ({ label: c.category, amount: c.amount, color: CHART_COLORS[i % CHART_COLORS.length] }));
+    if (moreCats > 0) {
+        const rest = cats.slice(TOP_CATEGORIES);
+        slices.push({ label: `Other (${rest.length} ${rest.length === 1 ? 'category' : 'categories'})`, amount: rest.reduce((n, c) => n + c.amount, 0), color: 'var(--chart-8)' });
+    }
+    const pctText = (amount) => {
+        const p = (amount / t.expense) * 100;
+        return `${p < 1 ? '<1' : Math.round(p)}%`;
+    };
 
     const recent = monthTx.slice(0, RECENT_LIMIT);
 
@@ -249,21 +260,21 @@ export function render(root, ctx) {
 
             <section class="block" data-card="categories">
                 <div class="section-head"><h2>Expenses by category</h2></div>
-                ${topCats.length
-                    ? `<ul class="cat-list">
-                        ${topCats
-                            .map((c, i) => {
-                                const pct = (c.amount / t.expense) * 100;
-                                return `
+                ${slices.length
+                    ? `<div class="pie-wrap">
+                        <canvas id="cat-pie" role="img" aria-label="Pie chart of spending by category: ${esc(slices.map((s) => `${s.label} ${pctText(s.amount)}`).join(', '))}"></canvas>
+                       </div>
+                       <ul class="cat-list">
+                        ${slices
+                            .map((s) => `
                                 <li class="cat-card">
-                                    <span class="pie" style="--p:${(pct * 3.6).toFixed(1)}deg;--c:${CHART_COLORS[i % CHART_COLORS.length]}" aria-hidden="true"></span>
-                                    <span class="cat-main"><small>${esc(c.category)}</small><strong>${money(c.amount)}</strong></span>
-                                    <span class="cat-pct">${pct < 1 ? '<1' : Math.round(pct)}%</span>
-                                </li>`;
-                            })
+                                    <span class="cat-dot" style="background:${s.color}" aria-hidden="true"></span>
+                                    <span class="cat-main"><small>${esc(s.label)}</small><strong>${money(s.amount)}</strong></span>
+                                    <span class="cat-pct">${pctText(s.amount)}</span>
+                                </li>`)
                             .join('')}
                        </ul>
-                       ${moreCats > 0 ? `<a href="#/report" class="link">+ ${moreCats} more ${moreCats === 1 ? 'category' : 'categories'} in the report</a>` : ''}`
+                       ${moreCats > 0 ? `<a href="#/report" class="link">See all ${cats.length} categories in the report</a>` : ''}`
                     : `<p class="muted">No expenses in ${fmtMonth(key)}.</p>`}
             </section>
 
@@ -290,5 +301,6 @@ export function render(root, ctx) {
     </div>`;
 
     applyFolds(root);
+    drawCategoryPie(root.querySelector('#cat-pie'), slices);
     root.onclick = (e) => onCalendarClick(e, root);
 }
