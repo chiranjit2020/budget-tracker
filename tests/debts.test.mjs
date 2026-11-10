@@ -1,4 +1,4 @@
-// Unit tests for js/debts.js and lend/borrow cleaning in js/store.js. Run: node tests/debts.test.mjs
+// Unit tests for js/debts.js (money given & taken) and its cleaning in js/store.js. Run: node tests/debts.test.mjs
 import assert from 'node:assert/strict';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -19,33 +19,34 @@ assert.equal(amt(R(499.5)), '₹499.50');
 
 // Open, no due date
 let s = debtStatus(debt(), today);
-assert.equal(s.title, 'Rahul owes you ₹500');
-assert.equal(s.detail, 'Since 3 Nov 2026');
+assert.equal(s.title, 'You will get ₹500 from Rahul');
+assert.equal(s.detail, 'Given on 3 Nov 2026');
 assert.equal(s.due, 'none');
 
 // Borrowed, partly repaid, with a note
 s = debtStatus(debt({ kind: 'borrowed', person: 'Priya', note: 'Concert tickets', repayments: [paid(200)] }), today);
-assert.equal(s.title, 'You owe Priya ₹300');
-assert.equal(s.detail, 'Since 3 Nov 2026 · ₹200 of ₹500 repaid · Concert tickets');
+assert.equal(s.title, 'You will give ₹300 to Priya');
+assert.equal(s.detail, 'Taken on 3 Nov 2026 · ₹200 of ₹500 returned · Concert tickets');
 
 // Due dates
-assert.equal(debtStatus(debt({ due: '2026-11-20' }), today).detail, 'Due 20 Nov 2026');
+assert.equal(debtStatus(debt({ due: '2026-11-20' }), today).detail, 'Given on 3 Nov 2026 · Return by 20 Nov 2026');
 assert.equal(debtStatus(debt({ due: '2026-11-20' }), today).due, 'later');
-assert.equal(debtStatus(debt({ due: '2026-11-13' }), today).detail, 'Due in 3 days');
-assert.equal(debtStatus(debt({ due: '2026-11-11' }), today).detail, 'Due in 1 day');
+assert.equal(debtStatus(debt({ due: '2026-11-13' }), today).detail, '3 days left to return · Given on 3 Nov 2026');
+assert.equal(debtStatus(debt({ due: '2026-11-11' }), today).detail, '1 day left to return · Given on 3 Nov 2026');
+assert.equal(debtStatus(debt({ due: today }), today).detail, 'Return date is today · Given on 3 Nov 2026');
 assert.equal(debtStatus(debt({ due: today }), today).due, 'today');
 s = debtStatus(debt({ due: '2026-11-05' }), today);
 assert.equal(s.due, 'overdue');
-assert.equal(s.detail, 'Overdue by 5 days');
+assert.equal(s.detail, '5 days late · Given on 3 Nov 2026');
 
 // Settled: due dates no longer matter
 s = debtStatus(debt({ due: '2026-11-05', repayments: [paid(300, '2026-11-06'), paid(200, '2026-11-09')] }), today);
 assert.equal(s.settled, true);
 assert.equal(s.due, 'none');
-assert.equal(s.title, 'Rahul paid back ₹500');
-assert.equal(s.detail, 'Settled 9 Nov 2026');
-assert.equal(debtStatus(debt({ note: 'Lunch', repayments: [paid(500)] }), today).detail, 'Settled 8 Nov 2026 · Lunch'); // date first
-assert.equal(debtStatus(debt({ kind: 'borrowed', repayments: [paid(500)] }), today).title, 'You paid Rahul back ₹500');
+assert.equal(s.title, 'Rahul returned ₹500');
+assert.equal(s.detail, 'All returned on 9 Nov 2026');
+assert.equal(debtStatus(debt({ note: 'Lunch', repayments: [paid(500)] }), today).detail, 'All returned on 8 Nov 2026 · Lunch'); // date first
+assert.equal(debtStatus(debt({ kind: 'borrowed', repayments: [paid(500)] }), today).title, 'You returned ₹500 to Rahul');
 
 // Totals: only what's still outstanding
 const list = [
@@ -61,9 +62,9 @@ assert.deepEqual(knownPeople([debt({ person: 'rahul', date: '2026-10-01' }), deb
 
 // Reminder messages
 assert.equal(reminderMessage(debt({ note: 'movie tickets' }), today),
-    'Hi Rahul, just a friendly reminder about the ₹500 I lent you on 3 Nov 2026 for movie tickets. Please send it when you can. Thanks!');
+    'Hi Rahul, just a reminder about the ₹500 I gave you on 3 Nov 2026 for movie tickets. Please return it when you can. Thanks!');
 assert.equal(reminderMessage(debt({ repayments: [paid(300)] }), today),
-    'Hi Rahul, just a friendly reminder about the ₹500 I lent you on 3 Nov 2026. Thanks for the ₹300 so far! ₹200 is still pending; please send it when you can.');
+    "Hi Rahul, just a reminder about the ₹500 I gave you on 3 Nov 2026. You've returned ₹300, thank you! ₹200 is still left. Please return it when you can.");
 
 // Cleaning on load
 const n = normalize({
@@ -81,5 +82,11 @@ assert.equal(n.debts[0].due, '');
 assert.equal(n.debts[0].repayments.length, 1);
 assert.deepEqual(normalize({ transactions: [] }).debts, []);
 
-console.log('All lend & borrow tests passed.');
+// No accounting words anywhere a person reads
+for (const d of [debt(), debt({ kind: 'borrowed' }), debt({ repayments: [paid(100)] }), debt({ repayments: [paid(500)] }), debt({ due: '2026-11-01' })]) {
+    const st = debtStatus(d, today);
+    assert.doesNotMatch(`${st.title} ${st.detail} ${reminderMessage(d, today)}`, /(owe|owes|lent|borrow|settle|overdue|repaid|pending|outstanding)/i);
+}
+
+console.log('All given & taken tests passed.');
 process.exit(0); // vault.js's BroadcastChannel would otherwise keep Node running

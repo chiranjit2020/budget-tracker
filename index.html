@@ -286,22 +286,22 @@
         </form>
     </dialog>
 
-    <!-- Lend & borrow: a record -->
+    <!-- Money given & taken: a record -->
     <dialog id="debt-dialog" class="sheet" aria-labelledby="debt-title">
         <form id="debt-form" class="sheet-body" novalidate>
             <div class="sheet-head">
-                <h2 id="debt-title">Lend or borrow</h2>
+                <h2 id="debt-title">Money given or taken</h2>
                 <button type="button" class="icon-btn" data-close aria-label="Close">
                     <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
                 </button>
             </div>
             <fieldset class="segmented">
-                <legend class="sr-only">Lent or borrowed</legend>
-                <label><input type="radio" name="kind" value="lent" checked /><span>I lent</span></label>
-                <label><input type="radio" name="kind" value="borrowed" /><span>I borrowed</span></label>
+                <legend class="sr-only">Did you give or take money?</legend>
+                <label><input type="radio" name="kind" value="lent" checked /><span>I gave</span></label>
+                <label><input type="radio" name="kind" value="borrowed" /><span>I took</span></label>
             </fieldset>
             <label class="field">
-                <span id="debt-person-label">To whom?</span>
+                <span id="debt-person-label">Given to</span>
                 <input name="person" type="text" maxlength="40" list="debt-people" placeholder="Name" autocomplete="off" />
                 <datalist id="debt-people"></datalist>
             </label>
@@ -315,7 +315,7 @@
                     <input name="date" type="date" />
                 </label>
                 <label class="field">
-                    <span>Due back <small>(optional)</small></span>
+                    <span>Return date <small>(optional)</small></span>
                     <input name="due" type="date" />
                 </label>
             </div>
@@ -331,17 +331,17 @@
         </form>
     </dialog>
 
-    <!-- Lend & borrow: settle up -->
+    <!-- Money given & taken: got it back / I returned it -->
     <dialog id="settle-dialog" class="sheet" aria-labelledby="settle-title">
         <form id="settle-form" class="sheet-body" novalidate>
             <div class="sheet-head">
-                <h2 id="settle-title">Settle up</h2>
+                <h2 id="settle-title">Money returned</h2>
                 <button type="button" class="icon-btn" data-close aria-label="Close">
                     <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
                 </button>
             </div>
             <label class="field">
-                <span id="settle-label">Amount paid back</span>
+                <span id="settle-label">How much?</span>
                 <span class="amount-wrap"><b aria-hidden="true">₹</b><input name="amount" class="amount-input" type="text" inputmode="decimal" autocomplete="off" aria-describedby="settle-hint" /></span>
             </label>
             <p class="muted goal-money-hint" id="settle-hint"></p>

@@ -1,4 +1,4 @@
-// Lend & borrow on the dashboard: the card, the record dialog and the settle-up dialog.
+// Money given & taken on the dashboard: the card, the record dialog and the "got it back" dialog.
 
 import { getState, addDebt, updateDebt, deleteDebt, restoreDebt, repayDebt, removeRepayment } from './store.js';
 import { money, esc, parseAmount, toDecimal, nowLocal } from './format.js';
@@ -20,8 +20,8 @@ function row(d, s) {
             <button type="button" class="debt-title" data-debt-edit="${esc(d.id)}" aria-label="Edit: ${esc(s.title)}">${esc(s.title)}</button>
             <small class="debt-detail">${esc(s.detail)}</small>
             ${s.settled ? '' : `<div class="debt-actions">
-                <button type="button" class="btn btn-ghost btn-sm" data-debt-settle="${esc(d.id)}">Settle</button>
-                ${lent ? `<button type="button" class="link" data-debt-remind="${esc(d.id)}">${icon('send')}<span>Remind</span></button>` : ''}
+                <button type="button" class="btn btn-ghost btn-sm" data-debt-settle="${esc(d.id)}">${lent ? 'Got it back' : 'I returned it'}</button>
+                ${lent ? `<button type="button" class="link" data-debt-remind="${esc(d.id)}">${icon('send')}<span>Remind ${esc(d.person)}</span></button>` : ''}
             </div>`}
         </div>
     </li>`;
@@ -29,14 +29,14 @@ function row(d, s) {
 
 export function debtsSection(state) {
     const day = today();
-    const head = `<div class="section-head"><h2>Lend &amp; borrow</h2>${state.debts.length ? '<button type="button" class="link" data-debt-new>+ Add</button>' : ''}</div>`;
+    const head = `<div class="section-head"><h2>Given &amp; taken</h2>${state.debts.length ? '<button type="button" class="link" data-debt-new>+ Add</button>' : ''}</div>`;
     if (!state.debts.length) {
         return `
         <section class="block">
             ${head}
             <div class="budget-empty">
-                <p>Lent a friend money, or borrowed some? Keep track of who owes whom, settle up, and send a friendly reminder.</p>
-                <button type="button" class="btn btn-ghost" data-debt-new>${icon('plus')}<span>Add a record</span></button>
+                <p>Gave money to a friend, or took some? Note it here so you don’t forget who has to return what.</p>
+                <button type="button" class="btn btn-ghost" data-debt-new>${icon('plus')}<span>Add</span></button>
             </div>
         </section>`;
     }
@@ -50,12 +50,12 @@ export function debtsSection(state) {
     <section class="block" id="debts-block">
         ${head}
         <div class="debt-totals">
-            <div><small>People owe you</small><strong class="income">${money(t.owedToYou)}</strong></div>
-            <div><small>You owe</small><strong class="expense">${money(t.youOwe)}</strong></div>
+            <div><small>You will get</small><strong class="income">${money(t.owedToYou)}</strong></div>
+            <div><small>You will give</small><strong class="expense">${money(t.youOwe)}</strong></div>
         </div>
-        ${open.length ? `<ul class="debt-list">${open.map((x) => row(x.d, x.s)).join('')}</ul>` : '<p class="muted debt-clear">All settled up. Nobody owes anybody.</p>'}
+        ${open.length ? `<ul class="debt-list">${open.map((x) => row(x.d, x.s)).join('')}</ul>` : '<p class="muted debt-clear">Nothing pending. All money has been returned.</p>'}
         ${settled.length
-            ? `<button type="button" class="link debt-toggle" data-debt-toggle aria-expanded="${showSettled}">${showSettled ? 'Hide' : 'Show'} settled (${settled.length})</button>
+            ? `<button type="button" class="link debt-toggle" data-debt-toggle aria-expanded="${showSettled}">${showSettled ? 'Hide' : 'Show'} returned (${settled.length})</button>
                ${showSettled ? `<ul class="debt-list">${settled.map((x) => row(x.d, x.s)).join('')}</ul>` : ''}`
             : ''}
     </section>`;
@@ -90,7 +90,7 @@ let editingDebt = null;
 wire(debtDialog);
 
 function updatePersonLabel() {
-    document.getElementById('debt-person-label').textContent = f.kind.value === 'lent' ? 'To whom?' : 'From whom?';
+    document.getElementById('debt-person-label').textContent = f.kind.value === 'lent' ? 'Given to' : 'Taken from';
 }
 
 export function openDebtDialog(id = null) {
@@ -100,7 +100,7 @@ export function openDebtDialog(id = null) {
     showError(debtError, null, '');
     debtForm.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
     document.getElementById('debt-people').innerHTML = knownPeople(getState().debts).map((p) => `<option value="${esc(p)}"></option>`).join('');
-    document.getElementById('debt-title').textContent = debt ? 'Edit record' : 'Lend or borrow';
+    document.getElementById('debt-title').textContent = debt ? 'Edit' : 'Money given or taken';
     debtDelete.hidden = !debt;
     f.kind.value = debt?.kind ?? 'lent';
     f.person.value = debt?.person ?? '';
@@ -129,16 +129,16 @@ debtForm.addEventListener('submit', (e) => {
     if (amount === null) return showError(debtError, f.amount, 'Enter an amount greater than ₹0, like 500.');
     const date = f.date.value || today();
     const due = f.due.value;
-    if (due && due < date) return showError(debtError, f.due, 'The due date can’t be before the date it was given.');
+    if (due && due < date) return showError(debtError, f.due, 'The return date can’t be before the day the money was given.');
     const data = { kind: f.kind.value, person, amount, date, due, note: f.note.value };
 
     if (editingDebt) {
         const current = getState().debts.find((x) => x.id === editingDebt);
         const repaid = current ? debtStatus(current, today()).repaid : 0;
-        if (amount < repaid) return showError(debtError, f.amount, `${money(repaid)} has already been paid back, so the amount can’t be less than that.`);
+        if (amount < repaid) return showError(debtError, f.amount, `${money(repaid)} has already been returned, so the amount can’t be less than that.`);
         if (!updateDebt(editingDebt, data)) return;
         debtDialog.close();
-        toast('Record updated');
+        toast('Saved');
     } else {
         const debt = addDebt(data);
         if (!debt) return;
@@ -150,10 +150,10 @@ debtForm.addEventListener('submit', (e) => {
 debtDelete.addEventListener('click', () => {
     const removed = deleteDebt(editingDebt);
     debtDialog.close();
-    if (removed) toast('Record deleted', { label: 'Undo', run: () => restoreDebt(removed) });
+    if (removed) toast('Deleted', { label: 'Undo', run: () => restoreDebt(removed) });
 });
 
-// ---- Settle up ------------------------------------------------------------------------------
+// ---- Got it back / I returned it ------------------------------------------------------------------------------
 
 const settleDialog = document.getElementById('settle-dialog');
 const settleForm = document.getElementById('settle-form');
@@ -169,9 +169,9 @@ export function openSettleDialog(id) {
     settleForm.reset();
     showError(settleError, settleForm.elements.amount, '');
     const lent = debt.kind === 'lent';
-    document.getElementById('settle-title').textContent = lent ? `${debt.person} paid you back` : `You paid ${debt.person} back`;
-    document.getElementById('settle-label').textContent = 'Amount';
-    document.getElementById('settle-hint').textContent = `${amt(s.remaining)} is still ${lent ? 'owed to you' : 'to pay'}. Change the amount for a part payment.`;
+    document.getElementById('settle-title').textContent = lent ? `Money you got back from ${debt.person}` : `Money you returned to ${debt.person}`;
+    document.getElementById('settle-label').textContent = 'How much?';
+    document.getElementById('settle-hint').textContent = `${amt(s.remaining)} is still left. If only part of it came back, change the amount.`;
     settleForm.elements.amount.value = toDecimal(s.remaining).replace(/\.00$/, '');
     settleDialog.showModal();
     settleForm.elements.amount.select();
@@ -187,12 +187,12 @@ settleForm.addEventListener('submit', (e) => {
     const input = settleForm.elements.amount;
     const amount = parseAmount(input.value);
     if (amount === null) return showError(settleError, input, 'Enter an amount greater than ₹0.');
-    if (amount > remaining) return showError(settleError, input, `Only ${money(remaining)} is outstanding.`);
+    if (amount > remaining) return showError(settleError, input, `Only ${money(remaining)} is left.`);
     const entry = repayDebt(debt.id, amount, today());
     if (!entry) return;
     settleDialog.close();
     const after = debtStatus(getState().debts.find((x) => x.id === debt.id), today());
-    toast(after.settled ? `Settled with ${debt.person}` : after.title, { label: 'Undo', run: () => removeRepayment(debt.id, entry.id) });
+    toast(after.settled ? (debt.kind === 'lent' ? `${debt.person} returned everything` : `All returned to ${debt.person}`) : after.title, { label: 'Undo', run: () => removeRepayment(debt.id, entry.id) });
 });
 
 // ---- Reminder: the share sheet on phones, the clipboard elsewhere -------------------------------

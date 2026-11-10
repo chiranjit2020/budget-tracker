@@ -28,4 +28,4 @@ All planned features are built. Pick the next one from *Later / maybe*.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, lend & borrow tracker.
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, given & taken tracker (plain wording).
