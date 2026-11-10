@@ -1,6 +1,6 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions, lastMethod, METHOD_LABELS, planRepeat } from './store.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions, lastMethod, METHOD_LABELS, planRepeat, skipRepeat, restoreRepeat } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
@@ -468,6 +468,24 @@ export function askPassword({ title, message, submit = 'Unlock', verify, wrong =
     return new Promise((resolve) => {
         pwDialog.addEventListener('close', () => resolve(pwResult), { once: true });
     });
+}
+
+// ---- Skip the next one of a repeat (Coming up and Settings) -------------------------------------
+
+/** Skip a repeat's next entry, say what happens instead, and offer Undo. */
+export function skipNextOf(id) {
+    const before = getState().recurring.find((r) => r.id === id);
+    if (!before || !skipRepeat(id)) return;
+    const after = getState().recurring.find((r) => r.id === id);
+    const name = before.note || before.category;
+    let message = `Skipped ${name} on ${fmtDate(before.next)}.`;
+    if (after.finished) message += ' That was the last one, so it has finished.';
+    else if (after.end?.type === 'count') {
+        // a skipped payment doesn't count, so the last one moves later
+        const last = planRepeat({ freq: after.freq, start: after.next }, { type: 'count', count: after.end.count - after.done }).last;
+        message += ` Payment ${after.end.count} is now on ${fmtDate(last)}.`;
+    } else message += ` Next: ${fmtDate(after.next)}.`;
+    toast(message, { label: 'Undo', run: () => restoreRepeat(before) });
 }
 
 // ---- Quick add ---------------------------------------------------------------------------

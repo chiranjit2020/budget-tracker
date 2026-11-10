@@ -3,7 +3,7 @@ import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
 import { passwordProblem } from '../passwords.js';
 import { esc, money, parseAmount, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
-import { icon, toast, confirmDialog, askPassword } from '../ui.js';
+import { icon, toast, confirmDialog, askPassword, skipNextOf } from '../ui.js';
 import * as vault from '../vault.js';
 import { biometricSupported, biometricEnabled, enableBiometric, disableBiometric } from '../biometric.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
@@ -141,7 +141,7 @@ function recurringPanel(rules, categories) {
                     <span class="rec-main">
                         <strong>${esc(r.note || r.category)}</strong>
                         <small><span class="${r.type}">${r.type === 'income' ? '+' : '−'} ${money(r.amount)}</span> · ${scheduleText(r)}${r.method ? ` · ${METHOD_LABELS[r.method]}` : ''}</small>
-                        <small>${[r.finished ? '' : r.active ? `Next: ${fmtDate(r.next)}` : 'Paused', r.ask && !r.finished ? 'Asks for the amount' : '', repeatProgress(r)].filter(Boolean).join(' · ')}</small>
+                        <small>${[r.finished ? '' : r.active ? `Next: ${fmtDate(r.next)}${r.ask && r.next <= nowLocal().slice(0, 10) ? '' : ` <button type="button" class="link rec-skip" data-skip-next="${esc(r.id)}" aria-label="Skip ${esc(r.note || r.category)} on ${fmtDate(r.next)}">Skip</button>`}` : 'Paused', r.ask && !r.finished ? 'Asks for the amount' : '', repeatProgress(r)].filter(Boolean).join(' · ')}</small>
                     </span>
                     <span class="rec-actions">
                         <button type="button" class="icon-btn" data-rec-edit="${esc(r.id)}" aria-label="Change ${esc(r.note || r.category)}">${icon('edit')}</button>
@@ -477,6 +477,8 @@ export function render(root, ctx = {}) {
                 if (!ok) return;
             }
             removeCategory(type, name);
+        } else if (el.dataset.skipNext) {
+            skipNextOf(el.dataset.skipNext);
         } else if (el.dataset.recEdit) {
             editingRule = el.dataset.recEdit;
             render(root);

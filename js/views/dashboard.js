@@ -1,6 +1,6 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS, confirmRepeat, skipRepeat, restoreRepeat } from '../store.js';
 import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, fmtDate, shiftMonth, nowLocal, leftOver, parseAmount } from '../format.js';
-import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS, toast } from '../ui.js';
+import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS, toast, skipNextOf } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
 import { debtsSection } from '../debts-ui.js';
@@ -157,6 +157,11 @@ function onConfirmSubmit(e) {
 }
 
 function onConfirmSkip(e) {
+    const next = e.target.closest('[data-skip-next]');
+    if (next) {
+        skipNextOf(next.dataset.skipNext);
+        return true;
+    }
     const btn = e.target.closest('[data-confirm-skip]');
     if (!btn) return false;
     const rule = getState().recurring.find((r) => r.id === btn.dataset.confirmSkip);
@@ -176,6 +181,14 @@ function upcomingSection(state, key) {
     // Only about the future, so only on the current month, and only once something repeats.
     if (key !== today.slice(0, 7) || !state.recurring.some((r) => r.active)) return '';
     const items = upcomingItems(state.recurring, today, upcomingDays);
+    // Only each repeat's next one can be skipped: mark the first row of every repeat.
+    const seen = new Set();
+    const skippable = new Set();
+    for (const it of items) {
+        if (seen.has(it.ruleId)) continue;
+        seen.add(it.ruleId);
+        if (!it.ask) skippable.add(`${it.ruleId}|${it.date}`);
+    }
     const { toPay, comingIn } = upcomingTotals(items);
     const sums = [toPay && `To pay <strong class="expense">${money(toPay)}</strong>`, comingIn && `Coming in <strong class="income">${money(comingIn)}</strong>`].filter(Boolean);
     const switcher = [7, 30]
@@ -192,7 +205,7 @@ function upcomingSection(state, key) {
                     const sub = [it.total ? `${it.type === 'income' ? '' : 'Payment '}${it.nth} of ${it.total}` : '', it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', it.ask ? 'asks you' : '', whenText(it.daysAway)].filter(Boolean);
                     return `<li class="up-item ${it.type}">
                 <span class="up-date" aria-hidden="true"><b>${day.getDate()}</b><small>${day.toLocaleDateString('en-IN', { month: 'short' })}</small></span>
-                <span class="up-main"><strong>${esc(it.name)}</strong><small>${esc(sub.join(' · '))}<span class="sr-only">, ${fmtDay(it.date)}</span></small></span>
+                <span class="up-main"><strong>${esc(it.name)}</strong><small>${esc(sub.join(' · '))}<span class="sr-only">, ${fmtDay(it.date)}</span>${skippable.has(`${it.ruleId}|${it.date}`) ? ` · <button type="button" class="link up-skip" data-skip-next="${esc(it.ruleId)}" aria-label="Skip ${esc(it.name)} on ${fmtDate(it.date)}">Skip</button>` : ''}</small></span>
                 <span class="up-amt ${it.type}">${it.ask ? '<small>about</small> ' : ''}${it.type === 'income' ? '+' : '−'} ${money(it.amount)}</span>
             </li>`;
                 })

@@ -941,6 +941,7 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     .confirm-item { grid-template-columns: minmax(0, 1fr) auto; }
     .ci-top { grid-column: 1 / -1; }
 }
+.up-skip, .rec-skip { font-size: inherit; padding: 0 .2rem; }
 .up-amt small { font-size: 1.15rem; font-weight: 500; color: var(--muted); }
 .ask-field, .rec-ask { margin-top: .8rem; grid-column: 1 / -1; }
 
