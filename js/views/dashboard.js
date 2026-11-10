@@ -1,11 +1,12 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, nowLocal, leftOver } from '../format.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, fmtDate, shiftMonth, nowLocal, leftOver } from '../format.js';
 import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
 import { debtsSection } from '../debts-ui.js';
 import { applyFolds } from '../folds.js';
 import { drawCategoryPie } from '../pie.js';
+import { upcomingItems, upcomingTotals, nextAfter, whenText } from '../upcoming.js';
 import { budgetSection } from '../budgets.js';
 import { backupReminder } from '../backup.js';
 import { computeInsights } from '../insights.js';
@@ -99,6 +100,63 @@ function quickAddRow(state) {
                 .join('')}
         </div>
     </div>`;
+}
+
+// ---- Coming up: what repeats will add soon --------------------------------------------
+
+let upcomingDays = 7; // 7 or 30, kept while the dashboard re-renders
+let currentKey = ''; // the month on screen
+
+function upcomingSection(state, key) {
+    const today = nowLocal().slice(0, 10);
+    // Only about the future, so only on the current month, and only once something repeats.
+    if (key !== today.slice(0, 7) || !state.recurring.some((r) => r.active)) return '';
+    const items = upcomingItems(state.recurring, today, upcomingDays);
+    const { toPay, comingIn } = upcomingTotals(items);
+    const sums = [toPay && `To pay <strong class="expense">${money(toPay)}</strong>`, comingIn && `Coming in <strong class="income">${money(comingIn)}</strong>`].filter(Boolean);
+    const switcher = [7, 30]
+        .map((d) => `<button type="button" data-upcoming-days="${d}" aria-pressed="${d === upcomingDays}">${d} days</button>`)
+        .join('');
+    let body;
+    if (items.length) {
+        body = `
+        <p class="up-sum">${sums.join(' · ')}</p>
+        <ul class="up-list">
+            ${items
+                .map((it) => {
+                    const day = new Date(`${it.date}T00:00`);
+                    const sub = [it.name !== it.category ? it.category : '', it.method ? METHOD_LABELS[it.method] : '', whenText(it.daysAway)].filter(Boolean);
+                    return `<li class="up-item ${it.type}">
+                <span class="up-date" aria-hidden="true"><b>${day.getDate()}</b><small>${day.toLocaleDateString('en-IN', { month: 'short' })}</small></span>
+                <span class="up-main"><strong>${esc(it.name)}</strong><small>${esc(sub.join(' · '))}<span class="sr-only">, ${fmtDay(it.date)}</span></small></span>
+                <span class="up-amt ${it.type}">${it.type === 'income' ? '+' : '−'} ${money(it.amount)}</span>
+            </li>`;
+                })
+                .join('')}
+        </ul>`;
+    } else {
+        const next = nextAfter(state.recurring, today, upcomingDays);
+        body = `<p class="muted up-empty">Nothing due in the next ${upcomingDays} days.${next ? ` Next: ${esc(next.name)} ${money(next.amount)} on ${fmtDate(next.date)}.` : ''}</p>`;
+    }
+    return `
+    <section class="block" data-card="upcoming" id="upcoming-block">
+        <div class="section-head"><h2>Coming up</h2><div class="up-switch" role="group" aria-label="How far ahead">${switcher}</div></div>
+        ${body}
+        <a href="#/settings" class="link up-manage">Change or pause repeats in Settings</a>
+    </section>`;
+}
+
+function onUpcomingClick(e, root) {
+    const btn = e.target.closest('[data-upcoming-days]');
+    if (!btn) return false;
+    upcomingDays = Number(btn.dataset.upcomingDays);
+    const card = root.querySelector('#upcoming-block');
+    if (card) {
+        card.outerHTML = upcomingSection(getState(), currentKey);
+        applyFolds(root);
+        root.querySelector(`[data-upcoming-days="${upcomingDays}"]`)?.focus();
+    }
+    return true;
 }
 
 // ---- Spending calendar ----------------------------------------------------------
@@ -234,6 +292,8 @@ export function render(root, ctx) {
 
             ${insightsSection(state, key)}
 
+            ${upcomingSection(state, key)}
+
             <section class="block" data-card="history">
                 <div class="section-head">
                     <h2>Transaction history</h2>
@@ -303,5 +363,6 @@ export function render(root, ctx) {
 
     applyFolds(root);
     drawCategoryPie(root.querySelector('#cat-pie'), slices);
-    root.onclick = (e) => onCalendarClick(e, root);
+    currentKey = key;
+    root.onclick = (e) => onUpcomingClick(e, root) || onCalendarClick(e, root);
 }

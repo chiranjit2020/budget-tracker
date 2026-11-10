@@ -923,6 +923,29 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
     .gh-remove { grid-column: 2; grid-row: 1 / span 3; }
 }
 
+/* Dashboard: coming up (repeats due soon) */
+.up-switch { display: inline-flex; padding: .3rem; gap: .2rem; border-radius: 99px; background: var(--soft); }
+.up-switch button { padding: .4rem 1.1rem; border: 0; border-radius: 99px; background: none; color: var(--muted); font: inherit; font-size: 1.25rem; font-weight: 600; cursor: pointer; }
+.up-switch button[aria-pressed="true"] { background: var(--surface); color: var(--dark-blue); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.up-switch button:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.up-sum { margin: -.4rem 0 1rem; font-size: 1.4rem; color: var(--muted); }
+.up-sum strong { font-weight: 700; }
+.up-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.up-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+.up-item:first-child { border-top: 0; }
+.up-date { display: grid; place-items: center; width: 4.4rem; padding: .4rem 0; border-radius: 1rem; background: var(--soft); line-height: 1.1; }
+.up-date b { font-size: 1.7rem; font-weight: 700; color: var(--dark-blue); }
+.up-date small { font-size: 1.1rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.up-item.income .up-date { background: var(--tint-income); }
+.up-main { min-width: 0; }
+.up-main strong { display: block; font-size: 1.45rem; font-weight: 600; color: var(--dark-blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-main small { font-size: 1.25rem; color: var(--muted); }
+.up-amt { font-weight: 600; font-size: 1.4rem; white-space: nowrap; }
+.up-amt.expense { color: var(--expense-text); }
+.up-amt.income { color: var(--blue); }
+.up-empty { font-size: 1.4rem; margin: 0 0 1rem; }
+.up-manage { display: inline-block; margin-top: .8rem; }
+
 /* Lend & borrow */
 .debt-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.4rem; padding: 1.4rem 1.6rem; border-radius: var(--radius); background: var(--soft); }
 .debt-totals small { display: block; font-size: 1.3rem; color: var(--muted); }

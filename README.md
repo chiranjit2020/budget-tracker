@@ -7,7 +7,8 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 
 ## Features
 
-- **Dashboard:** this month's spending, income and what's left over, then your everyday cards (insights, recent entries, budgets, goals, money given & taken) and below them the deeper ones (spending calendar, a doughnut chart of spending by category with the month's total in the middle, how you paid, 6-month trend). Tap any card's title to fold it; the app remembers which ones you folded on that device. Features you haven't used yet sit together in one small "More you can do" card.
+- **Dashboard:** this month's spending, income and what's left over, then your everyday cards (insights, coming up, recent entries, budgets, goals, money given & taken) and below them the deeper ones (spending calendar, a doughnut chart of spending by category with the month's total in the middle, how you paid, 6-month trend). Tap any card's title to fold it; the app remembers which ones you folded on that device. Features you haven't used yet sit together in one small "More you can do" card.
+- **Coming up:** what your repeats will add in the next 7 or 30 days (bills to pay and money coming in), with totals, e.g. *Gym ₹200 in 2 days · Netflix ₹649 in 4 days*. When nothing is due it says what comes next.
 - **Insights:** short notes on the dashboard: where this month is heading (repeating bills like rent aren't multiplied), which categories rose or fell, and your average spend per day. A month in progress is compared with the same days of last month, so early-month figures are fair.
 - **Spending calendar:** the month as a heat-map on the dashboard; darker days are the ones you spent most on (ranked against each other, so one big bill doesn't wash out the rest). Tap a day to see its entries.
 - **Savings goals:** e.g. *Goa trip ₹30,000 by 10 Mar*. Add or withdraw money (with Undo) and see the progress and how much to save each month to get there. **Show history** lists every add and withdrawal with how much was saved after each; remove a mistaken one (with Undo), as long as that wouldn't take the goal below ₹0. Goals are kept apart from expenses, so setting money aside doesn't count as spending.
@@ -59,7 +60,7 @@ python -m http.server 8000
 
 (Opening `index.html` directly from disk won't work, because ES modules and service workers need `http://`.)
 
-To check the calculations: `node tests/insights.test.mjs`, `node tests/calendar.test.mjs`, `node tests/goals.test.mjs`, `node tests/debts.test.mjs`, `node tests/format.test.mjs`, `node tests/biometric.test.mjs` and `node tests/security.test.mjs` (Node 18+).
+To check the calculations: `node tests/insights.test.mjs`, `node tests/upcoming.test.mjs`, `node tests/calendar.test.mjs`, `node tests/goals.test.mjs`, `node tests/debts.test.mjs`, `node tests/format.test.mjs`, `node tests/biometric.test.mjs` and `node tests/security.test.mjs` (Node 18+).
 
 ## Deploy to GitHub Pages
 
@@ -90,6 +91,7 @@ js/budgets.js           Monthly category budgets (dashboard, form, alerts)
 js/backup.js            Encrypted backup export/import, CSV export, backup reminder
 js/theme.js             Light/dark mode (Auto, Light, Dark)
 js/insights.js          Dashboard insights (pure calculations)
+js/upcoming.js          "Coming up": what repeats will add soon (pure calculations)
 js/calendar.js          Spending calendar heat-map
 js/goals.js, goals-ui.js  Savings goals (maths / card + dialogs)
 js/debts.js, debts-ui.js  Money given & taken (wording + maths / card + dialogs)
