@@ -8,7 +8,6 @@ All planned features are built. Pick the next one from *Later / maybe*.
 
 ## Later / maybe
 
-- **Fingerprint / Face unlock** (WebAuthn): on top of the password, where the phone supports it.
 - **Edit a recurring transaction's amount** (today: stop it and add a new one).
 - **Goal history:** list each add/withdrawal under a goal (the data is already kept).
 - **Receipt photos:** attach a photo to an entry (now possible, since data is in IndexedDB).
@@ -19,6 +18,7 @@ All planned features are built. Pick the next one from *Later / maybe*.
 - Android: app-icon shortcuts (long-press: Add expense / Add income / Monthly).
 - Android: launch screen flows into the blue splash without a white flash.
 - iPhone: install via Share → Add to Home Screen, login, dark mode.
+- Fingerprint / face unlock: turn on in Settings → Security, lock, unlock with a scan (Android Chrome, iPhone Safari iOS 18+). Also check that changing the password turns it off.
 
 ## Not a good fit right now
 
@@ -27,4 +27,4 @@ All planned features are built. Pick the next one from *Later / maybe*.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, given & taken tracker (plain wording), dashboard tidy-up (order, foldable cards, "More you can do"), Chart.js doughnut for categories.
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods, dashboard insights, spending calendar, savings goals, Barlow digits, given & taken tracker (plain wording), dashboard tidy-up (order, foldable cards, "More you can do"), Chart.js doughnut for categories, exact amount maths, fingerprint / face unlock.

@@ -13,6 +13,8 @@
 
 const VAULT_KEY = 'budget-tracker.vault.v1'; // localStorage key (used before IndexedDB, and as the fallback)
 const LEGACY_KEY = 'budget-tracker.v1'; // unencrypted data from before accounts existed
+/** Fingerprint/face unlock record (see biometric.js). Removed whenever the account's key changes. */
+export const BIOMETRIC_KEY = 'budget-tracker.biometric.v1';
 const ITERATIONS = 600_000;
 
 const encoder = new TextEncoder();
@@ -42,13 +44,13 @@ const bytes = (v) => (typeof v === 'string' ? fromBase64(v) : new Uint8Array(v))
 
 // ---- Crypto -------------------------------------------------------------------
 
-async function deriveKey(password, salt, iterations) {
+async function deriveKey(password, salt, iterations, extractable = false) {
     const material = await crypto.subtle.importKey('raw', encoder.encode(password.normalize('NFKC')), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey(
         { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
         material,
         { name: 'AES-GCM', length: 256 },
-        false, // the key can never be exported or read by scripts
+        extractable, // normally false: the key can never be exported or read by scripts
         ['encrypt', 'decrypt'],
     );
 }
@@ -228,6 +230,47 @@ export async function createAccount(name, password, data) {
     const vault = await seal(key, data, header);
     await write(vault); // may throw if storage is full
     session = { key, header };
+    forgetBiometric(); // a new key: any fingerprint unlock made for the old one is useless
+}
+
+function forgetBiometric() {
+    try {
+        localStorage.removeItem(BIOMETRIC_KEY);
+    } catch { /* storage blocked */ }
+}
+
+/** The current key's salt (not secret). Fingerprint unlock remembers it to notice a password change. */
+export const kdfSalt = () => readVault()?.kdf?.salt ?? '';
+
+/**
+ * For turning on fingerprint/face unlock: check `password`, then return the data key as raw bytes
+ * (or null if the password is wrong). The caller wraps it with the device secret and wipes it.
+ */
+export async function exportRawKey(password) {
+    const vault = readVault();
+    if (!vault) return null;
+    const key = await deriveKey(password, fromBase64(vault.kdf.salt), vault.kdf.iter, true);
+    try {
+        await unseal(key, vault);
+    } catch {
+        return null;
+    }
+    return new Uint8Array(await crypto.subtle.exportKey('raw', key));
+}
+
+/** Unlock with raw key bytes from fingerprint/face unlock. Returns the data, or null if they don't fit. */
+export async function unlockWithRawKey(raw) {
+    const vault = readVault();
+    if (!vault) return null;
+    const key = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']); // non-extractable again
+    let data;
+    try {
+        data = await unseal(key, vault);
+    } catch {
+        return null;
+    }
+    session = { key, header: { v: vault.v, name: vault.name, kdf: vault.kdf } };
+    return data;
 }
 
 /** Returns the decrypted data, or null if the password is wrong. */
@@ -309,6 +352,7 @@ export async function deleteAccount() {
     cached = null;
     await backend.remove();
     localStorage.removeItem(VAULT_KEY); // in case an old copy is still around
+    forgetBiometric();
     removeLegacy();
     announce();
 }

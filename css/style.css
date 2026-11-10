@@ -818,6 +818,16 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:checked + span { border-color: var(--blue); background: var(--soft); color: var(--blue); }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
+/* Settings: fingerprint or face unlock */
+.bio-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; margin: .4rem 0 1.6rem; padding: 1.2rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius); }
+.bio-row[hidden] { display: none; }
+.bio-icon { display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border-radius: 50%; background: var(--soft); color: var(--blue); }
+.bio-icon .icon { width: 2rem; height: 2rem; }
+.bio-text strong { display: block; font-size: 1.45rem; font-weight: 600; }
+.bio-text small { display: block; font-size: 1.25rem; color: var(--muted); }
+.auth-bio { margin-top: 1.2rem; }
+.auth-bio .icon { width: 2rem; height: 2rem; }
+
 /* Foldable dashboard cards */
 .fold-btn { display: inline-flex; align-items: center; gap: .6rem; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .fold-btn .icon { width: 1.6rem; height: 1.6rem; color: var(--muted); transform: rotate(90deg); transition: transform var(--trans); flex-shrink: 0; }

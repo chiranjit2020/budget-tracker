@@ -30,6 +30,7 @@ Everything is saved in your browser's storage (IndexedDB) on that device, **encr
 
 - **Account:** the first time you open the app, you create an account (name + password, 8+ characters). After that the app opens on a login screen. It locks when closed or reloaded, auto-locks after you switch away (1 minute by default, adjustable in **Settings → Security**), and can be locked anytime from the profile popup.
 - **How it's protected:** the password is never stored. It's stretched into an AES-256 key with PBKDF2-SHA256 (600,000 rounds, random salt), and all data is encrypted with AES-256-GCM (Web Crypto API). A wrong password simply can't decrypt the data. After 5 wrong attempts the login makes you wait.
+- **Fingerprint or face unlock (optional):** turn it on in **Settings → Security** (it asks for your password once). Your phone's fingerprint/face check then gives back a secret that unlocks a locked copy of your data key, using passkeys (WebAuthn with the PRF extension). The password is still never stored, and it keeps working as well. Changing the password or resetting the app turns this off. It only appears where the device and browser support it (e.g. Android Chrome, iPhone Safari on iOS 18+, Windows Hello).
 - **No password recovery.** If you forget it, the data can't be decrypted. "Forgot password?" can only wipe the device and start over, so **export a backup regularly**. The dashboard reminds you if your last backup is over 30 days old.
 - **Backups are encrypted** with your password (AES-256-GCM). Restoring one asks for the password you had when it was made; older unencrypted backups still import. CSV exports are plain spreadsheets, so keep those private.
 - Data isn't shared between devices or browsers. Use **Settings → Export backup** and **Import backup** to move it.
@@ -88,6 +89,7 @@ js/goals.js, goals-ui.js  Savings goals (maths / card + dialogs)
 js/debts.js, debts-ui.js  Money given & taken (wording + maths / card + dialogs)
 js/folds.js             Foldable dashboard cards (remembered per device)
 js/pie.js               "Expenses by category" doughnut chart (loads Chart.js when needed)
+js/biometric.js         Fingerprint / face unlock (WebAuthn PRF wraps the data key)
 js/vendor/              Chart.js 4.5.0 (MIT), shipped with the app so it works offline
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 tests/*.test.mjs        Unit tests for the calculations: node tests/<name>.test.mjs

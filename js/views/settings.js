@@ -2,7 +2,9 @@ import { getState, addCategory, removeCategory, clearAll, changePassword, setRec
 import { downloadBackup, downloadCSV, importFile } from '../backup.js';
 import { lock, getAutoLock, setAutoLock, AUTOLOCK_OPTIONS, MIN_PASSWORD } from '../auth.js';
 import { esc, money, parseAmount, toDate, fmtDate, fmtTime, nowLocal, toLocalString } from '../format.js';
-import { icon, toast, confirmDialog } from '../ui.js';
+import { icon, toast, confirmDialog, askPassword } from '../ui.js';
+import * as vault from '../vault.js';
+import { biometricSupported, biometricEnabled, enableBiometric, disableBiometric } from '../biometric.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 import { themeSwitchHTML } from '../theme.js';
 
@@ -163,6 +165,11 @@ export function render(root, ctx = {}) {
                     ${AUTOLOCK_OPTIONS.map(([m, label]) => `<option value="${m}"${m === getAutoLock() ? ' selected' : ''}>${label}</option>`).join('')}
                 </select>
             </label>
+            <div class="bio-row" id="bio-row" hidden>
+                <span class="bio-icon" aria-hidden="true">${icon('fingerprint')}</span>
+                <span class="bio-text"><strong>Fingerprint or face unlock</strong><small id="bio-status"></small></span>
+                <button type="button" class="btn btn-ghost btn-sm" id="bio-toggle"></button>
+            </div>
             <details class="pw-change">
                 <summary>Change password</summary>
                 <form id="pw-form" novalidate>
@@ -224,6 +231,19 @@ export function render(root, ctx = {}) {
     }
 
     // Storage protection status (async).
+    const showBiometric = () => {
+        const row = root.querySelector('#bio-row');
+        if (!row) return;
+        const on = biometricEnabled();
+        row.querySelector('#bio-status').textContent = on
+            ? 'On. You can unlock with your fingerprint or face. Your password still works too.'
+            : 'Unlock without typing your password, using your phone’s fingerprint or face check.';
+        row.querySelector('#bio-toggle').textContent = on ? 'Turn off' : 'Turn on';
+        row.hidden = false;
+    };
+    biometricSupported().then((ok) => ok && showBiometric());
+    root.showBiometric = showBiometric;
+
     storagePersisted().then((persisted) => {
         const line = root.querySelector('#storage-line');
         if (!line || !navigator.storage?.persist) return;
@@ -283,7 +303,9 @@ export function render(root, ctx = {}) {
             btn.disabled = true;
             btn.textContent = 'Updating…';
             let ok = false;
+            let hadBiometric = false;
             try {
+                hadBiometric = biometricEnabled();
                 ok = await changePassword(current.value, next.value);
             } catch (err) {
                 console.error(err);
@@ -300,7 +322,8 @@ export function render(root, ctx = {}) {
             form.reset();
             error.hidden = true;
             form.closest('details').open = false;
-            toast('Password updated');
+            root.showBiometric?.(); // a new password switches fingerprint unlock off
+            toast(hadBiometric ? 'Password updated. Fingerprint or face unlock was turned off; turn it on again if you want it.' : 'Password updated');
             return;
         }
 
@@ -357,6 +380,25 @@ export function render(root, ctx = {}) {
                 danger: true,
             });
             if (ok && deleteRecurring(rule.id)) toast('Repeat stopped');
+        } else if (el.id === 'bio-toggle') {
+            if (biometricEnabled()) {
+                disableBiometric();
+                toast('Fingerprint or face unlock is off');
+                root.showBiometric?.();
+                return;
+            }
+            const rawKey = await askPassword({
+                title: 'Turn on fingerprint or face unlock',
+                message: 'Enter your password once to confirm. Then your phone will ask for your fingerprint or face.',
+                submit: 'Continue',
+                verify: (password) => vault.exportRawKey(password),
+                wrong: 'That’s not your password. Try again.',
+            });
+            if (!rawKey) return;
+            const result = await enableBiometric(rawKey, getState().profile.name);
+            if (result === 'on') toast('Done. Next time, unlock with your fingerprint or face.');
+            else if (result === 'unsupported') toast('This phone or browser can’t do fingerprint or face unlock for this app. Your password still works.');
+            root.showBiometric?.();
         } else if (el.id === 'lock-now') {
             lock();
         } else if (el.id === 'export-json') {

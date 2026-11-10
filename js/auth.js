@@ -2,7 +2,8 @@
 
 import * as vault from './vault.js';
 import { openSession, closeSession, flush, normalize, setExternalLockHandler } from './store.js';
-import { confirmDialog, toast } from './ui.js';
+import { confirmDialog, toast, icon } from './ui.js';
+import { biometricEnabled, biometricSupported, unlockWithBiometric } from './biometric.js';
 import { esc } from './format.js';
 
 const screen = document.getElementById('auth');
@@ -161,11 +162,34 @@ function showLogin() {
             <p class="field-error" role="alert" hidden></p>
             <button type="submit" class="btn btn-primary btn-block">Unlock</button>
         </form>
+        <button type="button" class="btn btn-ghost btn-block auth-bio" id="bio-unlock" hidden>${icon('fingerprint')}<span>Unlock with fingerprint or face</span></button>
         <button type="button" class="link-btn auth-forgot" id="forgot-btn">Forgot password?</button>`);
 
     const form = document.getElementById('login-form');
     const input = form.elements.password;
     input.focus();
+
+    // Fingerprint / face: offered when it's turned on and this device supports it.
+    const bioBtn = document.getElementById('bio-unlock');
+    const tryBiometric = async (auto) => {
+        bioBtn.disabled = true;
+        const data = await unlockWithBiometric();
+        bioBtn.disabled = false;
+        if (data) {
+            failures = 0;
+            enterApp(data);
+        } else if (!auto) {
+            setError(form, 'Couldn’t unlock with fingerprint or face. Try again, or use your password.');
+        }
+    };
+    bioBtn.addEventListener('click', () => tryBiometric(false));
+    if (biometricEnabled()) {
+        biometricSupported().then((ok) => {
+            if (!ok || !bioBtn.isConnected) return;
+            bioBtn.hidden = false;
+            tryBiometric(true); // ask straight away; if it's closed, the button and password stay
+        });
+    }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();

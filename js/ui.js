@@ -343,6 +343,7 @@ const pwError = pwForm.querySelector('.field-error');
 const pwSubmit = pwForm.querySelector('button[type="submit"]');
 const pwToggle = pwForm.querySelector('.pw-toggle');
 let pwVerify = null;
+let pwWrong = '';
 let pwResult = null;
 
 pwToggle.addEventListener('click', () => {
@@ -377,7 +378,7 @@ pwForm.addEventListener('submit', async (e) => {
         pwResult = result;
         pwDialog.close();
     } else {
-        pwError.textContent = 'That password doesn’t open this file. Try again.';
+        pwError.textContent = pwWrong;
         pwError.hidden = false;
         pwInput.select();
     }
@@ -388,7 +389,7 @@ pwForm.addEventListener('submit', async (e) => {
  * for a wrong password; the dialog stays open until it succeeds or is cancelled.
  * Resolves to the result, or null if cancelled.
  */
-export function askPassword({ title, message, submit = 'Unlock', verify }) {
+export function askPassword({ title, message, submit = 'Unlock', verify, wrong = 'That password doesn’t open this file. Try again.' }) {
     document.getElementById('pw-dialog-title').textContent = title;
     document.getElementById('pw-dialog-msg').textContent = message;
     pwSubmit.textContent = submit;
@@ -397,6 +398,7 @@ export function askPassword({ title, message, submit = 'Unlock', verify }) {
     pwToggle.textContent = 'Show';
     pwError.hidden = true;
     pwVerify = verify;
+    pwWrong = wrong;
     pwResult = null;
     pwDialog.showModal();
     pwInput.focus();
