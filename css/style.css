@@ -854,6 +854,8 @@ dialog.sheet[open] { animation: pop .18s ease-out; }
 .method-options input:checked + span { border-color: var(--blue); background: var(--soft); color: var(--blue); }
 .method-options input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 1px; }
 
+.sound-field { margin-top: 1.6rem; }
+
 /* Settings: fingerprint or face unlock */
 .bio-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; margin: .4rem 0 1.6rem; padding: 1.2rem 1.4rem; border: 1px solid var(--line); border-radius: var(--radius); }
 .bio-row[hidden] { display: none; }

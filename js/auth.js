@@ -10,6 +10,7 @@ const screen = document.getElementById('auth');
 const appEl = document.querySelector('.app');
 
 import { MIN_PASSWORD, passwordProblem } from './passwords.js';
+import { playUnlockChime } from './sound.js';
 
 export { MIN_PASSWORD };
 
@@ -92,6 +93,7 @@ function enterApp(data) {
     screen.replaceChildren();
     appEl.hidden = false;
     handlers.onUnlock();
+    playUnlockChime(); // a soft "ta-da" (can be turned off in Settings → Appearance)
 }
 
 // ---- Registration -------------------------------------------------------------

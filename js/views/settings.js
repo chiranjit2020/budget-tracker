@@ -8,6 +8,7 @@ import * as vault from '../vault.js';
 import { biometricSupported, biometricEnabled, enableBiometric, disableBiometric } from '../biometric.js';
 import { canInstall, promptInstall, isStandalone, isIOS, storagePersisted, requestPersistentStorage } from '../pwa.js';
 import { themeSwitchHTML } from '../theme.js';
+import { soundsOn, setSoundsOn, playUnlockChime } from '../sound.js';
 
 export const title = 'Settings';
 
@@ -189,6 +190,10 @@ export function render(root, ctx = {}) {
             <h2>Appearance</h2>
             <p class="muted">Auto follows your phone or computer's light/dark setting.</p>
             ${themeSwitchHTML(icon)}
+            <label class="check-field sound-field">
+                <input type="checkbox" id="sound-toggle"${soundsOn() ? ' checked' : ''} />
+                <span>Play a soft chime when you unlock <small>Only on this device. Your phone's silent mode also mutes it.</small></span>
+            </label>
         </section>
       </div>
 
@@ -255,7 +260,11 @@ export function render(root, ctx = {}) {
 
     root.onchange = async (e) => {
         const el = e.target;
-        if (el.id === 'autolock') {
+        if (el.id === 'sound-toggle') {
+            setSoundsOn(el.checked);
+            if (el.checked) playUnlockChime({ force: true }); // let them hear it
+            toast(el.checked ? 'Unlock chime on' : 'Unlock chime off');
+        } else if (el.id === 'autolock') {
             setAutoLock(Number(el.value));
             toast('Auto-lock updated');
         } else if (el.id === 'import-input' && el.files[0]) {
