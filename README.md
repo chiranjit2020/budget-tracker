@@ -87,7 +87,7 @@ js/calendar.js          Spending calendar heat-map
 js/goals.js, goals-ui.js  Savings goals (maths / card + dialogs)
 js/debts.js, debts-ui.js  Money given & taken (wording + maths / card + dialogs)
 js/folds.js             Foldable dashboard cards (remembered per device)
-js/pie.js               "Expenses by category" pie chart (loads Chart.js when needed)
+js/pie.js               "Expenses by category" doughnut chart (loads Chart.js when needed)
 js/vendor/              Chart.js 4.5.0 (MIT), shipped with the app so it works offline
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 tests/*.test.mjs        Unit tests for the calculations: node tests/<name>.test.mjs

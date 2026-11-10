@@ -473,6 +473,9 @@ button.link { padding: 0; border: 0; background: none; color: var(--blue); curso
 
 .pie-wrap { position: relative; height: 22rem; margin-bottom: 1.6rem; } /* Chart.js fills this box */
 .pie-wrap[hidden] { display: none; }
+.pie-total { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; text-align: center; pointer-events: none; } /* sits in the doughnut's hole; taps go through to the chart */
+.pie-total small { font-size: 1.25rem; color: var(--muted); }
+.pie-total strong { font-size: 2rem; font-weight: 700; color: var(--expense-text); line-height: 1.2; }
 .cat-dot { width: 1.4rem; height: 1.4rem; flex-shrink: 0; border-radius: 50%; }
 
 .cat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }

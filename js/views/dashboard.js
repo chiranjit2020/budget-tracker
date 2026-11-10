@@ -201,7 +201,7 @@ export function render(root, ctx) {
     const cats = byCategory(monthTx.filter((x) => x.type === 'expense'));
     const topCats = cats.slice(0, TOP_CATEGORIES);
     const moreCats = cats.length - topCats.length;
-    // Pie slices: the biggest categories, plus everything else together as "Other".
+    // Doughnut slices: the biggest categories, plus everything else together as "Other".
     const slices = topCats.map((c, i) => ({ label: c.category, amount: c.amount, color: CHART_COLORS[i % CHART_COLORS.length] }));
     if (moreCats > 0) {
         const rest = cats.slice(TOP_CATEGORIES);
@@ -262,7 +262,8 @@ export function render(root, ctx) {
                 <div class="section-head"><h2>Expenses by category</h2></div>
                 ${slices.length
                     ? `<div class="pie-wrap">
-                        <canvas id="cat-pie" role="img" aria-label="Pie chart of spending by category: ${esc(slices.map((s) => `${s.label} ${pctText(s.amount)}`).join(', '))}"></canvas>
+                        <canvas id="cat-pie" role="img" aria-label="Doughnut chart of spending by category: ${esc(slices.map((s) => `${s.label} ${pctText(s.amount)}`).join(', '))}"></canvas>
+                        <p class="pie-total"><small>Spent in ${fmtMonthShort(key)}</small><strong>${moneyWhole(t.expense)}</strong></p>
                        </div>
                        <ul class="cat-list">
                         ${slices

@@ -1,4 +1,4 @@
-// "Expenses by category" pie chart, drawn with Chart.js (js/vendor/chart.umd.min.js, MIT).
+// "Expenses by category" doughnut chart, drawn with Chart.js (js/vendor/chart.umd.min.js, MIT).
 // The library ships with the app (no CDN), so it works offline and nothing is fetched
 // from anywhere else. It's only loaded once there is something to draw.
 
@@ -61,7 +61,7 @@ export async function drawCategoryPie(canvas, slices) {
     const colors = themeColors(slices);
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; // Barlow digits, Manrope text
     chart = new Chart(canvas, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: slices.map((s) => s.label),
             datasets: [{
@@ -75,6 +75,7 @@ export async function drawCategoryPie(canvas, slices) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '64%', // room for the month's total in the middle (HTML over the canvas)
             animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 500 },
             plugins: {
                 legend: { display: false }, // the list under the chart is the legend (with exact amounts)
