@@ -44,7 +44,7 @@ Everything is saved in your browser's storage (IndexedDB) on that device, **encr
 ## Install it as an app
 
 - **Android / Chrome / Edge:** open the site, then use **Settings → Install app** (or the browser menu's *Install app*).
-- **iPhone / iPad:** open the site in Safari, tap **Share → Add to Home Screen**.
+- **iPhone / iPad:** open the site in Safari, tap **Share → Add to Home Screen**. On iPhone the app opens on the same blue launch screen as the splash (13 screen sizes covered, iPhone SE to 17 Pro Max).
 
 Once installed, **long-press the app icon** (Android) or right-click it in the taskbar/dock (desktop) for shortcuts: **Add expense**, **Add income** and **Monthly overview**. The form opens right after you unlock. (iPhone doesn't support app-icon shortcuts for web apps.)
 
@@ -103,6 +103,7 @@ js/vendor/              Chart.js 4.5.0 (MIT), shipped with the app so it works o
 js/views/*.js           Dashboard, Monthly, Expenses/Income, Report, Settings
 tests/*.test.mjs        Unit tests for the calculations: node tests/<name>.test.mjs
 icons/                  App icons (PNG + SVG)
+icons/launch/           iPhone launch screens, one per screen size (rendered from the splash)
 images/logo.svg         Brand mark
 README.md               This file
 ROADMAP.md              Planned and finished features, and checks still to do on a real phone
