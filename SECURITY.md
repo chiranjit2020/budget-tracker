@@ -69,4 +69,8 @@ node tests/format.test.mjs       # exact money parsing
 
 The browser attack sweep (XSS payloads in every field, lock hygiene, booby-trapped backups, CSP blocking, framing, the wrong-password wait across reloads) was run by hand in Chrome against a throwaway account. Re-run it after any change that adds new places where text becomes HTML.
 
-**Reporting a problem:** open a GitHub issue without sensitive details, or contact the repository owner privately.
+**Reporting a problem:** open a GitHub issue without sensitive details, or contact the developer privately via [chiranjitkarmakar.com](https://chiranjitkarmakar.com).
+
+---
+
+© 2021–2026 Chiranjit Karmakar. Budget Tracker is developed by Chiranjit Karmakar · [chiranjitkarmakar.com](https://chiranjitkarmakar.com)

@@ -111,6 +111,7 @@ export function render(root, ctx) {
             </table>
         </div>`
             : '<p class="muted">No transactions this month.</p>'}
+        <p class="report-credit">Made with Budget Tracker · © 2021–2026 Chiranjit Karmakar · chiranjitkarmakar.com</p>
     </article>`;
 
     root.querySelector('#print-btn').onclick = () => {

@@ -278,6 +278,7 @@ export function render(root, ctx = {}) {
             <h2>App</h2>
             ${installSection()}
             <p class="muted storage-line" id="storage-line"></p>
+            <p class="app-credit">Budget Tracker · © 2021–2026 Chiranjit Karmakar<br>Developed by Chiranjit Karmakar · <a href="https://chiranjitkarmakar.com" target="_blank" rel="noopener">chiranjitkarmakar.com</a></p>
         </section>
 
         <section class="panel panel-danger">

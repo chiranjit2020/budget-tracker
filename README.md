@@ -112,3 +112,9 @@ ROADMAP.md              Planned and finished features, and checks still to do on
 SECURITY.md             Security review (OWASP Top 10 2025, MITRE ATT&CK), fixes and accepted risks
 security-review.html    The same review as a standalone web page
 ```
+
+## Copyright
+
+© 2021–2026 **Chiranjit Karmakar**. Developed by Chiranjit Karmakar · [chiranjitkarmakar.com](https://chiranjitkarmakar.com)
+
+Released under the [MIT License](LICENSE). Bundled third-party files keep their own licences: Chart.js (MIT, `js/vendor/`), Manrope and Barlow (SIL Open Font License, `fonts/`).
