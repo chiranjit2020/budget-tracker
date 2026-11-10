@@ -1,10 +1,9 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, esc, fmtMonth, fmtDate, fmtTime, nowLocal } from '../format.js';
+import { money, esc, fmtMonth, fmtDate, fmtTime, nowLocal, leftOver, savedShare } from '../format.js';
 import { icon, monthSwitch } from '../ui.js';
 
 export const title = 'Report';
 
-const signed = (n) => `${n < 0 ? '−' : ''}${money(Math.abs(n))}`;
 
 function categoryTable(rows, total, kind, budgets = {}) {
     if (!rows.length) return `<p class="muted">No ${kind} this month.</p>`;
@@ -78,8 +77,8 @@ export function render(root, ctx) {
         <div class="stat-row">
             <div class="stat"><small>Income</small><strong class="income">${money(t.income)}</strong></div>
             <div class="stat"><small>Expenses</small><strong class="expense">${money(t.expense)}</strong></div>
-            <div class="stat"><small>Net</small><strong class="${t.net < 0 ? 'expense' : 'net'}">${signed(t.net)}</strong></div>
-            <div class="stat"><small>Saved</small><strong>${t.income ? `${Math.round((t.net / t.income) * 100)}%` : '—'}</strong></div>
+            ${((l) => `<div class="stat"><small>${l.label}</small><strong class="${l.cls}">${l.amount}</strong></div>`)(leftOver(t.net))}
+            <div class="stat"><small>Saved from income</small><strong>${savedShare(t.net, t.income)}</strong></div>
         </div>
 
         <h3>Expenses by category</h3>

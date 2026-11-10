@@ -1,5 +1,5 @@
 import { getState, inMonth, totals } from '../store.js';
-import { money, moneyShort, fmtMonth, fmtMonthName, fmtMonthShort, currentMonthKey } from '../format.js';
+import { money, moneyShort, fmtMonth, fmtMonthName, fmtMonthShort, currentMonthKey, leftOver, savedShare } from '../format.js';
 import { icon } from '../ui.js';
 
 export const title = 'Monthly transaction';
@@ -32,7 +32,7 @@ export function render(root, ctx) {
     <div class="stat-row">
         <div class="stat"><small>Income in ${year}</small><strong class="income">${money(yearTotals.income)}</strong></div>
         <div class="stat"><small>Expenses in ${year}</small><strong class="expense">${money(yearTotals.expense)}</strong></div>
-        <div class="stat"><small>Net</small><strong class="${yearTotals.net < 0 ? 'expense' : 'net'}">${signed(yearTotals.net)}</strong></div>
+        ${((l) => `<div class="stat"><small>${l.label} in ${year}</small><strong class="${l.cls}">${l.amount}</strong></div>`)(leftOver(yearTotals.net))}
         <div class="stat"><small>Average monthly spend</small><strong>${money(activeMonths ? Math.round(yearTotals.expense / activeMonths) : 0)}</strong></div>
     </div>
 
@@ -61,18 +61,17 @@ export function render(root, ctx) {
     <section class="block">
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr><th scope="col">Month</th><th scope="col">Income</th><th scope="col">Expense</th><th scope="col">Net</th><th scope="col">Saved</th></tr></thead>
+                <thead><tr><th scope="col">Month</th><th scope="col">Income</th><th scope="col">Expense</th><th scope="col">Left over</th><th scope="col">Saved from income</th></tr></thead>
                 <tbody>
                     ${rows
                         .map((r) => {
-                            const saved = r.income ? Math.round((r.net / r.income) * 100) : null;
                             return `
                         <tr class="${r.count ? '' : 'is-empty'}${r.key === thisMonth ? ' is-current' : ''}">
                             <th scope="row"><a href="#/" data-goto-month="${r.key}">${fmtMonthName(r.key)}</a></th>
                             <td class="income">${r.income ? money(r.income) : '—'}</td>
                             <td class="expense">${r.expense ? money(r.expense) : '—'}</td>
-                            <td class="${r.net < 0 ? 'expense' : ''}">${r.count ? signed(r.net) : '—'}</td>
-                            <td>${saved === null ? '—' : `${saved}%`}</td>
+                            <td class="nowrap${r.net < 0 ? ' expense' : ''}">${r.count ? signed(r.net) : '—'}</td>
+                            <td>${savedShare(r.net, r.income)}</td>
                         </tr>`;
                         })
                         .join('')}
@@ -82,13 +81,13 @@ export function render(root, ctx) {
                         <th scope="row">Total</th>
                         <td class="income">${money(yearTotals.income)}</td>
                         <td class="expense">${money(yearTotals.expense)}</td>
-                        <td class="${yearTotals.net < 0 ? 'expense' : ''}">${signed(yearTotals.net)}</td>
-                        <td>${yearTotals.income ? `${Math.round((yearTotals.net / yearTotals.income) * 100)}%` : '—'}</td>
+                        <td class="nowrap${yearTotals.net < 0 ? ' expense' : ''}">${signed(yearTotals.net)}</td>
+                        <td>${savedShare(yearTotals.net, yearTotals.income)}</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        <p class="muted hint">Select a month to open it on the dashboard.</p>
+        <p class="muted hint">A minus (−) under “Left over” means you spent more than you got that month. Select a month to open it on the dashboard.</p>
     </section>`;
 
     root.onclick = (e) => {

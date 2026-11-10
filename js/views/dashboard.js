@@ -1,5 +1,5 @@
 import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
-import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, nowLocal } from '../format.js';
+import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, fmtDay, shiftMonth, nowLocal, leftOver } from '../format.js';
 import { icon, monthSwitch, txGroups, txItem, emptyState, CHART_COLORS } from '../ui.js';
 import { calendarMonth, calendarHTML } from '../calendar.js';
 import { goalsSection } from '../goals-ui.js';
@@ -190,7 +190,7 @@ export function render(root, ctx) {
                 <div class="amount-block">
                     <div><small>Total Expense</small><strong class="expense">${money(t.expense)}</strong></div>
                     <div><small>Total Income</small><strong class="income">${money(t.income)}</strong></div>
-                    <div><small>Net</small><strong class="${t.net < 0 ? 'expense' : 'net'}">${t.net < 0 ? '−' : ''}${money(Math.abs(t.net))}</strong></div>
+                    ${((l) => `<div><small>${l.label}</small><strong class="${l.cls}">${l.amount}</strong></div>`)(leftOver(t.net))}
                 </div>
                 ${quickAddRow(state)}
             </section>

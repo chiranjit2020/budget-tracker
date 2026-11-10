@@ -16,7 +16,7 @@ It's an installable Progressive Web App (PWA) that works offline. Your data stay
 - **Add, edit or delete** any transaction (Spent / Received, amount, category, date & time, note). Deleting can be undone.
 - **Payment method:** tag each entry as UPI, Cash, Card or Bank (tap it again to clear; older entries show *Not set*). The form remembers your last choice, the lists can filter by it, the dashboard shows *How you paid* this month, and the report and CSV include it.
 - **Smarter add form:** it remembers the last category you used for expenses and for income. While you type a note, notes you've used before appear as chips (e.g. *Tea · Food & Drink · ₹20*); tap one to fill in its usual category and amount (an amount you've already typed is kept).
-- **Monthly:** a year at a glance with an income vs expense chart and a table of totals and savings rate.
+- **Monthly:** a year at a glance with an income vs expense chart and a table showing what was left over each month and how much of your income you saved.
 - **Expenses / Income:** full lists filtered by month and category, with search.
 - **Report:** a printable monthly statement. Use *Print → Save as PDF* to keep a copy.
 - **Settings:** your name and photo, custom categories, backup (JSON), Excel export (CSV), restore, and delete-all.
@@ -54,7 +54,7 @@ python -m http.server 8000
 
 (Opening `index.html` directly from disk won't work, because ES modules and service workers need `http://`.)
 
-To check the calculations: `node tests/insights.test.mjs`, `node tests/calendar.test.mjs`, `node tests/goals.test.mjs` and `node tests/debts.test.mjs` (Node 18+).
+To check the calculations: `node tests/insights.test.mjs`, `node tests/calendar.test.mjs`, `node tests/goals.test.mjs`, `node tests/debts.test.mjs` and `node tests/format.test.mjs` (Node 18+).
 
 ## Deploy to GitHub Pages
 

@@ -35,6 +35,15 @@ export function parseAmount(text) {
 }
 
 /** Plain decimal for inputs and CSV: 123450 -> "1234.50" */
+/**
+ * Money in minus money out, in plain words. Positive: "Left over ₹X".
+ * Negative: "Spent extra ₹X" (no minus sign; shown in red via the 'expense' class).
+ */
+export const leftOver = (net) => (net < 0 ? { label: 'Spent extra', amount: money(-net), cls: 'expense' } : { label: 'Left over', amount: money(net), cls: 'net' });
+
+/** Share of income kept: "25%". Spending more than you got counts as 0%; no income gives "—". */
+export const savedShare = (net, income) => (income ? `${Math.max(0, Math.round((net / income) * 100))}%` : '—');
+
 export const toDecimal = (paise) => (paise / 100).toFixed(2);
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
