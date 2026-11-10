@@ -1,7 +1,7 @@
 // Backups: encrypted export, import (encrypted or older plain files),
 // CSV export, and the "time for a backup" reminder.
 
-import { getState, exportBackup, importBackup, markBackedUp } from './store.js';
+import { getState, exportBackup, importBackup, markBackedUp, METHOD_LABELS } from './store.js';
 import * as vault from './vault.js';
 import { download, toast, confirmDialog, askPassword } from './ui.js';
 import { nowLocal, toDecimal, fmtDate, toLocalString } from './format.js';
@@ -35,9 +35,9 @@ function csvCell(value) {
 }
 
 export function downloadCSV() {
-    const rows = [['Date', 'Time', 'Type', 'Category', 'Note', 'Amount (INR)']];
+    const rows = [['Date', 'Time', 'Type', 'Category', 'Method', 'Note', 'Amount (INR)']];
     for (const t of [...getState().transactions].reverse()) {
-        rows.push([t.date.slice(0, 10), t.date.slice(11, 16), t.type === 'income' ? 'Income' : 'Expense', t.category, t.note, (t.type === 'income' ? '' : '-') + toDecimal(t.amount)]);
+        rows.push([t.date.slice(0, 10), t.date.slice(11, 16), t.type === 'income' ? 'Income' : 'Expense', t.category, t.method ? METHOD_LABELS[t.method] : '', t.note, (t.type === 'income' ? '' : '-') + toDecimal(t.amount)]);
     }
     const csv = '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n'); // BOM so Excel reads ₹ correctly
     download(`budget-tracker-${today()}.csv`, csv, 'text/csv;charset=utf-8');

@@ -9,6 +9,11 @@ export const DEFAULT_CATEGORIES = {
 };
 
 const TYPES = ['expense', 'income'];
+
+/** How money was paid or received. Entries made before this existed have no method. */
+export const METHODS = ['upi', 'cash', 'card', 'bank'];
+export const METHOD_LABELS = { upi: 'UPI', cash: 'Cash', card: 'Card', bank: 'Bank', '': 'Not set' };
+const cleanMethod = (m) => (METHODS.includes(m) ? m : '');
 const listeners = new Set();
 let onSaveError = (err) => console.error(err);
 
@@ -25,6 +30,7 @@ function blank() {
         recurring: [], // repeating transactions (see cleanRule)
         favorites: [], // one-tap "quick add" entries (see cleanFavorite)
         lastCategory: { expense: '', income: '' }, // pre-selected in the add form
+        lastMethod: { expense: '', income: '' },
         lastBackup: '',
     };
 }
@@ -42,6 +48,8 @@ function cleanTx(t) {
         note: String(t.note ?? '').trim().slice(0, 200),
         date: t.date.slice(0, 16),
     };
+    const method = cleanMethod(t.method);
+    if (method) tx.method = method;
     if (typeof t.recurringId === 'string' && t.recurringId) tx.recurringId = t.recurringId;
     return tx;
 }
@@ -88,6 +96,7 @@ function cleanRule(r) {
         next: r.next,
         time: /^\d{2}:\d{2}$/.test(r.time) ? r.time : '09:00',
         active: r.active !== false,
+        method: cleanMethod(r.method),
     };
 }
 
@@ -128,6 +137,7 @@ export function normalize(data) {
     for (const type of TYPES) {
         const c = data.lastCategory?.[type];
         if (typeof c === 'string') s.lastCategory[type] = c.trim().slice(0, 40);
+        s.lastMethod[type] = cleanMethod(data.lastMethod?.[type]);
     }
     s.lastBackup = typeof data.lastBackup === 'string' ? data.lastBackup : '';
     return s;
@@ -230,7 +240,10 @@ export function addTx(input, { repeat = '', remember = false } = {}) {
     return commit((d) => {
         d.transactions.push(tx);
         if (rule) d.recurring.push(rule);
-        if (remember) d.lastCategory[tx.type] = tx.category;
+        if (remember) {
+            d.lastCategory[tx.type] = tx.category;
+            d.lastMethod[tx.type] = tx.method ?? '';
+        }
     }) ? tx : null;
 }
 
@@ -275,7 +288,7 @@ export const MAX_FAVORITES = 12;
 function cleanFavorite(f) {
     const tx = cleanTx({ ...f, date: '2000-01-01T00:00' }); // reuse the same validation
     if (!tx) return null;
-    return { id: tx.id, type: tx.type, amount: tx.amount, category: tx.category, note: tx.note };
+    return { id: tx.id, type: tx.type, amount: tx.amount, category: tx.category, note: tx.note, method: tx.method ?? '' };
 }
 
 const sameFavorite = (a, b) => a.type === b.type && a.amount === b.amount && a.category === b.category && a.note.toLowerCase() === b.note.toLowerCase();
@@ -424,6 +437,9 @@ export function lastCategory(type) {
     return c && state.categories[type].includes(c) ? c : '';
 }
 
+/** The payment method to pre-select when adding: the last one used for this type. */
+export const lastMethod = (type) => state.lastMethod[type];
+
 // Notes used before, per type, rebuilt only when the transactions change.
 let noteIndexFor = null;
 let noteIndex = null;
@@ -438,10 +454,11 @@ function buildNoteIndex() {
         if (!t.note) continue;
         const key = t.note.toLowerCase();
         let g = groups[t.type].get(key);
-        if (!g) groups[t.type].set(key, (g = { note: t.note, key, count: 0, categories: new Map(), amounts: new Map() }));
+        if (!g) groups[t.type].set(key, (g = { note: t.note, key, count: 0, categories: new Map(), amounts: new Map(), methods: new Map() }));
         g.count++;
         g.categories.set(t.category, (g.categories.get(t.category) ?? 0) + 1);
         g.amounts.set(t.amount, (g.amounts.get(t.amount) ?? 0) + 1);
+        if (t.method) g.methods.set(t.method, (g.methods.get(t.method) ?? 0) + 1);
     }
     noteIndex = {};
     for (const type of TYPES) {
@@ -451,6 +468,7 @@ function buildNoteIndex() {
             count: g.count,
             category: mostCommon(g.categories),
             amount: mostCommon(g.amounts),
+            method: g.methods.size ? mostCommon(g.methods) : '',
         }));
     }
     noteIndexFor = state.transactions;
@@ -496,6 +514,17 @@ export function byCategory(list) {
         map.set(t.category, row);
     }
     return [...map.values()].sort((a, b) => b.amount - a.amount);
+}
+
+/** Totals per payment method, in METHODS order, then "not set" last. Only methods that were used. */
+export function byMethod(list) {
+    const rows = new Map([...METHODS, ''].map((m) => [m, { method: m, amount: 0, count: 0 }]));
+    for (const t of list) {
+        const row = rows.get(t.method ?? '');
+        row.amount += t.amount;
+        row.count++;
+    }
+    return [...rows.values()].filter((r) => r.count);
 }
 
 /** Group an already date-sorted list into [{ day: 'YYYY-MM-DD', items }]. */

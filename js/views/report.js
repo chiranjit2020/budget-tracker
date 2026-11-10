@@ -1,4 +1,4 @@
-import { getState, inMonth, totals, byCategory } from '../store.js';
+import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
 import { money, esc, fmtMonth, fmtDate, fmtTime, nowLocal } from '../format.js';
 import { icon, monthSwitch } from '../ui.js';
 
@@ -31,6 +31,27 @@ function categoryTable(rows, total, kind, budgets = {}) {
     </div>`;
 }
 
+/** Spent and received per payment method, side by side. */
+function methodTable(list) {
+    const spent = new Map(byMethod(list.filter((x) => x.type === 'expense')).map((r) => [r.method, r]));
+    const got = new Map(byMethod(list.filter((x) => x.type === 'income')).map((r) => [r.method, r]));
+    const methods = [...new Set([...spent.keys(), ...got.keys()])];
+    if (!methods.length || (methods.length === 1 && methods[0] === '')) return '<p class="muted">No payment methods recorded this month.</p>';
+    const order = ['upi', 'cash', 'card', 'bank', ''];
+    methods.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const cell = (r) => (r ? `${money(r.amount)}<br><small class="muted">${r.count} ${r.count === 1 ? 'entry' : 'entries'}</small>` : '<span class="muted">—</span>');
+    const share = (r, total) => (r && total ? `${((r.amount / total) * 100).toFixed(1)}%` : '<span class="muted">—</span>');
+    const totalSpent = [...spent.values()].reduce((n, r) => n + r.amount, 0);
+    return `
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th scope="col">Method</th><th scope="col">Spent</th><th scope="col">Share</th><th scope="col">Received</th></tr></thead>
+            <tbody>
+                ${methods.map((m) => `<tr><th scope="row">${METHOD_LABELS[m]}</th><td class="nowrap">${cell(spent.get(m))}</td><td>${share(spent.get(m), totalSpent)}</td><td class="nowrap">${cell(got.get(m))}</td></tr>`).join('')}
+            </tbody>
+        </table>
+    </div>`;
+}
 
 export function render(root, ctx) {
     const { transactions, profile, budgets } = getState();
@@ -67,11 +88,14 @@ export function render(root, ctx) {
         <h3>Income by category</h3>
         ${categoryTable(byCategory(list.filter((x) => x.type === 'income')), t.income, 'income')}
 
+        <h3>By payment method</h3>
+        ${methodTable(list)}
+
         <h3>All transactions</h3>
         ${chronological.length
             ? `<div class="table-wrap">
             <table class="data-table tx-table">
-                <thead><tr><th scope="col">Date</th><th scope="col">Category</th><th scope="col">Note</th><th scope="col">Amount</th></tr></thead>
+                <thead><tr><th scope="col">Date</th><th scope="col">Category</th><th scope="col">Note</th><th scope="col">Method</th><th scope="col">Amount</th></tr></thead>
                 <tbody>
                     ${chronological
                         .map(
@@ -79,6 +103,7 @@ export function render(root, ctx) {
                                 <td class="nowrap">${fmtDate(x.date)}<br><small class="muted">${fmtTime(x.date)}</small></td>
                                 <td>${esc(x.category)}</td>
                                 <td>${esc(x.note) || '<span class="muted">—</span>'}</td>
+                                <td>${x.method ? METHOD_LABELS[x.method] : '<span class="muted">—</span>'}</td>
                                 <td class="${x.type} nowrap">${x.type === 'income' ? '+' : '−'} ${money(x.amount)}</td>
                             </tr>`,
                         )

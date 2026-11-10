@@ -1,4 +1,4 @@
-import { getState, inMonth, totals, byCategory } from '../store.js';
+import { getState, inMonth, totals, byCategory, byMethod, METHOD_LABELS } from '../store.js';
 import { money, moneyWhole, esc, fmtMonth, fmtMonthShort, shiftMonth } from '../format.js';
 import { icon, monthSwitch, txGroups, emptyState, CHART_COLORS } from '../ui.js';
 import { budgetSection } from '../budgets.js';
@@ -68,6 +68,29 @@ function quickAddRow(state) {
                 .join('')}
         </div>
     </div>`;
+}
+
+/** A stacked bar of this month's spending per payment method, once any entry has one. */
+function methodSplit(expenses, total, key) {
+    const rows = byMethod(expenses);
+    if (!rows.some((r) => r.method)) return '';
+    const colour = { upi: 'var(--chart-1)', cash: 'var(--chart-2)', card: 'var(--chart-3)', bank: 'var(--chart-4)', '': 'var(--line)' };
+    const pct = (r) => (r.amount / total) * 100;
+    const pctText = (r) => `${pct(r) < 1 ? '<1' : Math.round(pct(r))}%`;
+    return `
+    <section class="block">
+        <div class="section-head"><h2>How you paid</h2></div>
+        <div class="method-bar" role="img" aria-label="Spending in ${fmtMonth(key)} by payment method: ${rows.map((r) => `${METHOD_LABELS[r.method]} ${pctText(r).replace('<1', 'under 1')}`).join(', ')}">
+            ${rows.map((r) => `<i style="width:${pct(r).toFixed(2)}%;background:${colour[r.method]}"></i>`).join('')}
+        </div>
+        <ul class="method-legend">
+            ${rows
+                .map(
+                    (r) => `<li><span class="dot" style="background:${colour[r.method]}" aria-hidden="true"></span><span>${METHOD_LABELS[r.method]}</span><strong>${money(r.amount)}</strong><small>${pctText(r)}</small></li>`,
+                )
+                .join('')}
+        </ul>
+    </section>`;
 }
 
 export function render(root, ctx) {
@@ -160,6 +183,8 @@ export function render(root, ctx) {
                        ${moreCats > 0 ? `<a href="#/report" class="link">+ ${moreCats} more ${moreCats === 1 ? 'category' : 'categories'} in the report</a>` : ''}`
                     : `<p class="muted">No expenses in ${fmtMonth(key)}.</p>`}
             </section>
+
+            ${methodSplit(monthTx.filter((x) => x.type === 'expense'), t.expense, key)}
         </div>
     </div>`;
 }

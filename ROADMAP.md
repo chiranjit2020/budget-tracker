@@ -4,11 +4,10 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 ## Next up (in order)
 
-1. **Payment method:** tag entries as UPI, Cash, Card or Bank; filter by it and see the split per month.
-2. **Smart insights on the dashboard:** e.g. "Food is up 24% vs last month", average spend per day, projected month-end total.
-3. **Spending calendar:** a heat-map of the month showing which days you spent most; tap a day to see its entries.
-4. **Savings goals:** e.g. "Goa trip ₹30,000", with progress and a target date.
-5. **Lend & borrow tracker:** "Rahul owes me ₹500", with settle-up and reminders.
+1. **Smart insights on the dashboard:** e.g. "Food is up 24% vs last month", average spend per day, projected month-end total.
+2. **Spending calendar:** a heat-map of the month showing which days you spent most; tap a day to see its entries.
+3. **Savings goals:** e.g. "Goa trip ₹30,000", with progress and a target date.
+4. **Lend & borrow tracker:** "Rahul owes me ₹500", with settle-up and reminders.
 
 ## Later / maybe
 
@@ -30,4 +29,4 @@ Features are built one at a time: build, test (desktop + phone), push.
 
 ## Done
 
-Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB.
+Encrypted accounts (registration/login, auto-lock), PWA + offline, full-screen dashboard, Manrope font, profile popup, splash screen, monthly budgets, recurring transactions, encrypted backups + 30-day reminder, quick-add favourites (editable), app-icon shortcuts, light/dark mode, smarter add form (last category, note suggestions), data moved to IndexedDB, payment methods.

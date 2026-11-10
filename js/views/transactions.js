@@ -1,4 +1,4 @@
-import { getState, totals } from '../store.js';
+import { getState, totals, METHODS, METHOD_LABELS } from '../store.js';
 import { money, esc, fmtMonth } from '../format.js';
 import { icon, txGroups, emptyState } from '../ui.js';
 
@@ -6,12 +6,13 @@ const TITLES = { expense: 'Expenses', income: 'Income', all: 'All transactions' 
 
 /** One list view per type ("expense", "income" or "all"), each remembering its own filters. */
 export function listView(type) {
-    const filters = { month: '', category: '', q: '' };
+    const filters = { month: '', category: '', method: '', q: '' }; // method: '' = any, 'none' = not set
 
     function matches(t) {
         if (type !== 'all' && t.type !== type) return false;
         if (filters.month !== 'all' && !t.date.startsWith(filters.month)) return false;
         if (filters.category && t.category !== filters.category) return false;
+        if (filters.method && (t.method ?? 'none') !== filters.method) return false;
         if (filters.q) {
             const q = filters.q.toLowerCase();
             if (!t.note.toLowerCase().includes(q) && !t.category.toLowerCase().includes(q)) return false;
@@ -50,6 +51,7 @@ export function listView(type) {
             if (ctx.entered) {
                 filters.month = ctx.month;
                 filters.category = '';
+                filters.method = '';
                 filters.q = '';
             }
             const { transactions, categories } = getState();
@@ -76,6 +78,12 @@ export function listView(type) {
                     <select data-f="category">
                         <option value="">All categories</option>
                         ${[...cats].sort((a, b) => a.localeCompare(b)).map((c) => `<option${c === filters.category ? ' selected' : ''}>${esc(c)}</option>`).join('')}
+                    </select>
+                </label>
+                <label><span class="sr-only">Payment method</span>
+                    <select data-f="method">
+                        <option value="">All methods</option>
+                        ${[...METHODS, 'none'].map((m) => `<option value="${m}"${m === filters.method ? ' selected' : ''}>${METHOD_LABELS[m === 'none' ? '' : m]}</option>`).join('')}
                     </select>
                 </label>
                 <label class="search">${icon('search')}<span class="sr-only">Search</span>

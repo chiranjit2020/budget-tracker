@@ -188,6 +188,15 @@
                 <span>Category</span>
                 <select name="category"></select>
             </label>
+            <fieldset class="field method-pick">
+                <legend id="method-label">Paid with</legend>
+                <div class="method-options">
+                    <label><input type="radio" name="method" value="upi" /><span>UPI</span></label>
+                    <label><input type="radio" name="method" value="cash" /><span>Cash</span></label>
+                    <label><input type="radio" name="method" value="card" /><span>Card</span></label>
+                    <label><input type="radio" name="method" value="bank" /><span>Bank</span></label>
+                </div>
+            </fieldset>
             <label class="field">
                 <span>Date &amp; time</span>
                 <input name="date" type="datetime-local" required />

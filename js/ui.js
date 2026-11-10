@@ -1,6 +1,6 @@
 // Shared UI pieces: icons, dialogs, toasts and reusable markup.
 
-import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions } from './store.js';
+import { getState, addTx, updateTx, deleteTx, restoreTx, byDay, totals, nextOccurrence, runRecurring, addFavorite, lastCategory, noteSuggestions, lastMethod, METHOD_LABELS } from './store.js';
 import { esc, money, parseAmount, toDecimal, nowLocal, fmtDay, fmtTime, fmtMonth, fmtDate } from './format.js';
 import { budgetAlert, categorySpent } from './budgets.js';
 
@@ -37,7 +37,8 @@ export const emptyState = (message, addType) => `
 export function txItem(t) {
     const title = t.note || t.category;
     const repeatMark = t.recurringId ? `<span class="tx-repeat" title="Repeats automatically">${icon('repeat')}<span class="sr-only">Repeating,</span></span>` : '';
-    const sub = repeatMark + (t.note ? `${esc(t.category)} · ${fmtTime(t.date)}` : fmtTime(t.date));
+    const parts = [t.note ? t.category : '', t.method ? METHOD_LABELS[t.method] : '', fmtTime(t.date)].filter(Boolean);
+    const sub = repeatMark + esc(parts.join(' · '));
     const sign = t.type === 'income' ? '+' : '−';
     return `
         <li>
@@ -169,6 +170,7 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     const kind = tx?.type ?? type;
     txForm.type.value = kind;
     fillCategories(kind, tx ? tx.category : lastCategory(kind));
+    setMethod(tx ? tx.method ?? '' : lastMethod(kind), kind);
     txForm.amount.value = tx ? toDecimal(tx.amount) : '';
     txForm.date.value = tx?.date ?? nowLocal();
     txForm.note.value = tx?.note ?? '';
@@ -186,6 +188,36 @@ export function openTxDialog(tx = null, { type = 'expense' } = {}) {
     renderSuggestions();
     txDialog.showModal();
 }
+
+// ---- Payment method: optional, tap the chosen one again to clear it ----
+
+const methodLabel = document.getElementById('method-label');
+let methodValue = '';
+
+function setMethod(method, type) {
+    methodValue = method;
+    for (const radio of txForm.querySelectorAll('input[name="method"]')) radio.checked = radio.value === method;
+    if (type) methodLabel.textContent = type === 'income' ? 'Received in' : 'Paid with';
+}
+
+const methodOptions = txForm.querySelector('.method-options');
+let tappedChosen = null; // the already-chosen radio a pointer just pressed
+
+methodOptions.addEventListener('pointerdown', (e) => {
+    const radio = e.target.closest('label')?.querySelector('input[name="method"]');
+    tappedChosen = radio && radio.value === methodValue ? radio : null;
+});
+methodOptions.addEventListener('click', (e) => {
+    const radio = e.target.closest('input[name="method"]');
+    if (!radio) return;
+    if (radio === tappedChosen) {
+        radio.checked = false; // tapping the chosen one again clears it (keyboard arrows never do)
+        methodValue = '';
+    } else {
+        methodValue = radio.value;
+    }
+    tappedChosen = null;
+});
 
 // ---- Note suggestions: earlier notes with their usual category and amount ----
 
@@ -209,6 +241,7 @@ function renderSuggestions() {
 function applySuggestion(s) {
     txForm.note.value = s.note;
     fillCategories(txForm.type.value, s.category);
+    if (s.method) setMethod(s.method);
     if (!txForm.amount.value.trim() || amountSuggested) {
         txForm.amount.value = toDecimal(s.amount);
         amountSuggested = true;
@@ -243,6 +276,7 @@ function updateRepeatHint() {
 txForm.addEventListener('change', (e) => {
     if (e.target.name === 'type') {
         fillCategories(e.target.value, lastCategory(e.target.value));
+        setMethod(editingId ? methodValue : lastMethod(e.target.value), e.target.value);
         renderSuggestions();
     }
     if (e.target.name === 'repeat' || e.target.name === 'date') updateRepeatHint();
@@ -266,6 +300,7 @@ txForm.addEventListener('submit', (e) => {
         amount,
         category: txForm.category.value,
         note: txForm.note.value,
+        method: methodValue,
         date: txForm.date.value || nowLocal(),
     };
     // Category spending before this save (not counting the old version of an edited entry).
@@ -376,7 +411,7 @@ export function askPassword({ title, message, submit = 'Unlock', verify }) {
 export function quickAdd(id) {
     const fav = getState().favorites.find((f) => f.id === id);
     if (!fav) return;
-    const data = { type: fav.type, amount: fav.amount, category: fav.category, note: fav.note, date: nowLocal() };
+    const data = { type: fav.type, amount: fav.amount, category: fav.category, note: fav.note, method: fav.method, date: nowLocal() };
     const before = fav.type === 'expense' ? categorySpent(fav.category, data.date) : 0;
     const tx = addTx(data);
     if (!tx) return;
