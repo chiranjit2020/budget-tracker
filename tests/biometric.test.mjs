@@ -127,5 +127,44 @@ sensor.refuse = true;
 assert.equal(await bio.enableBiometric(await vault.exportRawKey('another pass'), 'Tester'), 'cancelled');
 assert.equal(bio.biometricEnabled(), false);
 
+// 10. Both needed: right password + scan opens it; a wrong password or a failed scan doesn't
+sensor = fakeSensor();
+sensor.refuse = false;
+await vault.unlock('another pass');
+assert.equal(await bio.enableBiometric(await vault.exportRawKey('another pass'), 'Tester'), 'on');
+vault.lock();
+assert.deepEqual(await bio.unlockWithBoth('wrong pass'), { problem: 'password' });
+assert.equal(vault.isUnlocked(), false, 'the scan alone does not open it');
+sensor.refuse = true;
+assert.deepEqual(await bio.unlockWithBoth('another pass'), { problem: 'scan' });
+assert.equal(vault.isUnlocked(), false, 'the right password alone does not open it');
+assert.deepEqual(await bio.unlockWithBoth('wrong pass'), { problem: 'scan' }, 'no hint about the password without a scan');
+sensor.refuse = false;
+assert.deepEqual((await bio.unlockWithBoth('another pass')).data.transactions, data.transactions);
+assert.equal(vault.isUnlocked(), true);
+
+// 11. Password only: works only 24 hours after asking, and the clock going back doesn't count
+const t0 = Date.UTC(2026, 10, 10, 9, 0);
+assert.equal(bio.passwordOnlyRequest(t0), null);
+let req = bio.requestPasswordOnly(t0);
+assert.equal(req.ready, false);
+assert.equal(req.readyAt, t0 + bio.PASSWORD_ONLY_WAIT_MS);
+assert.equal(bio.requestPasswordOnly(t0 + 5000).askedAt, t0, 'asking again keeps the first time');
+assert.equal(bio.passwordOnlyRequest(t0 + bio.PASSWORD_ONLY_WAIT_MS - 1).ready, false);
+assert.equal(bio.passwordOnlyRequest(t0 + bio.PASSWORD_ONLY_WAIT_MS).ready, true);
+assert.equal(bio.passwordOnlyRequest(t0 - 1000).ready, false, 'clock set back');
+localStorage.setItem(vault.PASSWORD_ONLY_KEY, 'junk');
+assert.equal(bio.passwordOnlyRequest(t0), null, 'a damaged value is ignored');
+bio.requestPasswordOnly(t0);
+bio.cancelPasswordOnly();
+assert.equal(bio.passwordOnlyRequest(t0), null);
+// turning fingerprint off, or resetting, removes a waiting request too
+bio.requestPasswordOnly(t0);
+bio.disableBiometric();
+assert.equal(bio.passwordOnlyRequest(t0), null);
+bio.requestPasswordOnly(t0);
+await vault.deleteAccount();
+assert.equal(bio.passwordOnlyRequest(t0), null);
+
 console.log('All fingerprint unlock tests passed.');
 process.exit(0); // vault.js's BroadcastChannel would otherwise keep Node running

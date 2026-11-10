@@ -299,8 +299,8 @@ export function render(root, ctx = {}) {
         if (!row) return;
         const on = biometricEnabled();
         row.querySelector('#bio-status').textContent = on
-            ? 'On. You can unlock with your fingerprint or face. Your password still works too.'
-            : 'Unlock without typing your password, using your phone’s fingerprint or face check.';
+            ? 'On. Unlocking needs your password and your fingerprint or face, so a saved password alone can’t open the app.'
+            : 'Extra safety: unlocking will need your fingerprint or face as well as your password.';
         row.querySelector('#bio-toggle').textContent = on ? 'Turn off' : 'Turn on';
         row.hidden = false;
     };
@@ -528,7 +528,7 @@ export function render(root, ctx = {}) {
             });
             if (!rawKey) return;
             const result = await enableBiometric(rawKey, getState().profile.name);
-            if (result === 'on') toast('Done. Next time, unlock with your fingerprint or face.');
+            if (result === 'on') toast('Done. From now on, unlock with your password and your fingerprint or face.');
             else if (result === 'unsupported') toast('This phone or browser can’t do fingerprint or face unlock for this app. Your password still works.');
             root.showBiometric?.();
         } else if (el.id === 'lock-now') {

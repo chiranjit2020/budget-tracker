@@ -3,7 +3,10 @@
 import * as vault from './vault.js';
 import { openSession, closeSession, flush, normalize, setExternalLockHandler } from './store.js';
 import { confirmDialog, toast, icon } from './ui.js';
-import { biometricEnabled, biometricSupported, unlockWithBiometric } from './biometric.js';
+import {
+    biometricEnabled, biometricSupported, disableBiometric, unlockWithBoth,
+    passwordOnlyRequest, requestPasswordOnly, cancelPasswordOnly,
+} from './biometric.js';
 import { esc } from './format.js';
 
 const screen = document.getElementById('auth');
@@ -177,44 +180,63 @@ function resetGuard() {
     saveGuard();
 }
 
+const whenText = (ms) =>
+    new Date(ms).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+/** Count a wrong password, with growing waits after 5 tries. */
+function wrongPassword(form, input) {
+    failures++;
+    saveGuard();
+    if (failures >= 5) {
+        const seconds = Math.min(30 * 2 ** (failures - 5), MAX_WAIT_SECONDS); // 30s, 60s, 120s… up to an hour
+        lockedUntil = Date.now() + seconds * 1000;
+        saveGuard();
+        setError(form, `Wrong password. Too many attempts, so wait ${seconds} seconds.`);
+    } else {
+        setError(form, 'Wrong password. Try again.');
+    }
+    input.select();
+}
+
 function showLogin() {
     const name = vault.accountName();
+    // With fingerprint/face on, the password alone isn't enough: a browser can fill
+    // it in for anyone holding the phone. Both are needed, unless the 24-hour
+    // password-only wait has passed.
+    const both = biometricEnabled();
+    const request = both ? passwordOnlyRequest() : null;
+    const passwordOnly = !both || Boolean(request?.ready);
+
+    let note = '';
+    if (request?.ready) {
+        note = `<p class="auth-note">You can now unlock with only your password. Fingerprint or face unlock will be turned off; you can turn it on again in Settings.</p>`;
+    } else if (request) {
+        note = `<p class="auth-note">Unlocking with only the password was asked for on ${whenText(request.askedAt)}. It will work from ${whenText(request.readyAt)}.
+            Didn’t ask for this? Unlock with your password and fingerprint or face, and it’s cancelled. <button type="button" class="link-btn" id="pw-only-cancel">Cancel now</button></p>`;
+    }
+
     showScreen(`
         <h1>Welcome back${name ? `, ${esc(name)}` : ''}</h1>
-        <p class="muted">Enter your password to unlock your budget.</p>
+        <p class="muted">${passwordOnly ? 'Enter your password to unlock your budget.' : 'Enter your password, then check your fingerprint or face.'}</p>
+        ${note}
+        <p class="auth-note" id="bio-missing" hidden>This phone can’t check your fingerprint or face right now. Turn the phone’s screen lock back on, or use “Can’t use fingerprint or face?” below.</p>
         <form id="login-form" novalidate>
             <input type="text" name="username" autocomplete="username" value="${esc(name)}" class="sr-only" tabindex="-1" aria-hidden="true">
             ${passwordField('password', 'Password', 'current-password')}
             <p class="field-error" role="alert" hidden></p>
-            <button type="submit" class="btn btn-primary btn-block">Unlock</button>
+            <button type="submit" class="btn btn-primary btn-block">${passwordOnly ? 'Unlock' : `${icon('fingerprint')}<span>Unlock</span>`}</button>
         </form>
-        <button type="button" class="btn btn-ghost btn-block auth-bio" id="bio-unlock" hidden>${icon('fingerprint')}<span>Unlock with fingerprint or face</span></button>
+        ${both && !request ? '<button type="button" class="link-btn auth-forgot" id="pw-only-btn">Can’t use fingerprint or face?</button>' : ''}
         <button type="button" class="link-btn auth-forgot" id="forgot-btn">Forgot password?</button>`);
 
     const form = document.getElementById('login-form');
     const input = form.elements.password;
     input.focus();
 
-    // Fingerprint / face: offered when it's turned on and this device supports it.
-    const bioBtn = document.getElementById('bio-unlock');
-    const tryBiometric = async () => {
-        bioBtn.disabled = true;
-        const data = await unlockWithBiometric();
-        bioBtn.disabled = false;
-        if (data) {
-            resetGuard();
-            enterApp(data);
-        } else {
-            setError(form, 'Couldn’t unlock with fingerprint or face. Try again, or use your password.');
-        }
-    };
-    bioBtn.addEventListener('click', tryBiometric);
-    if (biometricEnabled()) {
+    if (both && !passwordOnly) {
         biometricSupported().then((ok) => {
-            if (!ok || !bioBtn.isConnected) return;
-            bioBtn.hidden = false;
-            // No automatic prompt: face unlock passes instantly, so the app would
-            // open again before the lock screen was even seen. One tap instead.
+            const missing = document.getElementById('bio-missing');
+            if (!ok && missing) missing.hidden = false;
         });
     }
 
@@ -224,30 +246,63 @@ function showLogin() {
         if (wait > 0) return setError(form, `Too many wrong attempts. Try again in ${wait} seconds.`);
         if (!input.value) return setError(form, 'Enter your password.');
         setError(form, '');
-        busy(form, 'Unlocking…');
-        let data = null;
+
+        if (passwordOnly) {
+            busy(form, 'Unlocking…');
+            let data = null;
+            try {
+                data = await vault.unlock(input.value);
+            } catch (err) {
+                console.error(err);
+            }
+            if (!data) {
+                busy(form, '');
+                return wrongPassword(form, input);
+            }
+            resetGuard();
+            enterApp(data);
+            if (request?.ready) {
+                disableBiometric(); // it couldn't be used; also clears the request
+                toast('Fingerprint or face unlock is now off. You can turn it on again in Settings.');
+            }
+            return;
+        }
+
+        busy(form, 'Checking…');
+        let result = { problem: 'scan' };
         try {
-            data = await vault.unlock(input.value);
+            result = await unlockWithBoth(input.value);
         } catch (err) {
             console.error(err);
         }
-        if (data) {
-            resetGuard();
-            enterApp(data);
-            return;
-        }
         busy(form, '');
-        failures++;
-        saveGuard();
-        if (failures >= 5) {
-            const seconds = Math.min(30 * 2 ** (failures - 5), MAX_WAIT_SECONDS); // 30s, 60s, 120s… up to an hour
-            lockedUntil = Date.now() + seconds * 1000;
-            saveGuard();
-            setError(form, `Wrong password. Too many attempts, so wait ${seconds} seconds.`);
-        } else {
-            setError(form, 'Wrong password. Try again.');
+        if (result.problem === 'password') return wrongPassword(form, input);
+        if (result.problem === 'scan') {
+            return setError(form, 'The fingerprint or face check didn’t pass. Tap Unlock to try again.');
         }
-        input.select();
+        resetGuard();
+        enterApp(result.data);
+        if (request) {
+            cancelPasswordOnly();
+            toast('Someone asked to unlock with only the password. That is now cancelled.');
+        }
+    });
+
+    document.getElementById('pw-only-btn')?.addEventListener('click', async () => {
+        const ok = await confirmDialog({
+            title: 'Unlock with only your password?',
+            message: 'To keep your data safe if someone else has your phone, this works only after 24 hours. Until then, unlocking with your password and fingerprint or face still works, and cancels this.',
+            ok: 'Start the 24-hour wait',
+        });
+        if (!ok) return;
+        requestPasswordOnly();
+        showLogin();
+    });
+
+    document.getElementById('pw-only-cancel')?.addEventListener('click', () => {
+        cancelPasswordOnly();
+        showLogin();
+        toast('Cancelled. Unlocking still needs your password and fingerprint or face.');
     });
 
     document.getElementById('forgot-btn').addEventListener('click', async () => {

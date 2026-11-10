@@ -7,7 +7,11 @@
 //   after a successful scan. That secret, stretched with HKDF, locks (AES-GCM) a copy
 //   of the data key. Only the locked copy is stored, so on its own it is useless.
 // - Unlocking asks for the scan, gets the secret again, unlocks the key copy and
-//   opens the data with it. The password still works as well.
+//   opens the data with it.
+// - Once it's on, unlocking needs BOTH the password and the scan, so a password
+//   the browser fills in by itself isn't enough for someone holding the phone.
+//   If the scan can't work any more, the password alone works again, but only
+//   24 hours after asking (see "Password only" below).
 // - Changing the password or resetting the app removes this (see vault.js).
 
 import * as vault from './vault.js';
@@ -49,6 +53,7 @@ export function biometricEnabled() {
 export function disableBiometric() {
     try {
         localStorage.removeItem(KEY);
+        localStorage.removeItem(vault.PASSWORD_ONLY_KEY); // nothing left to skip
     } catch { /* storage blocked */ }
 }
 
@@ -144,4 +149,55 @@ export async function unlockWithBiometric() {
     } finally {
         raw?.fill(0);
     }
+}
+
+/**
+ * Unlock with both: the scan must pass AND the password must be right.
+ * The scan comes first, so someone guessing without the owner's finger or face
+ * never learns whether a password was right.
+ * Returns { data } on success, or { problem: 'scan' | 'password' }.
+ */
+export async function unlockWithBoth(password) {
+    const data = await unlockWithBiometric();
+    if (!data) return { problem: 'scan' };
+    const raw = await vault.exportRawKey(password);
+    if (!raw) {
+        vault.lock(); // the scan alone isn't enough either
+        return { problem: 'password' };
+    }
+    raw.fill(0);
+    return { data };
+}
+
+// ---- Password only, after a 24-hour wait ---------------------------------------------
+// For when the scan can't work any more (screen lock removed, fingerprint key deleted).
+// The wait means someone who picks up the phone can't get in on the spot, and the
+// owner sees the request (and can cancel it) the next time they unlock.
+
+export const PASSWORD_ONLY_WAIT_MS = 24 * 60 * 60 * 1000;
+
+export function passwordOnlyRequest(now = Date.now()) {
+    let askedAt = NaN;
+    try {
+        askedAt = Number(localStorage.getItem(vault.PASSWORD_ONLY_KEY));
+    } catch { /* storage blocked */ }
+    if (!Number.isFinite(askedAt) || askedAt <= 0) return null;
+    const readyAt = askedAt + PASSWORD_ONLY_WAIT_MS;
+    // A clock set back before the request doesn't count as time passed.
+    return { askedAt, readyAt, ready: now >= readyAt && askedAt <= now };
+}
+
+/** Start the wait (keeps the first request if one is already running). */
+export function requestPasswordOnly(now = Date.now()) {
+    if (passwordOnlyRequest(now)) return passwordOnlyRequest(now);
+    try {
+        localStorage.setItem(vault.PASSWORD_ONLY_KEY, String(now));
+    } catch { /* storage blocked */ }
+    return passwordOnlyRequest(now);
+}
+
+export function cancelPasswordOnly() {
+    try {
+        localStorage.removeItem(vault.PASSWORD_ONLY_KEY);
+    } catch { /* storage blocked */ }
 }

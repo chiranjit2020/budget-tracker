@@ -41,7 +41,7 @@ All data (transactions, budgets, goals, money given & taken, profile) is stored 
 | Floating-point errors in money | A06 Insecure Design | — | Safe: amounts are whole paise; parsing and goal pace use exact integer maths |
 | Network interception | A04 Cryptographic Failures | T1557 Adversary-in-the-Middle | Safe: GitHub Pages serves HTTPS only and `github.io` is HSTS-preloaded; nothing secret is sent anyway |
 | Supply chain: Chart.js and fonts | A03 Software Supply Chain Failures | T1195.001 Compromise Software Dependencies | Safe: Chart.js 4.5.0 is shipped inside the app (no CDN) and was checked byte-for-byte against the official npm package; the fonts are shipped too, so nothing is loaded from other sites at all |
-| Fingerprint / face unlock | A07 Authentication Failures | T1556 Modify Authentication Process | Safe in tests: the data key is wrapped by a secret only the device's fingerprint hardware releases (WebAuthn PRF); a different device, a tampered copy or a changed password all fail |
+| Fingerprint / face unlock | A07 Authentication Failures | T1556 Modify Authentication Process | Safe in tests: the data key is wrapped by a secret only the device's fingerprint hardware releases (WebAuthn PRF); a different device, a tampered copy or a changed password all fail. With it on, unlocking needs the password *and* the scan, so a browser-filled password alone can't open the app; the password-only fallback needs a 24-hour wait the owner sees and can cancel (setting the phone clock forward would shorten it) |
 
 ### OWASP items that mostly don't apply
 

@@ -15,6 +15,7 @@ const VAULT_KEY = 'budget-tracker.vault.v1'; // localStorage key (used before In
 const LEGACY_KEY = 'budget-tracker.v1'; // unencrypted data from before accounts existed
 /** Fingerprint/face unlock record (see biometric.js). Removed whenever the account's key changes. */
 export const BIOMETRIC_KEY = 'budget-tracker.biometric.v1';
+export const PASSWORD_ONLY_KEY = 'budget-tracker.password-only'; // when a password-only unlock was asked for
 const ITERATIONS = 600_000;
 // Key-stretching settings read from a file or storage must be sane: a booby-trapped
 // backup asking for billions of rounds would otherwise hang the app (and too few is weak).
@@ -243,6 +244,7 @@ export async function createAccount(name, password, data) {
 function forgetBiometric() {
     try {
         localStorage.removeItem(BIOMETRIC_KEY);
+        localStorage.removeItem(PASSWORD_ONLY_KEY);
     } catch { /* storage blocked */ }
 }
 
